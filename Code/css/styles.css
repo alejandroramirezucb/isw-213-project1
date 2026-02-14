@@ -9,3 +9,10 @@ body {
     background-color: #f9f9f9;
 }
 
+.contenedor-productos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+    justify-content: center;
+}
