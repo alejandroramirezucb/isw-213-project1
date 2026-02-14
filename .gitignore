@@ -1,4 +1,56 @@
-﻿Code/node_modules/
-Code/.env
-Code/.idea/
+﻿# Node.js dependencies
+node_modules/
+**/node_modules/
 
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime / environment
+.env
+.env.local
+.env.*.local
+!.env.example   # keep example files in repo
+
+# Build output
+dist/
+build/
+.tmp/
+.tmp-*
+tmp/
+temp/
+.cache/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*~
+*.code-workspace
+
+# Misc
+.pnp/
+.pnp.js
+.parcel-cache/
+
+# Keep lockfiles committed for reproducible installs (do NOT ignore package-lock.json / yarn.lock)
+
+# Notes:
+# - Removed the previous `Code/` prefixes so ignores apply repository-wide.
+# - Removed `Supabase.md` and `package-lock.json` from ignore so documentation and lockfile are tracked.
