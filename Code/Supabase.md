@@ -225,4 +225,29 @@ END IF;
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = public; 
+SET search_path = public;
+
+CREATE OR REPLACE FUNCTION seleccionar_productos_por_categoria(categoria_nombre VARCHAR)
+RETURNS TABLE (
+    id_producto INT,
+    nombre_producto VARCHAR,
+    descripcion_producto TEXT,
+    precio_actual DECIMAL,
+    stock_disponible INT,
+    url_imagen VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        p.id AS id_producto,
+        p.nombre AS nombre_producto,
+        p.descripcion AS descripcion_producto,
+        p.precio_actual,
+        p.stock_disponible,
+        p.url_imagen
+    FROM productos p
+    INNER JOIN categorias c ON p.categoria_id = c.id
+    WHERE c.nombre = categoria_nombre
+      AND p.estado = 'activo';
+END;
+$$ LANGUAGE plpgsql;

@@ -28,14 +28,31 @@
         </div>
     </main>
 
+    <script src="/js/utilidades/CalculadorPrecio.js"></script>
+    <script src="/js/servicios/ProductoServicio.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
+    <script src="/js/utilidades/ActualizadorContador.js"></script>
     <script src="/js/carrito.js"></script>
     <script>
         fetch('/api/navbar')
             .then(res => res.text())
             .then(html => {
                 document.getElementById('navbar-placeholder').innerHTML = html;
+                const actualizadorContador = new ActualizadorContador(new CarritoServicio());
+                actualizadorContador.actualizar();
+
+                const enlaces = document.querySelectorAll('.barra-navegacion__dropdown-link');
+                enlaces.forEach(enlace => {
+                    enlace.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const href = enlace.getAttribute('href') || '';
+                        const query = href.includes('?') ? href.split('?')[1] : (new URL(enlace.href)).searchParams.toString();
+                        const params = new URLSearchParams(query);
+                        const categoria = params.get('categoria');
+                        if (categoria) window.location.href = '/' + '?categoria=' + encodeURIComponent(categoria);
+                    });
+                });
             });
     </script>
 </body>
 </html>
-

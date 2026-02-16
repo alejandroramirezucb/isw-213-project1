@@ -5,7 +5,7 @@
         </a>
     </div>
     <div class="barra-navegacion__menu">
-        <img src="/assets/menu.svg" alt="Menú" class="barra-navegacion__menu-icon">
+        <img src="/assets/menu.svg" alt="Men?" class="barra-navegacion__menu-icon">
         <ul class="barra-navegacion__dropdown">
             <li class="barra-navegacion__dropdown-item"><a href="/?categoria=hogar" class="barra-navegacion__dropdown-link">Hogar</a></li>
             <li class="barra-navegacion__dropdown-item"><a href="/?categoria=oficina" class="barra-navegacion__dropdown-link">Oficina</a></li>
@@ -17,9 +17,12 @@
         </ul>
     </div>
     <form action="/" method="GET" class="barra-navegacion__search">
+        <button type="submit" class="barra-navegacion__search-btn">
+            <img src="/assets/search.svg" alt="Buscar" class="barra-navegacion__search-icon">
+        </button>
         <input type="text" placeholder="Buscar productos..." name="q" aria-label="Buscar productos" class="barra-navegacion__search-input">
-        <button type="submit" style="background:none; border:none; position:absolute; left:10px; top:50%; transform:translateY(-50%); cursor:pointer;">
-            <img src="/assets/search.svg" alt="Buscar" class="barra-navegacion__search-icon" style="position:static; transform:none;">
+        <button type="button" id="btn-toggle-filtros" class="barra-navegacion__filter-btn">
+            <img src="/assets/filter.svg" alt="Filtros" class="barra-navegacion__filter-icon">
         </button>
     </form>
     <div class="barra-navegacion__icons">

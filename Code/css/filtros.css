@@ -1,0 +1,113 @@
+﻿.panel-filtros {
+    width: 100%;
+    margin: 10px 0 20px 0;
+    padding: 18px 32px;
+    background: #ffffff;
+    border-bottom: 1px solid #dde2f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    display: none;
+    box-sizing: border-box;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.panel-filtros .filtros-contenedor {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.panel-filtros .filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 180px;
+}
+
+.panel-filtros .filtro-grupo label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #444;
+    font-size: 0.95em;
+}
+
+.panel-filtros .filtro-grupo input[type="number"] {
+    padding: 12px 14px;
+    border: 1px solid #cfd5e4;
+    border-radius: 12px;
+    font-size: 14px;
+    background: #f7f9ff;
+}
+
+.panel-filtros .filtro-grupo input[type="number"]:focus {
+    border-color: #034e8b;
+}
+
+.panel-filtros .filtro-grupo input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.panel-filtros .filtro-acciones {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    min-width: 260px;
+}
+
+.btn-primary {
+    flex: 0 0 auto;
+    padding: 8px 14px; 
+    background: #034e8b;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 14px;
+}
+
+.btn-primary:hover {
+    background: #02375f;
+}
+
+.btn-secondary {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 14px;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.panel-filtros.activado {
+    display: block;
+}
+
+@media (max-width: 900px) {
+    .panel-filtros {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .panel-filtros .filtros-contenedor {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .panel-filtros .filtro-acciones {
+        justify-content: stretch;
+    }
+}

@@ -16,3 +16,14 @@ body {
     padding: 20px;
     justify-content: center;
 }
+
+.contador-resultados {
+    display: block;
+    text-align: center;
+    padding: 14px 20px;
+    background: white;
+    color: #555;
+    margin: 18px auto;
+    font-size: 1.05rem;
+    max-width: 640px;
+}

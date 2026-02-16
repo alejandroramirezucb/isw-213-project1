@@ -70,8 +70,8 @@
 .tarjeta-producto__boton {
     display: block;
     margin: 0 auto;
-    border-radius: 20px;
-    background-color: #034e8b; 
+    border-radius: 25px !important;
+    background-color: #034e8b !important; 
     color: white;
     padding: 10px 20px;
     border: none;
@@ -82,5 +82,5 @@
 }
 
 .tarjeta-producto__boton:hover {
-    background-color: #02375f; 
+    background-color: #02375f !important; 
 }
