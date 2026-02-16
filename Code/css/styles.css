@@ -21,9 +21,11 @@ body {
     display: block;
     text-align: center;
     padding: 14px 20px;
-    background: white;
+    background: #f0f2f5;
     color: #555;
+    border-radius: 10px;
     margin: 18px auto;
     font-size: 1.05rem;
     max-width: 640px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }

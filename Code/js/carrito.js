@@ -3,27 +3,26 @@ const carritoServicio = new CarritoServicio();
 const actualizadorContador = new ActualizadorContador(carritoServicio);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await mostrarCarrito();
-    configurarBotonFinalizar();
+    configurarEventosCheckout();
+    await inicializarCarrito();
 });
 
-async function mostrarCarrito() {
+async function inicializarCarrito() {
     const contenedor = document.getElementById('lista-carrito');
-    const elementoTotal = document.getElementById('total-precio');
     const carrito = carritoServicio.obtenerCarrito();
 
     if (carrito.length === 0) {
-        mostrarCarritoVacio(contenedor, elementoTotal);
+        mostrarCarritoVacio(contenedor);
         return;
     }
 
     const carritoActualizado = await verificarStockCarrito(carrito);
     renderizarProductosCarrito(contenedor, carritoActualizado);
-    actualizarTotalCarrito(elementoTotal, carritoActualizado);
+    actualizarResumenCheckout();
     actualizadorContador.actualizar();
 }
 
-function mostrarCarritoVacio(contenedor, elementoTotal) {
+function mostrarCarritoVacio(contenedor) {
     contenedor.innerHTML = `
         <div class="carrito-vacio">
             <h3>Tu carrito está vacío</h3>
@@ -31,8 +30,13 @@ function mostrarCarritoVacio(contenedor, elementoTotal) {
             <a href="/" class="btn-primary">Ir a la tienda</a>
         </div>
     `;
-    elementoTotal.innerText = 'Bs. 0.00';
-    actualizadorContador.actualizar();
+    const resumen = document.getElementById('resumen-detalle');
+    if (resumen) resumen.innerHTML = '';
+    const totalPrecio = document.getElementById('total-precio');
+    if (totalPrecio) totalPrecio.innerText = 'Bs. 0.00';
+    
+    document.querySelector('.carrito-checkout').style.opacity = '0.5';
+    document.querySelector('.carrito-checkout').style.pointerEvents = 'none';
 }
 
 async function verificarStockCarrito(carrito) {
@@ -44,13 +48,13 @@ async function verificarStockCarrito(carrito) {
             const infoStock = await productoServicio.verificarStock(item.id);
 
             if (!infoStock.disponible || infoStock.stock === 0) {
-                alert(`El producto "${item.nombre}" ya no está disponible y será eliminado del carrito.`);
+                alert(`El producto "${item.nombre}" ya no está disponible.`);
                 huboCambios = true;
                 continue;
             }
 
             if (item.cantidad > infoStock.stock) {
-                alert(`El producto "${item.nombre}" tiene menos stock del que solicitaste. Se ajustó a ${infoStock.stock} unidades.`);
+                alert(`Ajustamos "${item.nombre}" a ${infoStock.stock} por falta de stock.`);
                 item.cantidad = infoStock.stock;
                 huboCambios = true;
             }
@@ -58,14 +62,11 @@ async function verificarStockCarrito(carrito) {
             item.stock = infoStock.stock;
             carritoActualizado.push(item);
         } catch (error) {
-            console.error(`Error al verificar stock de producto ${item.id}:`, error);
             carritoActualizado.push(item);
         }
     }
 
-    if (huboCambios)
-        carritoServicio.guardarCarrito(carritoActualizado);
-
+    if (huboCambios) carritoServicio.guardarCarrito(carritoActualizado);
     return carritoActualizado;
 }
 
@@ -74,8 +75,6 @@ function renderizarProductosCarrito(contenedor, carrito) {
 
     carrito.forEach((producto, indice) => {
         const subtotal = CalculadorPrecio.calcularSubtotal(producto.precio, producto.cantidad);
-        const stock = producto.stock || 999;
-
         const divItem = document.createElement('div');
         divItem.className = 'item-carrito';
         
@@ -84,173 +83,134 @@ function renderizarProductosCarrito(contenedor, carrito) {
             <div class="item-carrito__info">
                 <div class="item-carrito__nombre">${producto.nombre}</div>
                 <div class="item-carrito__precio">Bs. ${CalculadorPrecio.formatearPrecio(producto.precio)}</div>
-                <div class="item-carrito__stock">Stock disponible: ${stock} unidades</div>
+                <div class="item-carrito__stock">Disponibles: ${producto.stock}</div>
                 <div class="item-carrito__subtotal">Subtotal: Bs. ${subtotal}</div>
             </div>
             <div class="item-carrito__controles">
                 <div class="cantidad-controles">
-                    <button onclick="cambiarCantidad(${indice}, -1)">-</button>
-                    <input type="number" value="${producto.cantidad}" min="1" max="${stock}"
-                           onchange="actualizarCantidad(${indice}, this.value)">
-                    <button onclick="cambiarCantidad(${indice}, 1)">+</button>
+                    <button class="btn-cantidad" data-indice="${indice}" data-cambio="-1">-</button>
+                    <input type="number" value="${producto.cantidad}" readonly>
+                    <button class="btn-cantidad" data-indice="${indice}" data-cambio="1">+</button>
                 </div>
-                <button class="btn-eliminar" onclick="eliminarProducto(${indice})">Eliminar</button>
+                <button class="btn-eliminar" data-indice="${indice}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                    </svg>
+                </button>
             </div>
         `;
         
         contenedor.appendChild(divItem);
     });
+
+    adjuntarEventosItems();
 }
 
-function actualizarTotalCarrito(elementoTotal, carrito) {
-    const cantidadTotal = carrito.reduce((total, item) => total + item.cantidad, 0);
+function adjuntarEventosItems() {
+    document.querySelectorAll('.btn-cantidad').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const indice = parseInt(e.currentTarget.dataset.indice);
+            const cambio = parseInt(e.currentTarget.dataset.cambio);
+            procesarCambioCantidad(indice, cambio);
+        });
+    });
+
+    document.querySelectorAll('.btn-eliminar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const indice = parseInt(e.currentTarget.dataset.indice);
+            procesarEliminacion(indice);
+        });
+    });
+}
+
+function actualizarResumenCheckout() {
+    const resumenContenedor = document.getElementById('resumen-detalle');
+    const cantidadTotal = carritoServicio.obtenerCantidadTotal();
     const precioTotal = carritoServicio.obtenerPrecioTotal();
 
-    const contenedorTotal = elementoTotal.parentElement;
-    if (contenedorTotal) {
-        contenedorTotal.innerHTML = `
-            <div class="resumen-total">
-                <div class="resumen-linea">
-                    <span>Productos:</span>
-                    <span>${cantidadTotal} unidad${cantidadTotal !== 1 ? 'es' : ''}</span>
-                </div>
-                <div class="resumen-linea total">
-                    <span>Total:</span>
-                    <span id="total-precio">Bs. ${precioTotal.toFixed(2)}</span>
-                </div>
+    if (resumenContenedor) {
+        resumenContenedor.innerHTML = `
+            <div class="resumen-linea">
+                <span>Productos (${cantidadTotal}):</span>
+                <span>Bs. ${precioTotal.toFixed(2)}</span>
+            </div>
+            <div class="resumen-linea">
+                <span>Envío:</span>
+                <span id="costo-envio">Gratis</span>
             </div>
         `;
-    } else {
-        elementoTotal.innerText = `Bs. ${precioTotal.toFixed(2)}`;
     }
+
+    const elemTotal = document.getElementById('total-precio');
+    if (elemTotal) elemTotal.innerText = `Bs. ${precioTotal.toFixed(2)}`;
 }
 
-async function cambiarCantidad(indice, cambio) {
+async function procesarCambioCantidad(indice, cambio) {
     const carrito = carritoServicio.obtenerCarrito();
-    
-    if (indice < 0 || indice >= carrito.length) return;
-
     const item = carrito[indice];
-    const cantidadNueva = item.cantidad + cambio;
+    const nuevaCantidad = item.cantidad + cambio;
 
-    if (cantidadNueva < 1) {
-        if (confirm('¿Deseas eliminar este producto del carrito?'))
-            eliminarProducto(indice);
-        return;
-    }
+    if (nuevaCantidad < 1) return;
 
     try {
         const infoStock = await productoServicio.verificarStock(item.id);
-
-        if (!infoStock.disponible || infoStock.stock === 0) {
-            alert('Este producto ya no está disponible.');
-            eliminarProducto(indice);
-            return;
-        }
-
-        if (cantidadNueva > infoStock.stock) {
-            alert(`Solo hay ${infoStock.stock} unidades disponibles.`);
-            return;
-        }
-
-        carritoServicio.actualizarCantidad(indice, cantidadNueva);
-        await mostrarCarrito();
-    } catch (error) {
-        console.error('Error al verificar stock:', error);
-        alert('Error al actualizar la cantidad. Por favor, intente nuevamente.');
-    }
-}
-
-async function actualizarCantidad(indice, nuevaCantidadStr) {
-    const nuevaCantidad = parseInt(nuevaCantidadStr);
-    
-    if (isNaN(nuevaCantidad) || nuevaCantidad < 1) {
-        alert('La cantidad debe ser al menos 1.');
-        await mostrarCarrito();
-        return;
-    }
-
-    const carrito = carritoServicio.obtenerCarrito();
-    
-    if (indice < 0 || indice >= carrito.length) return;
-
-    const item = carrito[indice];
-
-    try {
-        const infoStock = await productoServicio.verificarStock(item.id);
-
-        if (!infoStock.disponible || infoStock.stock === 0) {
-            alert('Este producto ya no está disponible.');
-            eliminarProducto(indice);
-            return;
-        }
-
         if (nuevaCantidad > infoStock.stock) {
-            alert(`Solo hay ${infoStock.stock} unidades disponibles.`);
-            await mostrarCarrito();
+            alert(`Máximo disponible: ${infoStock.stock}`);
             return;
         }
 
         carritoServicio.actualizarCantidad(indice, nuevaCantidad);
-        await mostrarCarrito();
+        await inicializarCarrito();
     } catch (error) {
-        console.error('Error al verificar stock:', error);
-        alert('Error al actualizar la cantidad. Por favor, intente nuevamente.');
-        await mostrarCarrito();
+        console.error(error);
     }
 }
 
-function eliminarProducto(indice) {
-    const carrito = carritoServicio.obtenerCarrito();
-    const producto = carrito[indice];
-    
-    if (confirm(`¿Estás seguro de eliminar "${producto.nombre}" del carrito?`)) {
+function procesarEliminacion(indice) {
+    if (confirm('¿Eliminar este producto?')) {
         carritoServicio.eliminarProducto(indice);
-        mostrarCarrito();
+        inicializarCarrito();
     }
 }
 
-function configurarBotonFinalizar() {
-    const btnFinalizar = document.getElementById('btn-finalizar');
-    if (!btnFinalizar) return;
+function configurarEventosCheckout() {
+    const radiosEntrega = document.querySelectorAll('input[name="metodo-entrega"]');
+    const campoDireccion = document.getElementById('campo-direccion');
 
-    btnFinalizar.addEventListener('click', async () => {
-        const carrito = carritoServicio.obtenerCarrito();
-        
-        if (carrito.length === 0) {
-            alert('El carrito está vacío');
-            return;
-        }
-
-        const carritoActualizado = await verificarStockCarrito(carrito);
-        
-        if (carritoActualizado.length === 0) {
-            alert('No hay productos disponibles en el carrito.');
-            return;
-        }
-
-        const metodoEntrega = confirm('¿Desea envío por Delivery?\n\nAceptar = Delivery\nCancelar = Recoger en Almacén');
-        const entrega = metodoEntrega ? 'delivery' : 'recojo_almacen';
-
-        const metodoPago = prompt('Elija su método de pago:\n\n- efectivo\n- tarjeta\n- qr');
-        if (!metodoPago) return;
-
-        const metodoPagoNormalizado = metodoPago.toLowerCase();
-        const metodosValidos = ['efectivo', 'tarjeta', 'qr'];
-
-        if (!metodosValidos.includes(metodoPagoNormalizado)) {
-            alert('Método de pago no válido. Operación cancelada.');
-            return;
-        }
-
-        const total = carritoServicio.obtenerPrecioTotal();
-        const cantidad = carritoServicio.obtenerCantidadTotal();
-
-        const textoEntrega = entrega === 'delivery' ? 'Delivery' : 'Recoger en Almacén';
-        alert(`¡Gracias por su compra!\n\nProductos: ${cantidad} unidad${cantidad !== 1 ? 'es' : ''}\nTotal: Bs. ${total.toFixed(2)}\nMétodo de entrega: ${textoEntrega}\nMétodo de pago: ${metodoPagoNormalizado}\n\nProcesando su pedido...`);
-        
-        carritoServicio.limpiarCarrito();
-        window.location.href = '/';
+    radiosEntrega.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'delivery') 
+                campoDireccion.style.display = 'block';
+            else 
+                campoDireccion.style.display = 'none';
+        });
     });
+
+    const btnFinalizar = document.getElementById('btn-finalizar');
+    if (btnFinalizar) {
+        btnFinalizar.addEventListener('click', async () => {
+            await finalizarCompra();
+        });
+    }
+}
+
+async function finalizarCompra() {
+    const carrito = carritoServicio.obtenerCarrito();
+    if (carrito.length === 0) return;
+
+    const entrega = document.querySelector('input[name="metodo-entrega"]:checked').value;
+    const pago = document.querySelector('input[name="metodo-pago"]:checked').value;
+    const direccion = document.getElementById('direccion').value;
+
+    if (entrega === 'delivery' && !direccion.trim()) {
+        alert('Por favor, ingresa una dirección de entrega.');
+        return;
+    }
+
+    const total = carritoServicio.obtenerPrecioTotal();
+    alert(`¡Pago Exitoso!\n\nTotal: Bs. ${total.toFixed(2)}\nMétodo: ${pago}\nTipo: ${entrega}\n\nGracias por su preferencia.`);
+    
+    carritoServicio.limpiarCarrito();
+    window.location.href = '/';
 }
 

@@ -13,18 +13,64 @@
     <header id="navbar-placeholder"></header>
     
     <main class="contenedor-carrito">
-        <h1>Tu Carrito</h1>
-        <div id="lista-carrito" class="lista-carrito">
-            <p>Cargando carrito...</p>
-        </div>
-        
-        <div class="resumen-carrito">
-            <div class="total-contenedor">
-                <span>Total:</span>
-                <span id="total-precio">Bs. 0.00</span>
-            </div>
-            <button id="btn-finalizar" class="btn-finalizar">Finalizar Compra</button>
-            <a href="/" class="btn-seguir-comprando">Seguir comprando</a>
+        <div class="carrito-grid">
+            <section class="carrito-productos">
+                <h1>Mi Carrito</h1>
+                <div id="lista-carrito" class="lista-carrito">
+                    <p>Cargando carrito...</p>
+                </div>
+            </section>
+
+            <section class="carrito-checkout">
+                <div class="resumen-checkout">
+                    <h2>Resumen de Compra</h2>
+                    <div id="resumen-detalle" class="resumen-detalle">
+                    </div>
+
+                    <div class="checkout-seccion">
+                        <h3>Método de Entrega</h3>
+                        <div class="opciones-entrega">
+                            <label class="opcion-radio">
+                                <input type="radio" name="metodo-entrega" value="recojo_almacen" checked>
+                                <span class="radio-label">Recoger en Almacén</span>
+                            </label>
+                            <label class="opcion-radio">
+                                <input type="radio" name="metodo-entrega" value="delivery">
+                                <span class="radio-label">Envío por Delivery</span>
+                            </label>
+                        </div>
+                        <div id="campo-direccion" class="campo-adicional" style="display: none;">
+                            <label for="direccion">Dirección de Entrega:</label>
+                            <textarea id="direccion" placeholder="Ej. Av. Siempre Viva 123..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="checkout-seccion">
+                        <h3>Método de Pago</h3>
+                        <div class="opciones-pago">
+                            <label class="opcion-radio">
+                                <input type="radio" name="metodo-pago" value="efectivo" checked>
+                                <span class="radio-label">Efectivo</span>
+                            </label>
+                            <label class="opcion-radio">
+                                <input type="radio" name="metodo-pago" value="tarjeta">
+                                <span class="radio-label">Tarjeta</span>
+                            </label>
+                            <label class="opcion-radio">
+                                <input type="radio" name="metodo-pago" value="qr">
+                                <span class="radio-label">QR</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="total-final">
+                        <span>Total a pagar:</span>
+                        <span id="total-precio">Bs. 0.00</span>
+                    </div>
+
+                    <button id="btn-finalizar" class="btn-finalizar">Finalizar Pago</button>
+                </div>
+            </section>
         </div>
     </main>
 

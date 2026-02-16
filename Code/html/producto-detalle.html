@@ -29,7 +29,6 @@
                 const actualizadorContador = new ActualizadorContador(new CarritoServicio());
                 actualizadorContador.actualizar();
 
-                // Adjuntar listeners a enlaces de categorías para que funcionen desde esta página
                 const enlaces = document.querySelectorAll('.barra-navegacion__dropdown-link');
                 enlaces.forEach(enlace => {
                     enlace.addEventListener('click', (e) => {

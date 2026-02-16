@@ -158,16 +158,34 @@ async function agregarProductoAlCarrito(producto, urlImagen, cantidad) {
 
         carritoServicio.agregarProducto(productoParaCarrito, cantidad);
         
-        const mensaje = cantidad === 1 
-            ? `${producto.name} agregado al carrito` 
-            : `${cantidad} unidades de ${producto.name} agregadas al carrito`;
-        
-        alert(mensaje);
+        mostrarNotificacionExito(producto.name, cantidad);
         actualizadorContador.actualizar();
         
     } catch (error) {
         console.error('Error al agregar al carrito:', error);
         alert('Error al agregar el producto al carrito. Por favor, intente nuevamente.');
     }
+}
+
+function mostrarNotificacionExito(nombreProducto, cantidad) {
+    const notificacion = document.getElementById('notificacion-carrito');
+    if (!notificacion) return;
+
+    const total = carritoServicio.obtenerPrecioTotal();
+    const totalItems = carritoServicio.obtenerCantidadTotal();
+
+    notificacion.innerHTML = `
+        <h4>¡Añadido con Éxito!</h4>
+        <p>Has agregado <strong>${cantidad}</strong> x ${nombreProducto}.</p>
+        <p>Tienes ${totalItems} productos en total.</p>
+        <div class="total">Total: Bs. ${total.toFixed(2)}</div>
+        <a href="/carrito" class="btn-primary" style="display:block; margin-top:15px; text-align:center; padding:10px; font-size:14px; text-decoration:none; color:white; border-radius:20px;">Ver mi Carrito</a>
+    `;
+
+    notificacion.style.display = 'block';
+
+    setTimeout(() => {
+        notificacion.style.display = 'none';
+    }, 4000);
 }
 

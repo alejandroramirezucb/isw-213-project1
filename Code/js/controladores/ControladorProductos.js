@@ -108,12 +108,35 @@
             }
 
             this.carritoServicio.agregarProducto(producto, 1);
-            alert(`${producto.nombre} agregado al carrito`);
+            this.mostrarNotificacion();
             this.actualizadorContador.actualizar();
         } catch (error) {
             console.error('Error al verificar stock:', error);
             alert('Error al agregar el producto al carrito. Por favor, intente nuevamente.');
         }
+    }
+
+    mostrarNotificacion() {
+        const notificacion = document.getElementById('notificacion-carrito');
+        if (!notificacion) return;
+
+        const total = this.carritoServicio.obtenerPrecioTotal();
+        const cantidad = this.carritoServicio.obtenerCantidadTotal();
+
+        notificacion.innerHTML = `
+            <h4>¡Producto Añadido!</h4>
+            <p>Has agregado un producto a tu carrito.</p>
+            <p>Cantidad total: <strong>${cantidad}</strong></p>
+            <div class="total">Total estimado: Bs. ${total.toFixed(2)}</div>
+            <a href="/carrito" class="btn-primary" style="display:block; margin-top:15px; text-align:center; padding:10px; font-size:14px;">Ver mi Carrito</a>
+        `;
+
+        notificacion.style.display = 'block';
+
+        if (this.timeoutNotificacion) clearTimeout(this.timeoutNotificacion);
+        this.timeoutNotificacion = setTimeout(() => {
+            notificacion.style.display = 'none';
+        }, 4000);
     }
 
     mostrarContadorResultados(cantidad) {
