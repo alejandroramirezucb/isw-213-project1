@@ -1,0 +1,26 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Producto - Raidencenter</title>
+    <link rel="icon" href="/assets/icon.png" type="image/png">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/producto-detalle.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header id="navbar-placeholder"></header>
+    <main class="detalle-contenedor" id="detalle-producto">
+        <div class="cargando">Cargando producto...</div>
+    </main>
+    <script src="/js/producto-detalle.js"></script>
+    <script>
+        fetch('/api/navbar')
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('navbar-placeholder').innerHTML = html;
+            });
+    </script>
+</body>
+</html>

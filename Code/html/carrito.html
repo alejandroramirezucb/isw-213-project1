@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras - Raidencenter</title>
+    <link rel="icon" href="/assets/icon.png" type="image/png">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/carrito.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header id="navbar-placeholder"></header>
+    
+    <main class="contenedor-carrito">
+        <h1>Tu Carrito</h1>
+        <div id="lista-carrito" class="lista-carrito">
+            <p>Cargando carrito...</p>
+        </div>
+        
+        <div class="resumen-carrito">
+            <div class="total-contenedor">
+                <span>Total:</span>
+                <span id="total-precio">Bs. 0.00</span>
+            </div>
+            <button id="btn-finalizar" class="btn-finalizar">Finalizar Compra</button>
+            <a href="/" class="btn-seguir-comprando">Seguir comprando</a>
+        </div>
+    </main>
+
+    <script src="/js/carrito.js"></script>
+    <script>
+        fetch('/api/navbar')
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('navbar-placeholder').innerHTML = html;
+            });
+    </script>
+</body>
+</html>
+

@@ -1,14 +1,14 @@
 ﻿function mapearProducto(producto) {
     return {
-        id: producto.id,
-        name: producto.nombre,
-        description: producto.descripcion,
+        id: producto.id || producto.id_producto,
+        name: producto.nombre || producto.nombre_producto,
+        description: producto.descripcion || producto.descripcion_producto,
         price: producto.precio_actual,
         stock: producto.stock_disponible,
         images: producto.url_imagen ? [producto.url_imagen] : [],
-        category: producto.categorias ? producto.categorias.nombre : '',
+        category: producto.categorias ? (producto.categorias.nombre || producto.categorias) : (producto.categoria_nombre || ''),
         brand: producto.marca || '',
-        status: producto.estado
+        status: producto.estado || 'activo'
     };
 }
 
@@ -34,4 +34,3 @@ module.exports = {
     manejarError,
     validarConfiguracion
 };
-

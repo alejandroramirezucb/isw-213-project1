@@ -1,25 +1,29 @@
 <nav class="barra-navegacion">
     <div class="barra-navegacion__logo-container">
-        <img src="/assets/logo.png" alt="Raidencenter" class="barra-navegacion__logo">
+        <a href="/">
+            <img src="/assets/logo.png" alt="Raidencenter" class="barra-navegacion__logo">
+        </a>
     </div>
     <div class="barra-navegacion__menu">
         <img src="/assets/menu.svg" alt="Menú" class="barra-navegacion__menu-icon">
         <ul class="barra-navegacion__dropdown">
-            <li class="barra-navegacion__dropdown-item"><a href="/hogar" class="barra-navegacion__dropdown-link">Hogar</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/oficina" class="barra-navegacion__dropdown-link">Oficina</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/muebles" class="barra-navegacion__dropdown-link">Muebles</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/tecnologia" class="barra-navegacion__dropdown-link">Tecnologia</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/jugueteria" class="barra-navegacion__dropdown-link">Jugueteria</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/alimentos-y-bebidas" class="barra-navegacion__dropdown-link">Alimentos y Bebidas</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/herramientas" class="barra-navegacion__dropdown-link">Herramientas</a></li>
+            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=hogar" class="barra-navegacion__dropdown-link">Hogar</a></li>
+            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=oficina" class="barra-navegacion__dropdown-link">Oficina</a></li>
+            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=muebles" class="barra-navegacion__dropdown-link">Muebles</a></li>
+            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=tecnologia" class="barra-navegacion__dropdown-link">Tecnologia</a></li>
+            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=jugueteria" class="barra-navegacion__dropdown-link">Jugueteria</a></li>
+            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=alimentos-y-bebidas" class="barra-navegacion__dropdown-link">Alimentos y Bebidas</a></li>
+            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=herramientas" class="barra-navegacion__dropdown-link">Herramientas</a></li>
         </ul>
     </div>
     <form action="/" method="GET" class="barra-navegacion__search">
         <input type="text" placeholder="Buscar productos..." name="q" aria-label="Buscar productos" class="barra-navegacion__search-input">
-        <img src="/assets/search.svg" alt="Buscar" class="barra-navegacion__search-icon">
+        <button type="submit" style="background:none; border:none; position:absolute; left:10px; top:50%; transform:translateY(-50%); cursor:pointer;">
+            <img src="/assets/search.svg" alt="Buscar" class="barra-navegacion__search-icon" style="position:static; transform:none;">
+        </button>
     </form>
     <div class="barra-navegacion__icons">
-        <a href="/cart" class="barra-navegacion__icon-link">
+        <a href="/carrito" class="barra-navegacion__icon-link">
             <img src="/assets/cart-line.svg" class="barra-navegacion__icon barra-navegacion__icon--line" alt="Carrito">
             <img src="/assets/cart.svg" class="barra-navegacion__icon barra-navegacion__icon--filled" alt="Carrito">
         </a>

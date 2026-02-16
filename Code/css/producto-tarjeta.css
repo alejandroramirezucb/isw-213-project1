@@ -2,7 +2,7 @@
     background: white;
     border: 1px solid #eee;
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 15px;
     cursor: pointer;
     transition: box-shadow 0.3s ease;
     display: flex;
@@ -10,6 +10,8 @@
     justify-content: space-between;
     width: 240px;
     text-align: left;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .tarjeta-producto:hover {
@@ -29,6 +31,7 @@
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    border-radius: 15px 15px 0 0;
 }
 
 .tarjeta-producto__marca {
@@ -65,18 +68,19 @@
 }
 
 .tarjeta-producto__boton {
-    width: 100%;
-    background-color: #034e8b;
+    display: block;
+    margin: 0 auto;
+    border-radius: 20px;
+    background-color: #034e8b; 
     color: white;
+    padding: 10px 20px;
     border: none;
-    padding: 10px;
-    border-radius: 4px;
     cursor: pointer;
     font-size: 13px;
     font-weight: bold;
-    transition: background-color 0.2s;
+    transition: background-color 0.3s;
 }
 
 .tarjeta-producto__boton:hover {
-    background-color: #023a67;
+    background-color: #02375f; 
 }
