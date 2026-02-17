@@ -1,41 +1,152 @@
 <nav class="barra-navegacion">
-    <div class="barra-navegacion__logo-container">
-        <a href="/">
-            <img src="/assets/logo.png" alt="Raidencenter" class="barra-navegacion__logo">
-        </a>
-    </div>
-    <div class="barra-navegacion__menu">
-        <img src="/assets/menu.svg" alt="Menú" class="barra-navegacion__menu-icon">
-        <ul class="barra-navegacion__dropdown">
-            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=hogar" class="barra-navegacion__dropdown-link">Hogar</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=oficina" class="barra-navegacion__dropdown-link">Oficina</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=muebles" class="barra-navegacion__dropdown-link">Muebles</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=tecnologia" class="barra-navegacion__dropdown-link">Tecnologia</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=jugueteria" class="barra-navegacion__dropdown-link">Jugueteria</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=alimentos-y-bebidas" class="barra-navegacion__dropdown-link">Alimentos y Bebidas</a></li>
-            <li class="barra-navegacion__dropdown-item"><a href="/?categoria=herramientas" class="barra-navegacion__dropdown-link">Herramientas</a></li>
-        </ul>
-    </div>
-    <form action="/" method="GET" class="barra-navegacion__search">
-        <button type="submit" class="barra-navegacion__search-btn">
-            <img src="/assets/search.svg" alt="Buscar" class="barra-navegacion__search-icon">
-        </button>
-        <input type="text" placeholder="Buscar productos..." name="q" aria-label="Buscar productos" class="barra-navegacion__search-input">
-        <button type="button" id="btn-toggle-filtros" class="barra-navegacion__filter-btn">
-            <img src="/assets/filter.svg" alt="Filtros" class="barra-navegacion__filter-icon">
-        </button>
-    </form>
-    <div class="barra-navegacion__icons">
-        <a href="/carrito" class="barra-navegacion__icon-link">
-            <img src="/assets/cart-line.svg" class="barra-navegacion__icon barra-navegacion__icon--line" alt="Carrito">
-            <img src="/assets/cart.svg" class="barra-navegacion__icon barra-navegacion__icon--filled" alt="Carrito">
-            <span class="cart-count">0</span>
-        </a>
-        <a href="/user" class="barra-navegacion__icon-link">
-            <img src="/assets/user-line.svg" class="barra-navegacion__icon barra-navegacion__icon--line" alt="Usuario">
-            <img src="/assets/user.svg" class="barra-navegacion__icon barra-navegacion__icon--filled" alt="Usuario">
-        </a>
-    </div>
-    
-    <div id="notificacion-carrito" class="notificacion-carrito"></div>
+  <div class="barra-navegacion__logo-container">
+    <a href="/">
+      <img
+        src="/assets/logo.png"
+        alt="Raidencenter"
+        class="barra-navegacion__logo" />
+    </a>
+  </div>
+  <div class="barra-navegacion__menu">
+    <img
+      src="/assets/menu.svg"
+      alt="Men?"
+      class="barra-navegacion__menu-icon" />
+    <ul class="barra-navegacion__dropdown">
+      <li class="barra-navegacion__dropdown-item">
+        <a
+          href="/?categoria=hogar"
+          class="barra-navegacion__dropdown-link"
+          >Hogar</a
+        >
+      </li>
+      <li class="barra-navegacion__dropdown-item">
+        <a
+          href="/?categoria=oficina"
+          class="barra-navegacion__dropdown-link"
+          >Oficina</a
+        >
+      </li>
+      <li class="barra-navegacion__dropdown-item">
+        <a
+          href="/?categoria=muebles"
+          class="barra-navegacion__dropdown-link"
+          >Muebles</a
+        >
+      </li>
+      <li class="barra-navegacion__dropdown-item">
+        <a
+          href="/?categoria=tecnologia"
+          class="barra-navegacion__dropdown-link"
+          >Tecnologia</a
+        >
+      </li>
+      <li class="barra-navegacion__dropdown-item">
+        <a
+          href="/?categoria=jugueteria"
+          class="barra-navegacion__dropdown-link"
+          >Jugueteria</a
+        >
+      </li>
+      <li class="barra-navegacion__dropdown-item">
+        <a
+          href="/?categoria=alimentos-y-bebidas"
+          class="barra-navegacion__dropdown-link"
+          >Alimentos y Bebidas</a
+        >
+      </li>
+      <li class="barra-navegacion__dropdown-item">
+        <a
+          href="/?categoria=herramientas"
+          class="barra-navegacion__dropdown-link"
+          >Herramientas</a
+        >
+      </li>
+    </ul>
+  </div>
+  <form
+    action="/"
+    method="GET"
+    class="barra-navegacion__search">
+    <button
+      type="submit"
+      class="barra-navegacion__search-btn">
+      <img
+        src="/assets/search.svg"
+        alt="Buscar"
+        class="barra-navegacion__search-icon" />
+    </button>
+    <input
+      type="text"
+      placeholder="Buscar productos..."
+      name="q"
+      aria-label="Buscar productos"
+      class="barra-navegacion__search-input" />
+    <button
+      type="button"
+      id="btn-toggle-filtros"
+      class="barra-navegacion__filter-btn">
+      <img
+        src="/assets/filter.svg"
+        alt="Filtros"
+        class="barra-navegacion__filter-icon" />
+    </button>
+  </form>
+  <div class="barra-navegacion__icons">
+    <a
+      href="/admin"
+      class="barra-navegacion__icon-link"
+      id="admin-icon-link"
+      style="display: none">
+      <img
+        src="/assets/admin-line.svg"
+        class="barra-navegacion__icon barra-navegacion__icon--line"
+        alt="Admin" />
+      <img
+        src="/assets/admin.svg"
+        class="barra-navegacion__icon barra-navegacion__icon--filled"
+        alt="Admin" />
+    </a>
+    <a
+      href="/historial"
+      class="barra-navegacion__icon-link">
+      <img
+        src="/assets/history_line.svg"
+        class="barra-navegacion__icon barra-navegacion__icon--line"
+        alt="Historial" />
+      <img
+        src="/assets/history.svg"
+        class="barra-navegacion__icon barra-navegacion__icon--filled"
+        alt="Historial" />
+    </a>
+    <a
+      href="/carrito"
+      class="barra-navegacion__icon-link">
+      <img
+        src="/assets/cart-line.svg"
+        class="barra-navegacion__icon barra-navegacion__icon--line"
+        alt="Carrito" />
+      <img
+        src="/assets/cart.svg"
+        class="barra-navegacion__icon barra-navegacion__icon--filled"
+        alt="Carrito" />
+      <span class="cart-count">0</span>
+    </a>
+    <a
+      href="/user"
+      class="barra-navegacion__icon-link">
+      <img
+        src="/assets/user-line.svg"
+        class="barra-navegacion__icon barra-navegacion__icon--line"
+        alt="Usuario" />
+      <img
+        src="/assets/user.svg"
+        class="barra-navegacion__icon barra-navegacion__icon--filled"
+        alt="Usuario" />
+    </a>
+  </div>
+
+  <div
+    id="notificacion-carrito"
+    class="notificacion-carrito"></div>
 </nav>

@@ -1,113 +1,122 @@
 ﻿.panel-filtros {
-    width: 100%;
-    margin: 10px 0 20px 0;
-    padding: 18px 32px;
-    background: #ffffff;
-    border-bottom: 1px solid #dde2f0;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    display: none;
-    box-sizing: border-box;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
+  position: fixed;
+  top: 80px; 
+  left: 0;
+  right: 0;
+  width: 100%;
+  margin: 0;
+  padding: 8px 12px;
+  background: #ffffff; 
+  border-bottom: 1px solid #eee;
+  border-radius: 0;
+  box-shadow: none;
+  display: none;
+  box-sizing: border-box;
+  z-index: 950;
 }
 
 .panel-filtros .filtros-contenedor {
-    display: flex;
-    align-items: center;
-    gap: 18px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel-filtros .filtros-contenedor {
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
 
 .panel-filtros .filtro-grupo {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 140px;
 }
 
 .panel-filtros .filtro-grupo label {
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #444;
-    font-size: 0.95em;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #444;
+  font-size: 0.9em;
 }
 
-.panel-filtros .filtro-grupo input[type="number"] {
-    padding: 12px 14px;
-    border: 1px solid #cfd5e4;
-    border-radius: 12px;
-    font-size: 14px;
-    background: #f7f9ff;
+.panel-filtros .filtro-grupo input[type='number'] {
+  padding: 8px 10px;
+  border: 1px solid #cfd5e4;
+  border-radius: 10px;
+  font-size: 13px;
+  background: #ffffff;
+}
+.panel-filtros .filtro-grupo input[type='number']:focus {
+  border-color: #034e8b;
 }
 
-.panel-filtros .filtro-grupo input[type="number"]:focus {
-    border-color: #034e8b;
-}
-
-.panel-filtros .filtro-grupo input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
+.panel-filtros .filtro-grupo input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 .panel-filtros .filtro-acciones {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    min-width: 260px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  min-width: 260px;
 }
 
 .btn-primary {
-    flex: 0 0 auto;
-    padding: 8px 14px; 
-    background: #034e8b;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-    font-size: 14px;
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  background: #034e8b;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
 }
 
 .btn-primary:hover {
-    background: #02375f;
+  background: #02375f;
 }
 
 .btn-secondary {
-    flex: 0 0 auto;
-    padding: 8px 14px;
-    background: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-    font-size: 14px;
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
 }
 
 .btn-secondary:hover {
-    background: #5a6268;
+  background: #5a6268;
 }
 
 .panel-filtros.activado {
-    display: block;
+  display: block;
 }
 
 @media (max-width: 900px) {
-    .panel-filtros {
-        padding: 16px;
-        border-radius: 12px;
-    }
+  .panel-filtros {
+    padding: 16px;
+    border-radius: 12px;
+  }
 
-    .panel-filtros .filtros-contenedor {
-        flex-direction: column;
-        align-items: stretch;
-    }
+  .panel-filtros .filtros-contenedor {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-    .panel-filtros .filtro-acciones {
-        justify-content: stretch;
-    }
+  .panel-filtros .filtro-acciones {
+    justify-content: stretch;
+  }
 }

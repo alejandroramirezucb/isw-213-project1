@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+    <title>Registro - Raidencenter</title>
+    <link
+      rel="icon"
+      href="/assets/icon.png"
+      type="image/png" />
+    <link
+      rel="stylesheet"
+      href="/css/navbar.css" />
+    <link
+      rel="stylesheet"
+      href="/css/styles.css" />
+    <style>
+      .contenedor-login {
+        max-width: 420px;
+        margin: 80px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+      }
+      .contenedor-login h1 {
+        color: #034e8b;
+        margin-bottom: 18px;
+      }
+      .form-grupo {
+        margin-bottom: 12px;
+        text-align: left;
+      }
+      .form-grupo label {
+        display: block;
+        margin-bottom: 6px;
+        color: #666;
+      }
+      .form-grupo input,
+      .form-grupo select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-sizing: border-box;
+      }
+      .telefono-input {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .telefono-prefijo {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 10px 12px;
+        border-radius: 8px;
+        color: #334155;
+        font-weight: 700;
+      }
+      .telefono-input input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+      }
+      .combobox {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: #ffffff;
+        border: 1px solid #cfd5e4;
+        padding: 12px 40px 12px 12px;
+        border-radius: 12px;
+        font-size: 14px;
+        background-image:
+          linear-gradient(45deg, transparent 50%, #034e8b 50%),
+          linear-gradient(135deg, #034e8b 50%, transparent 50%);
+        background-position:
+          calc(100% - 18px) calc(1em + 2px),
+          calc(100% - 13px) calc(1em + 2px);
+        background-size:
+          7px 7px,
+          7px 7px;
+        background-repeat: no-repeat;
+      }
+      .btn-login {
+        display: block;
+        width: auto;
+        min-width: 220px;
+        max-width: 320px;
+        margin: 10px auto 0;
+        padding: 12px 28px;
+        background: #034e8b;
+        color: white;
+        border: none;
+        border-radius: 28px;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 15px;
+        text-align: center;
+      }
+      .btn-login:hover {
+        background: #02375f;
+      }
+      .cambiar-modo {
+        margin-top: 14px;
+        font-size: 14px;
+        color: #666;
+      }
+      .cambiar-modo a {
+        color: #034e8b;
+        font-weight: bold;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header id="navbar-placeholder"></header>
+
+    <main class="contenedor-login">
+      <h1>Crear Cuenta</h1>
+      <form id="form-registro">
+        <div class="form-grupo">
+          <label for="reg-nombre">Nombre Completo</label>
+          <input
+            type="text"
+            id="reg-nombre"
+            required />
+        </div>
+        <div class="form-grupo">
+          <label for="reg-email">Correo Electrónico</label>
+          <input
+            type="email"
+            id="reg-email"
+            required />
+        </div>
+        <div class="form-grupo">
+          <label for="reg-telefono-local">Teléfono</label>
+          <div class="telefono-input">
+            <div class="telefono-prefijo">+591</div>
+            <input
+              type="tel"
+              id="reg-telefono-local"
+              placeholder="7xxxxxxx"
+              inputmode="tel"
+              pattern="[0-9]{6,9}"
+              maxlength="9" />
+          </div>
+        </div>
+        <div class="form-grupo">
+          <label for="reg-password">Contraseña</label>
+          <input
+            type="password"
+            id="reg-password"
+            required
+            minlength="6" />
+        </div>
+        <div class="form-grupo">
+          <label for="reg-rol">Tipo de cuenta</label>
+          <select
+            id="reg-rol"
+            required>
+            <option value="cliente">Cliente</option>
+            <option value="chofer">Chofer</option>
+          </select>
+        </div>
+        <button
+          type="submit"
+          class="btn-login">
+          Registrarse
+        </button>
+      </form>
+      <div class="cambiar-modo">
+        ¿Ya tienes cuenta?
+        <a
+          href="/login"
+          id="ir-a-login"
+          >Inicia sesión</a
+        >
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/utilidades/Toaster.js"></script>
+    <script src="/js/navbar-comun.js"></script>
+    <script src="/js/navbar-global.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
+    <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+      fetch('/api/navbar')
+        .then((res) => res.text())
+        .then((html) => {
+          document.getElementById('navbar-placeholder').innerHTML = html;
+          actualizarIconoUsuario();
+          const actualizador = new ActualizadorContador(new CarritoServicio());
+          actualizador.actualizar();
+        });
+    </script>
+  </body>
+</html>

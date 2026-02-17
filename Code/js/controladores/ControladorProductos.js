@@ -1,129 +1,167 @@
 ﻿class ControladorProductos {
-    constructor(productoServicio, carritoServicio, actualizadorContador) {
-        this.productoServicio = productoServicio;
-        this.carritoServicio = carritoServicio;
-        this.actualizadorContador = actualizadorContador;
-        this.filtrosActivos = {};
+  constructor(productoServicio, carritoServicio, actualizadorContador) {
+    this.productoServicio = productoServicio;
+    this.carritoServicio = carritoServicio;
+    this.actualizadorContador = actualizadorContador;
+    this.filtrosActivos = {};
+  }
+
+  async cargarProductos(filtros = {}) {
+    try {
+      this.filtrosActivos = { ...this.filtrosActivos, ...filtros };
+      const productos = await this.productoServicio.obtenerTodos(
+        this.filtrosActivos,
+      );
+      this.mostrarProductos(productos);
+
+      if (
+        this.filtrosActivos.busqueda ||
+        this.filtrosActivos.categoria ||
+        this.filtrosActivos.precioMinimo ||
+        this.filtrosActivos.precioMaximo ||
+        this.filtrosActivos.soloDisponibles
+      )
+        this.mostrarContadorResultados(productos.length);
+      else this.ocultarContadorResultados();
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      this.mostrarError();
+    }
+  }
+
+  async mostrarProductos(productos) {
+    const contenedor = document.getElementById('contenedor-productos');
+    if (!contenedor) return;
+
+    if (!productos || productos.length === 0) {
+      contenedor.innerHTML =
+        '<p style="text-align: center; padding: 20px;">No se encontraron productos disponibles.</p>';
+      return;
     }
 
-    async cargarProductos(filtros = {}) {
-        try {
-            this.filtrosActivos = { ...this.filtrosActivos, ...filtros };
-            const productos = await this.productoServicio.obtenerTodos(this.filtrosActivos);
-            this.mostrarProductos(productos);
-            
-            if (this.filtrosActivos.busqueda || this.filtrosActivos.categoria || 
-                this.filtrosActivos.precioMinimo || this.filtrosActivos.precioMaximo || 
-                this.filtrosActivos.soloDisponibles)
-                this.mostrarContadorResultados(productos.length);
-            else
-                this.ocultarContadorResultados();
-        } catch (error) {
-            console.error('Error al cargar productos:', error);
-            this.mostrarError();
-        }
-    }
+    const respuestaTarjeta = await fetch('/api/producto-tarjeta');
+    const plantillaBase = await respuestaTarjeta.text();
+    contenedor.innerHTML = '';
 
-    async mostrarProductos(productos) {
-        const contenedor = document.getElementById('contenedor-productos');
-        if (!contenedor) return;
+    productos.forEach((producto) => {
+      const tarjeta = this.crearTarjetaProducto(producto, plantillaBase);
+      contenedor.appendChild(tarjeta);
+    });
+  }
 
-        if (!productos || productos.length === 0) {
-            contenedor.innerHTML = '<p style="text-align: center; padding: 20px;">No se encontraron productos disponibles.</p>';
-            return;
-        }
+  crearTarjetaProducto(producto, plantillaBase) {
+    const imagenUrl =
+      producto.images &&
+      producto.images[0] &&
+      producto.images[0].startsWith('http')
+        ? producto.images[0]
+        : 'https://resources.multicenter.com.bo/products/silla-gregor.jpg';
 
-        const respuestaTarjeta = await fetch('/api/producto-tarjeta');
-        const plantillaBase = await respuestaTarjeta.text();
-        contenedor.innerHTML = '';
+    const precio = producto.price || 0;
+    const cuota = CalculadorPrecio.calcularCuotas(precio);
 
-        productos.forEach(producto => {
-            const tarjeta = this.crearTarjetaProducto(producto, plantillaBase);
-            contenedor.appendChild(tarjeta);
+    let htmlTarjeta = plantillaBase
+      .replace(/{{id}}/g, producto.id || '')
+      .replace(/{{name}}/g, producto.name || 'Sin nombre')
+      .replace(/{{brand}}/g, producto.brand || 'Genérico')
+      .replace(/{{price}}/g, precio)
+      .replace(/{{image}}/g, imagenUrl)
+      .replace(/{{cuota}}/g, cuota)
+      .replace(/{{stock}}/g, producto.stock || 0);
+
+    const div = document.createElement('div');
+    div.innerHTML = htmlTarjeta.trim();
+    const tarjeta = div.firstElementChild;
+
+    const botonAgregar = tarjeta.querySelector('.btn-agregar');
+    if (botonAgregar) {
+      botonAgregar.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        console.debug('ControladorProductos: click agregar', {
+          id: producto.id,
         });
+        await this.agregarAlCarrito(
+          {
+            id: producto.id,
+            nombre: producto.name,
+            name: producto.name,
+            precio: producto.price,
+            price: producto.price,
+            imagen: imagenUrl,
+            url_imagen: imagenUrl,
+            images: [imagenUrl],
+            stock: producto.stock,
+          },
+          botonAgregar,
+        );
+      });
     }
 
-    crearTarjetaProducto(producto, plantillaBase) {
-        const imagenUrl = producto.images && producto.images[0] && producto.images[0].startsWith('http') 
-            ? producto.images[0] 
-            : 'https://resources.multicenter.com.bo/products/silla-gregor.jpg';
+    tarjeta.style.cursor = 'pointer';
+    tarjeta.addEventListener('click', () => {
+      window.location.href = `/producto/${producto.id}`;
+    });
 
-        const precio = producto.price || 0;
-        const cuota = CalculadorPrecio.calcularCuotas(precio);
+    return tarjeta;
+  }
 
-        let htmlTarjeta = plantillaBase
-            .replace(/{{id}}/g, producto.id || '')
-            .replace(/{{name}}/g, producto.name || 'Sin nombre')
-            .replace(/{{brand}}/g, producto.brand || 'Genérico')
-            .replace(/{{price}}/g, precio)
-            .replace(/{{image}}/g, imagenUrl)
-            .replace(/{{cuota}}/g, cuota)
-            .replace(/{{stock}}/g, producto.stock || 0);
-        
-        const div = document.createElement('div');
-        div.innerHTML = htmlTarjeta.trim();
-        const tarjeta = div.firstElementChild;
+  async agregarAlCarrito(producto, botonEle) {
+    try {
+      const stockInfo = await this.productoServicio.verificarStock(producto.id);
 
-        const botonAgregar = tarjeta.querySelector('.btn-agregar');
-        if (botonAgregar) {
-            botonAgregar.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                await this.agregarAlCarrito({
-                    id: producto.id,
-                    nombre: producto.name,
-                    precio: producto.price,
-                    imagen: imagenUrl,
-                    stock: producto.stock
-                });
-            });
-        }
-
-        tarjeta.style.cursor = 'pointer';
-        tarjeta.addEventListener('click', () => {
-            window.location.href = `/producto/${producto.id}`;
+      if (!stockInfo.disponible || stockInfo.stock === 0) {
+        showToast('Lo sentimos, este producto no está disponible en stock.', {
+          type: 'warning',
         });
+        return;
+      }
 
-        return tarjeta;
-    }
+      const carrito = this.carritoServicio.obtenerCarrito();
+      const itemExistente = carrito.find((item) => item.id === producto.id);
 
-    async agregarAlCarrito(producto) {
-        try {
-            const stockInfo = await this.productoServicio.verificarStock(producto.id);
-            
-            if (!stockInfo.disponible || stockInfo.stock === 0) {
-                alert('Lo sentimos, este producto no está disponible en stock.');
-                return;
-            }
+      if (itemExistente) {
+        const nuevaCantidad = itemExistente.cantidad + 1;
 
-            const carrito = this.carritoServicio.obtenerCarrito();
-            const itemExistente = carrito.find(item => item.id === producto.id);
-
-            if (itemExistente) {
-                const nuevaCantidad = itemExistente.cantidad + 1;
-                
-                if (nuevaCantidad > stockInfo.stock) {
-                    alert(`Solo hay ${stockInfo.stock} unidades disponibles de este producto.`);
-                    return;
-                }
-            }
-
-            this.carritoServicio.agregarProducto(producto, 1);
-            this.mostrarNotificacion();
-            this.actualizadorContador.actualizar();
-        } catch (error) {
-            console.error('Error al verificar stock:', error);
-            alert('Error al agregar el producto al carrito. Por favor, intente nuevamente.');
+        if (nuevaCantidad > stockInfo.stock) {
+          showToast(
+            `Solo hay ${stockInfo.stock} unidades disponibles de este producto.`,
+            { type: 'warning' },
+          );
+          return;
         }
+      }
+
+      this.carritoServicio.agregarProducto(producto, 1);
+
+      if (botonEle) {
+        const textoOriginal = botonEle.innerText;
+        botonEle.innerText = '¡Agregado!';
+        botonEle.disabled = true;
+        setTimeout(() => {
+          botonEle.innerText = textoOriginal;
+          botonEle.disabled = false;
+        }, 1500);
+      }
+
+      this.mostrarNotificacion();
+      this.actualizadorContador.actualizar();
+    } catch (error) {
+      console.error('Error al verificar stock:', error);
+      showToast(
+        'Error al agregar el producto al carrito. Por favor, intente nuevamente.',
+        { type: 'error' },
+      );
     }
+  }
 
-    mostrarNotificacion() {
-        const notificacion = document.getElementById('notificacion-carrito');
-        if (!notificacion) return;
+  mostrarNotificacion() {
+    const notificacion = document.getElementById('notificacion-carrito');
+    if (!notificacion) return;
 
-        const total = this.carritoServicio.obtenerPrecioTotal();
-        const cantidad = this.carritoServicio.obtenerCantidadTotal();
+    const total = this.carritoServicio.obtenerPrecioTotal();
+    const cantidad = this.carritoServicio.obtenerCantidadTotal();
 
-        notificacion.innerHTML = `
+    notificacion.innerHTML = `
             <h4>¡Producto Añadido!</h4>
             <p>Has agregado un producto a tu carrito.</p>
             <p>Cantidad total: <strong>${cantidad}</strong></p>
@@ -131,46 +169,45 @@
             <a href="/carrito" class="btn-primary" style="display:block; margin-top:15px; text-align:center; padding:10px; font-size:14px;">Ver mi Carrito</a>
         `;
 
-        notificacion.style.display = 'block';
+    notificacion.style.display = 'block';
 
-        if (this.timeoutNotificacion) clearTimeout(this.timeoutNotificacion);
-        this.timeoutNotificacion = setTimeout(() => {
-            notificacion.style.display = 'none';
-        }, 4000);
+    if (this.timeoutNotificacion) clearTimeout(this.timeoutNotificacion);
+    this.timeoutNotificacion = setTimeout(() => {
+      notificacion.style.display = 'none';
+    }, 4000);
+  }
+
+  mostrarContadorResultados(cantidad) {
+    let contador = document.getElementById('contador-resultados');
+
+    if (!contador) {
+      contador = document.createElement('div');
+      contador.id = 'contador-resultados';
+      contador.className = 'contador-resultados';
+
+      const contenedor = document.getElementById('contenedor-productos');
+      if (contenedor && contenedor.parentNode)
+        contenedor.parentNode.insertBefore(contador, contenedor);
     }
 
-    mostrarContadorResultados(cantidad) {
-        let contador = document.getElementById('contador-resultados');
-        
-        if (!contador) {
-            contador = document.createElement('div');
-            contador.id = 'contador-resultados';
-            contador.className = 'contador-resultados';
-            
-            const contenedor = document.getElementById('contenedor-productos');
-            if (contenedor && contenedor.parentNode)
-                contenedor.parentNode.insertBefore(contador, contenedor);
-        }
-        
-        contador.textContent = `Se encontraron ${cantidad} producto(s)`;
-        contador.style.display = 'block';
-    }
+    contador.textContent = `Se encontraron ${cantidad} producto(s)`;
+    contador.style.display = 'block';
+  }
 
-    ocultarContadorResultados() {
-        const contador = document.getElementById('contador-resultados');
-        if (contador)
-            contador.style.display = 'none';
-    }
+  ocultarContadorResultados() {
+    const contador = document.getElementById('contador-resultados');
+    if (contador) contador.style.display = 'none';
+  }
 
-    mostrarError() {
-        const contenedor = document.getElementById('contenedor-productos');
-        if (contenedor)
-            contenedor.innerHTML = '<p style="text-align: center; padding: 20px;">Error al cargar los productos. Por favor, intente nuevamente.</p>';
-    }
+  mostrarError() {
+    const contenedor = document.getElementById('contenedor-productos');
+    if (contenedor)
+      contenedor.innerHTML =
+        '<p style="text-align: center; padding: 20px;">Error al cargar los productos. Por favor, intente nuevamente.</p>';
+  }
 
-    limpiarFiltros() {
-        this.filtrosActivos = {};
-        this.cargarProductos();
-    }
+  limpiarFiltros() {
+    this.filtrosActivos = {};
+    this.cargarProductos();
+  }
 }
-

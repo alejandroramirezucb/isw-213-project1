@@ -1,0 +1,177 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+    <title>Mi Perfil</title>
+    <link
+      rel="icon"
+      href="/assets/icon.png"
+      type="image/png" />
+    <link
+      rel="stylesheet"
+      href="/css/navbar.css" />
+    <link
+      rel="stylesheet"
+      href="/css/styles.css" />
+    <style>
+      .contenedor-perfil {
+        max-width: 800px;
+        margin: 100px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+      .encabezado-perfil {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 20px;
+      }
+      .avatar-ficticio {
+        width: 80px;
+        height: 80px;
+        background: #034e8b;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: bold;
+      }
+      .datos-usuario h1 {
+        margin: 0;
+        font-size: 24px;
+        color: #333;
+      }
+      .datos-usuario p {
+        margin: 5px 0 0;
+        color: #666;
+      }
+      .seccion-perfil {
+        margin-top: 30px;
+      }
+      .seccion-perfil h2 {
+        font-size: 18px;
+        color: #034e8b;
+        margin-bottom: 15px;
+      }
+      .lista-pedidos {
+        display: grid;
+        gap: 15px;
+      }
+      .item-pedido {
+        padding: 15px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .pedido-info span {
+        display: block;
+        font-size: 14px;
+      }
+      .pedido-id {
+        font-weight: bold;
+      }
+      .pedido-fecha {
+        color: #888;
+      }
+      .pedido-estado {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .estado-recibido {
+        background: #e3f2fd;
+        color: #034e8b;
+      }
+      .estado-entregado {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .btn-logout {
+        margin-top: 40px;
+        padding: 10px 20px;
+        background: #f44336;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <header id="navbar-placeholder"></header>
+
+    <main class="contenedor-perfil">
+      <div id="perfil-contenido">
+        <div class="encabezado-perfil">
+          <div
+            class="avatar-ficticio"
+            id="user-avatar">
+            U
+          </div>
+          <div class="datos-usuario">
+            <h1 id="user-nombre">Cargando...</h1>
+            <p id="user-email"></p>
+            <p
+              id="user-telefono"
+              style="color: #034e8b; font-weight: 500"></p>
+            <p
+              id="user-rol"
+              style="
+                color: #666;
+                font-size: 12px;
+                text-transform: uppercase;
+                font-weight: 700;
+              "></p>
+          </div>
+        </div>
+
+        <div class="seccion-perfil">
+          <h2>Mis Pedidos Recientes</h2>
+          <div
+            id="lista-pedidos"
+            class="lista-pedidos">
+            <p>No tienes pedidos registrados.</p>
+          </div>
+        </div>
+
+        <button
+          class="btn-logout"
+          id="btn-logout">
+          Cerrar Sesión
+        </button>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/utilidades/Toaster.js"></script>
+    <script src="/js/navbar-comun.js"></script>
+    <script src="/js/navbar-global.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
+    <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/perfil.js"></script>
+    <script>
+      fetch('/api/navbar')
+        .then((res) => res.text())
+        .then((html) => {
+          document.getElementById('navbar-placeholder').innerHTML = html;
+          actualizarIconoUsuario();
+          const actualizador = new ActualizadorContador(new CarritoServicio());
+          actualizador.actualizar();
+        });
+    </script>
+  </body>
+</html>

@@ -1,4 +1,6 @@
-﻿CREATE TYPE tipo_rol AS ENUM ('administrador', 'chofer', 'cliente');
+﻿# No puedes modificar este archivo, es de solo lectura
+
+CREATE TYPE tipo_rol AS ENUM ('administrador', 'chofer', 'cliente');
 CREATE TYPE tipo_estado_producto AS ENUM ('activo', 'inactivo');
 CREATE TYPE tipo_estado_pedido AS ENUM ('recibido', 'en proceso', 'enviado', 'trasladandose', 'listo para entregarse', 'entregado', 'cerrado');
 CREATE TYPE tipo_metodo_entrega AS ENUM ('delivery', 'recojo_almacen');
@@ -136,7 +138,9 @@ ALTER TABLE envios ADD CONSTRAINT envios_chofer_id_fkey FOREIGN KEY (chofer_id) 
 CREATE OR REPLACE FUNCTION es_admin()
 RETURNS BOOLEAN AS $$
 SELECT EXISTS (SELECT 1 FROM public.usuarios WHERE id = auth.uid() AND rol = 'administrador');
-$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
+$$
+LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
 CREATE POLICY "Ver categorias publicas" ON categorias FOR SELECT USING (true);
 CREATE POLICY "Ver productos publicos" ON productos FOR SELECT USING (true);
@@ -163,7 +167,9 @@ CREATE POLICY "Admin acceso total pagos" ON pagos FOR ALL USING (es_admin());
 CREATE POLICY "Admin acceso total devoluciones" ON devoluciones FOR ALL USING (es_admin());
 
 CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
-RETURNS trigger AS $$
+RETURNS trigger AS
+$$
+
 BEGIN
 INSERT INTO public.usuarios (id, nombre_completo, correo_electronico, rol)
 VALUES (
@@ -174,11 +180,15 @@ NEW.email,
 );
 RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public;
 
 CREATE OR REPLACE FUNCTION public.actualizar_stock_por_pago()
-RETURNS trigger AS $$
+RETURNS trigger AS
+$$
+
 BEGIN
 IF (NEW.estado_pago = 'pagado' AND OLD.estado_pago != 'pagado') THEN
 UPDATE public.productos
@@ -188,11 +198,15 @@ WHERE dp.pedido_id = NEW.pedido_id AND public.productos.id = dp.producto_id;
 END IF;
 RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public;
 
 CREATE OR REPLACE FUNCTION public.validar_tiempo_devolucion()
-RETURNS trigger AS $$
+RETURNS trigger AS
+$$
+
 DECLARE
 fecha_entrega_pedido TIMESTAMP;
 BEGIN
@@ -206,11 +220,15 @@ END IF;
 
 RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public;
 
 CREATE OR REPLACE FUNCTION public.validar_stock_antes_de_insertar()
-RETURNS trigger AS $$
+RETURNS trigger AS
+$$
+
 DECLARE
 stock_actual INT;
 BEGIN
@@ -224,30 +242,180 @@ END IF;
 
 RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public;
 
 CREATE OR REPLACE FUNCTION seleccionar_productos_por_categoria(categoria_nombre VARCHAR)
 RETURNS TABLE (
-    id_producto INT,
-    nombre_producto VARCHAR,
-    descripcion_producto TEXT,
-    precio_actual DECIMAL,
-    stock_disponible INT,
-    url_imagen VARCHAR
-) AS $$
+id_producto INT,
+nombre_producto VARCHAR,
+descripcion_producto TEXT,
+precio_actual DECIMAL,
+stock_disponible INT,
+url_imagen VARCHAR
+) AS
+$$
+
 BEGIN
-    RETURN QUERY
-    SELECT 
-        p.id AS id_producto,
-        p.nombre AS nombre_producto,
-        p.descripcion AS descripcion_producto,
-        p.precio_actual,
-        p.stock_disponible,
-        p.url_imagen
-    FROM productos p
-    INNER JOIN categorias c ON p.categoria_id = c.id
-    WHERE c.nombre = categoria_nombre
-      AND p.estado = 'activo';
+RETURN QUERY
+SELECT
+p.id AS id_producto,
+p.nombre AS nombre_producto,
+p.descripcion AS descripcion_producto,
+p.precio_actual,
+p.stock_disponible,
+p.url_imagen
+FROM productos p
+INNER JOIN categorias c ON p.categoria_id = c.id
+WHERE c.nombre = categoria_nombre
+AND p.estado = 'activo';
 END;
-$$ LANGUAGE plpgsql;
+
+$$
+LANGUAGE plpgsql;
+
+-- actualizar la función para incluir telefono y rol desde raw_user_meta_data
+CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
+RETURNS trigger AS
+$$
+
+BEGIN
+INSERT INTO public.usuarios (id, nombre_completo, correo_electronico, telefono, rol)
+VALUES (
+NEW.id,
+COALESCE(NEW.raw_user_meta_data->>'nombre_completo','Usuario Nuevo'),
+NEW.email,
+NULLIF(NEW.raw_user_meta_data->>'telefono',''),
+COALESCE(NEW.raw_user_meta_data->>'rol','cliente')
+);
+RETURN NEW;
+END;
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- eliminar trigger existente (si lo hubiera) y recrearlo
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.crear_usuario_nuevo();
+$$
+
+-- 1) Función resiliente: no aborta la creación en auth.users y evita errores por duplicado
+CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
+RETURNS trigger AS $$
+BEGIN
+INSERT INTO public.usuarios (id, nombre_completo, correo_electronico, telefono, rol)
+VALUES (
+NEW.id,
+COALESCE(NEW.raw_user_meta_data->>'nombre_completo','Usuario Nuevo'),
+NEW.email,
+NULLIF(NEW.raw_user_meta_data->>'telefono',''),
+COALESCE(NEW.raw_user_meta_data->>'rol','cliente')
+)
+ON CONFLICT (id) DO UPDATE
+SET nombre_completo = EXCLUDED.nombre_completo,
+correo_electronico = EXCLUDED.correo_electronico,
+telefono = COALESCE(EXCLUDED.telefono, public.usuarios.telefono),
+rol = EXCLUDED.rol;
+
+RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+RAISE NOTICE 'crear_usuario_nuevo() fallo: %', SQLERRM;
+RETURN NEW;
+END;
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- 2) (asegura que el trigger apunte a la función actualizada)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.crear_usuario_nuevo();
+$$
+
+CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
+RETURNS trigger AS $$
+BEGIN
+INSERT INTO public.usuarios (id, nombre_completo, correo_electronico, telefono, rol)
+VALUES (
+NEW.id,
+COALESCE(NEW.raw_user_meta_data->>'nombre_completo', 'Usuario Nuevo'),
+NEW.email,
+NULLIF(NEW.raw_user_meta_data->>'telefono', ''),
+COALESCE(NEW.raw_user_meta_data->>'rol', 'cliente')
+)
+ON CONFLICT (id) DO UPDATE
+SET nombre_completo = EXCLUDED.nombre_completo,
+correo_electronico = EXCLUDED.correo_electronico,
+telefono = COALESCE(EXCLUDED.telefono, public.usuarios.telefono),
+rol = EXCLUDED.rol;
+RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+RAISE NOTICE 'crear_usuario_nuevo() fallo: %', SQLERRM;
+RETURN NEW;
+END;
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.crear_usuario_nuevo();
+$$
+
+-- Función ultra-robusta con manejo de errores y casts explícitos
+CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
+RETURNS trigger AS $$
+DECLARE
+v_nombre text;
+v_rol public.tipo_rol;
+v_tel text;
+BEGIN
+-- Extraer metadatos con valores por defecto seguros
+v_nombre := COALESCE(NEW.raw_user_meta_data->>'nombre_completo', 'Usuario Nuevo');
+v_tel := NULLIF(NEW.raw_user_meta_data->>'telefono', '');
+
+    -- Manejo robusto del ENUM para evitar errores de tipo
+    BEGIN
+        v_rol := (COALESCE(NEW.raw_user_meta_data->>'rol', 'cliente'))::public.tipo_rol;
+    EXCEPTION WHEN OTHERS THEN
+        v_rol := 'cliente'::public.tipo_rol;
+    END;
+
+    -- Insertar o actualizar si ya existe el ID
+    INSERT INTO public.usuarios (id, nombre_completo, correo_electronico, telefono, rol)
+    VALUES (NEW.id, v_nombre, NEW.email, v_tel, v_rol)
+    ON CONFLICT (id) DO UPDATE
+    SET
+        nombre_completo = EXCLUDED.nombre_completo,
+        correo_electronico = EXCLUDED.correo_electronico,
+        telefono = COALESCE(EXCLUDED.telefono, public.usuarios.telefono),
+        rol = EXCLUDED.rol;
+
+    RETURN NEW;
+
+EXCEPTION WHEN OTHERS THEN
+-- Fallback absoluto: si todo falla, permitimos la creación en auth.users
+-- para que el usuario pueda al menos loguearse.
+RAISE WARNING 'Error en crear_usuario_nuevo: %', SQLERRM;
+RETURN NEW;
+END;
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Re-crear el trigger
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.crear_usuario_nuevo();
+$$
