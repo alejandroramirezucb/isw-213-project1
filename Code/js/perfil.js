@@ -6,6 +6,12 @@ async function inicializarSupabase() {
   supa = window.supabase.createClient(supabaseUrl, supabaseKey);
 }
 
+function getEstadoLabel(estado) {
+  if (!estado) return '';
+  if (estado === 'recibido') return 'Orden realizada';
+  return estado.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await inicializarSupabase();
 
@@ -107,7 +113,7 @@ async function cargarPedidos(userId) {
                     <span class="pedido-id">Pedido #${pedido.id}</span>
                     <span class="pedido-fecha">${fecha} - Bs. ${pedido.monto_total.toFixed(2)}</span>
                 </div>
-                <div class="pedido-estado estado-${pedido.estado.replace(/ /g, '-')}">${pedido.estado}</div>
+                <div class="pedido-estado estado-${pedido.estado.replace(/ /g, '-')}">${getEstadoLabel(pedido.estado)}</div>
             `;
       contenedor.appendChild(div);
     });

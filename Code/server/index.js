@@ -142,6 +142,103 @@ aplicacion.post(
   },
 );
 
+aplicacion.post('/api/pedidos', express.json(), async (req, res) => {
+  try {
+    const {
+      usuario_id,
+      monto_total,
+      metodo_entrega,
+      direccion_destino,
+      detalles,
+      pago,
+    } = req.body || {};
+
+    if (!usuario_id || !Array.isArray(detalles) || detalles.length === 0) {
+      return res
+        .status(400)
+        .json({ error: 'usuario_id and detalles[] required' });
+    }
+
+    const supabase = require('./db');
+
+    const { data: pedidoData, error: errPedido } = await supabase
+      .from('pedidos')
+      .insert({
+        usuario_id,
+        monto_total: monto_total || 0,
+        metodo_entrega: metodo_entrega || 'recojo_almacen',
+        direccion_destino: direccion_destino || null,
+        estado: 'recibido',
+      })
+      .select()
+      .single();
+
+    if (errPedido) {
+      console.error('[api/pedidos] error crear pedido:', errPedido);
+      return res.status(500).json({ error: errPedido.message || errPedido });
+    }
+
+    const pedidoId = pedidoData.id;
+
+    const detallesToInsert = detalles.map((d) => ({
+      pedido_id: pedidoId,
+      producto_id: d.producto_id,
+      cantidad: d.cantidad,
+      precio_unitario_venta: d.precio_unitario_venta,
+    }));
+
+    const { data: detallesData, error: errDetalles } = await supabase
+      .from('detalles_pedido')
+      .insert(detallesToInsert)
+      .select();
+
+    if (errDetalles) {
+      await supabase.from('pedidos').delete().eq('id', pedidoId);
+      console.error('[api/pedidos] error insertar detalles:', errDetalles);
+      return res
+        .status(500)
+        .json({ error: errDetalles.message || errDetalles });
+    }
+
+    let pagoData = null;
+    if (pago && typeof pago === 'object') {
+      const pagoToInsert = {
+        pedido_id: pedidoId,
+        metodo_pago: pago.metodo_pago || 'efectivo',
+        estado_pago: pago.estado_pago || 'pendiente',
+        es_en_cuotas: !!pago.es_en_cuotas,
+        cantidad_cuotas: pago.cantidad_cuotas || 1,
+        referencia_transaccion: pago.referencia_transaccion || null,
+        monto_total_pagado: pago.monto_total_pagado || monto_total || 0,
+      };
+      const { data: pagoInserted, error: errPago } = await supabase
+        .from('pagos')
+        .insert(pagoToInsert)
+        .select();
+
+      if (errPago) {
+        await supabase
+          .from('detalles_pedido')
+          .delete()
+          .in('pedido_id', [pedidoId]);
+        await supabase.from('pedidos').delete().eq('id', pedidoId);
+        console.error('[api/pedidos] error insertar pago:', errPago);
+        return res.status(500).json({ error: errPago.message || errPago });
+      }
+      pagoData = pagoInserted[0];
+    }
+
+    return res.json({
+      pedido: pedidoData,
+      detalles: detallesData,
+      pago: pagoData,
+    });
+  } catch (err) {
+    console.error('[api/pedidos] excepción:', err.message || err);
+    return res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 aplicacion.get('/api/productos/:id', (peticion, respuesta) =>
   controladorProductos.obtenerPorId(peticion, respuesta),
 );

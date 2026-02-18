@@ -2,10 +2,51 @@
 const carritoServicio = new CarritoServicio();
 const actualizadorContador = new ActualizadorContador(carritoServicio);
 
+let supa = null;
+
+async function inicializarSupabase() {
+  try {
+    const res = await fetch('/config');
+    if (!res.ok) return false;
+    const { supabaseUrl, supabaseKey } = await res.json();
+    if (!supabaseUrl || !supabaseKey || !window.supabase) return false;
+    supa = window.supabase.createClient(supabaseUrl, supabaseKey);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+  await inicializarSupabase();
   await mostrarCarrito();
   configurarBotonFinalizar();
+  configurarEventosPago();
 });
+
+function configurarEventosPago() {
+  const btnCerrar = document.getElementById('btn-cerrar-modal');
+  if (btnCerrar) {
+    btnCerrar.onclick = () => {
+      document.getElementById('modal-pago').style.display = 'none';
+    };
+  }
+
+  const formTarjeta = document.getElementById('form-tarjeta');
+  if (formTarjeta) {
+    formTarjeta.onsubmit = async (e) => {
+      e.preventDefault();
+      formTarjeta.style.display = 'none';
+      const areaEstado = document.getElementById('estado-tarjeta');
+      if (areaEstado) areaEstado.style.display = 'block';
+
+      setTimeout(async () => {
+        await realizarPedidoFinal('pagado');
+        document.getElementById('modal-pago').style.display = 'none';
+      }, 2500);
+    };
+  }
+}
 
 async function mostrarCarrito() {
   const contenedor = document.getElementById('lista-carrito');
@@ -245,7 +286,7 @@ function configurarBotonFinalizar() {
   if (!btnFinalizar) return;
 
   btnFinalizar.addEventListener('click', async () => {
-    if (!window.supabase || !window.supabaseClient) {
+    if (!supa) {
       window.location.href = '/login';
       return;
     }
@@ -253,12 +294,12 @@ function configurarBotonFinalizar() {
     try {
       const {
         data: { session },
-      } = await window.supabaseClient.auth.getSession();
+      } = await supa.auth.getSession();
       if (!session) {
         window.location.href = '/login';
         return;
       }
-    } catch (e) {
+    } catch {
       window.location.href = '/login';
       return;
     }
@@ -268,15 +309,10 @@ function configurarBotonFinalizar() {
 }
 
 async function finalizarCompra() {
-  if (!window.supabase || !supabase) {
-    window.location.href = '/login';
-    return;
-  }
-
   try {
     const {
       data: { session },
-    } = await window.supabaseClient.auth.getSession();
+    } = await supa.auth.getSession();
     if (!session) {
       window.location.href = '/login';
       return;
@@ -317,47 +353,105 @@ async function finalizarCompra() {
 
     const total = carritoServicio.obtenerPrecioTotal();
 
-    const { data: pedido, error: errorPedido } = await supabase
-      .from('pedidos')
-      .insert({
-        usuario_id: session.user.id,
-        monto_total: total,
-        metodo_entrega: entrega,
-        direccion_destino: direccion,
-        estado: 'recibido',
-      })
-      .select()
-      .single();
+    if (pago === 'efectivo') {
+      await realizarPedidoFinal('pendiente');
+    } else if (pago === 'tarjeta') {
+      const modal = document.getElementById('modal-pago');
+      document.getElementById('pago-qr').style.display = 'none';
+      document.getElementById('pago-tarjeta').style.display = 'block';
+      document.getElementById('monto-tarjeta').innerText =
+        `Bs. ${total.toFixed(2)}`;
+      document.getElementById('form-tarjeta').style.display = 'block';
+      document.getElementById('estado-tarjeta').style.display = 'none';
+      modal.style.display = 'block';
+    } else if (pago === 'qr') {
+      const modal = document.getElementById('modal-pago');
+      document.getElementById('pago-tarjeta').style.display = 'none';
+      document.getElementById('pago-qr').style.display = 'block';
+      document.getElementById('monto-qr').innerText = `Bs. ${total.toFixed(2)}`;
+      document.getElementById('texto-estado-qr').innerText =
+        'Esperando confirmación del banco...';
+      const qrImg = document.getElementById('qr-img');
+      if (qrImg) {
+        const qrData = encodeURIComponent(
+          `Raidencenter|Monto:${total.toFixed(2)}|Bs`,
+        );
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`;
+      }
+      modal.style.display = 'block';
 
-    if (errorPedido) throw errorPedido;
-
-    const detalles = carritoActualizado.map((item) => ({
-      pedido_id: pedido.id,
-      producto_id: item.id,
-      cantidad: item.cantidad,
-      precio_unitario_venta: item.precio,
-    }));
-
-    const { error: errorDetalles } = await supabase
-      .from('detalles_pedido')
-      .insert(detalles);
-    if (errorDetalles) throw errorDetalles;
-
-    const { error: errorPago } = await window.supabaseClient
-      .from('pagos')
-      .insert({
-        pedido_id: pedido.id,
-        metodo_pago: pago,
-        estado_pago: 'pendiente',
-        monto_total_pagado: total,
-      });
-    if (errorPago) throw errorPago;
-
-    carritoServicio.limpiarCarrito();
-    window.location.href = '/perfil';
+      setTimeout(async () => {
+        document.getElementById('texto-estado-qr').innerText =
+          '¡Pago confirmado por el banco!';
+        setTimeout(async () => {
+          await realizarPedidoFinal('pagado');
+          modal.style.display = 'none';
+        }, 1200);
+      }, 4000);
+    }
   } catch (err) {
     console.error('Error finalizarCompra:', err);
-    showToast('Error al procesar pedido. Intente nuevamente.', {
+    showToast('Error al iniciar pedido.', { type: 'error' });
+  }
+}
+
+async function realizarPedidoFinal(estadoPago) {
+  try {
+    const {
+      data: { session },
+    } = await supa.auth.getSession();
+    const carrito = carritoServicio.obtenerCarrito();
+    const total = carritoServicio.obtenerPrecioTotal();
+    const entregaNode = document.querySelector(
+      'input[name="metodo-entrega"]:checked',
+    );
+    const pagoNode = document.querySelector(
+      'input[name="metodo-pago"]:checked',
+    );
+    const direccion =
+      (document.getElementById('direccion') || {}).value || null;
+
+    const entrega = entregaNode ? entregaNode.value : 'recojo_almacen';
+    const pago = pagoNode ? pagoNode.value : 'efectivo';
+
+    const payload = {
+      usuario_id: session.user.id,
+      monto_total: total,
+      metodo_entrega: entrega,
+      direccion_destino: direccion,
+      detalles: carrito.map((item) => ({
+        producto_id: item.id,
+        cantidad: item.cantidad,
+        precio_unitario_venta: item.precio,
+      })),
+      pago: {
+        metodo_pago: pago,
+        estado_pago: estadoPago,
+        es_en_cuotas: false,
+        cantidad_cuotas: 1,
+        monto_total_pagado: total,
+      },
+    };
+
+    const res = await fetch('/api/pedidos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error || res.statusText);
+    }
+
+    carritoServicio.limpiarCarrito();
+    showToast('¡Compra realizada con éxito!', { type: 'success' });
+    setTimeout(() => {
+      window.location.href = '/historial';
+    }, 1200);
+  } catch (err) {
+    console.error('Error realizarPedidoFinal:', err);
+    showToast('Error al procesar el pedido final: ' + err.message, {
       type: 'error',
     });
   }

@@ -52,9 +52,9 @@
 }
 
 .item-carrito__precio {
-  color: #007bff;
+  color: #034e8b;
   font-size: 1.1em;
-  font-weight: 500;
+  font-weight: 600;
   padding: 4px 6px;
 }
 
@@ -401,6 +401,127 @@
 .btn-finalizar:hover {
   background: #02375f;
   transform: translateY(-2px);
+}
+
+.modal-pago {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+}
+
+.modal-pago__contenido {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2.5rem;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.btn-cerrar {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+}
+
+.qr-placeholder {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1.5rem auto;
+  width: fit-content;
+  border: 2px solid #eee;
+}
+
+.form-tarjeta {
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.form-tarjeta .campo-tarjeta {
+  margin-bottom: 1.2rem;
+}
+
+.form-tarjeta label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: bold;
+}
+
+.form-tarjeta input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.form-tarjeta .fila-tarjeta {
+  display: flex;
+  gap: 15px;
+}
+
+.btn-pagar-tarjeta {
+  width: 100%;
+  background-color: #034e8b;
+  color: white;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition:
+    background 0.15s ease-in-out,
+    transform 120ms;
+}
+.btn-pagar-tarjeta:hover {
+  background-color: #02375f;
+  transform: translateY(-1px);
+}
+
+.estado-simulacion {
+  margin-top: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.loader-pago {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #034e8b;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 1.5rem auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 900px) {

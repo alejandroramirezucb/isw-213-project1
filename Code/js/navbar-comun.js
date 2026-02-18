@@ -12,7 +12,6 @@
     const { supabaseUrl, supabaseKey } = await res.json();
 
     if (!supabaseUrl || !supabaseKey || !window.supabase) {
-      // Si falta la librería o la configuración, no intentar crear el cliente
       console.warn(
         'Supabase no está disponible en el cliente o faltan credenciales. Mostrando estado por defecto.',
       );
@@ -211,4 +210,70 @@ function inicializarDropdownCategorias() {
       });
     });
   }
+}
+
+let pedidosChannel = null;
+let pedidosChannelUserId = null;
+
+function mapEstadoLabel(estado) {
+  if (!estado) return '';
+  if (estado === 'recibido') return 'Orden realizada';
+  return estado.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function suscribirsePedidosUsuario(userId, supabaseClient) {
+  if (!userId || !supabaseClient) return;
+  if (pedidosChannel && pedidosChannelUserId === userId) return; // ya suscrito
+  if (pedidosChannel) {
+    pedidosChannel.unsubscribe();
+    pedidosChannel = null;
+    pedidosChannelUserId = null;
+  }
+
+  pedidosChannel = supabaseClient
+    .channel('user-pedidos-' + userId)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'pedidos',
+        filter: `usuario_id=eq.${userId}`,
+      },
+      (payload) => {
+        const estado = payload.new?.estado;
+        if (estado) {
+          showToast(
+            `Pedido #${payload.new.id} cambió a: ${mapEstadoLabel(estado)}`,
+            { type: 'info', duration: 6000 },
+          );
+        }
+      },
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'pedidos',
+        filter: `usuario_id=eq.${userId}`,
+      },
+      (payload) => {
+        const estado = payload.new?.estado;
+        showToast(
+          `Nuevo pedido #${payload.new.id}: ${mapEstadoLabel(estado)}`,
+          { type: 'success', duration: 6000 },
+        );
+      },
+    )
+    .subscribe();
+
+  pedidosChannelUserId = userId;
+}
+
+function unsubscribePedidos() {
+  if (!pedidosChannel) return;
+  pedidosChannel.unsubscribe();
+  pedidosChannel = null;
+  pedidosChannelUserId = null;
 }

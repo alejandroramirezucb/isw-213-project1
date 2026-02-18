@@ -152,6 +152,12 @@ function enviarNotificacionNavegador(pedido) {
   }
 }
 
+function getEstadoLabel(estado) {
+  if (!estado) return '';
+  if (estado === 'recibido') return 'Orden realizada';
+  return estado.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function crearPedidoCard(pedido) {
   const div = document.createElement('div');
   div.className = 'pedido-card';
@@ -180,7 +186,7 @@ function crearPedidoCard(pedido) {
                 <div class="pedido-numero">Pedido #${pedido.id}</div>
                 <div class="pedido-fecha">${fecha}</div>
             </div>
-            <div class="pedido-estado ${estadoClass}">${pedido.estado}</div>
+            <div class="pedido-estado ${estadoClass}">${getEstadoLabel(pedido.estado)}</div>
         </div>
         ${lineaTiempoHTML}
         <div class="pedido-detalles">
@@ -251,7 +257,7 @@ function generarLineaTiempo(pedido) {
     html += `
             <div class="estado-timeline ${activo}">
                 <div class="estado-punto"></div>
-                <div class="estado-nombre">${estado.charAt(0).toUpperCase() + estado.slice(1)}</div>
+                <div class="estado-nombre">${getEstadoLabel(estado)}</div>
                 <div class="estado-fecha">${fechaFormateada}</div>
             </div>
         `;
