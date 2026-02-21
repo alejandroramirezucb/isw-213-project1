@@ -95,6 +95,20 @@
   transform: translateY(-2px);
 }
 
+.tarjeta-producto__boton:disabled,
+.tarjeta-producto__boton.btn-en-carrito,
+.tarjeta-producto__boton.btn-agotado {
+  background-color: #ccc !important;
+  cursor: not-allowed;
+  color: #666;
+}
+
+.tarjeta-producto__boton.btn-en-carrito:hover,
+.tarjeta-producto__boton.btn-agotado:hover {
+  transform: none;
+  background-color: #ccc !important;
+}
+
 @media (max-width: 480px) {
   .tarjeta-producto__boton {
     width: 100%;

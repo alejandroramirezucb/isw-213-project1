@@ -75,6 +75,9 @@
 
     const botonAgregar = tarjeta.querySelector('.btn-agregar');
     if (botonAgregar) {
+      // Verificar estado inicial del producto
+      this.actualizarEstadoBoton(botonAgregar, producto.id, producto.stock);
+
       botonAgregar.addEventListener('click', async (e) => {
         e.stopPropagation();
         console.debug('ControladorProductos: click agregar', {
@@ -103,6 +106,21 @@
     });
 
     return tarjeta;
+  }
+
+  actualizarEstadoBoton(boton, productoId, stock) {
+    const carrito = this.carritoServicio.obtenerCarrito();
+    const enCarrito = carrito.some((item) => item.id === productoId);
+
+    if (stock === 0) {
+      boton.innerText = 'Agotado';
+      boton.disabled = true;
+      boton.classList.add('btn-agotado');
+    } else if (enCarrito) {
+      boton.innerText = 'Agregado';
+      boton.disabled = true;
+      boton.classList.add('btn-en-carrito');
+    }
   }
 
   async agregarAlCarrito(producto, botonEle) {
@@ -134,13 +152,9 @@
       this.carritoServicio.agregarProducto(producto, 1);
 
       if (botonEle) {
-        const textoOriginal = botonEle.innerText;
-        botonEle.innerText = '¡Agregado!';
+        botonEle.innerText = 'Agregado';
         botonEle.disabled = true;
-        setTimeout(() => {
-          botonEle.innerText = textoOriginal;
-          botonEle.disabled = false;
-        }, 1500);
+        botonEle.classList.add('btn-en-carrito');
       }
 
       this.mostrarNotificacion();

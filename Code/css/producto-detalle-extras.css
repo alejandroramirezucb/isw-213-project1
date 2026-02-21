@@ -98,6 +98,18 @@
   cursor: not-allowed;
 }
 
+.detalle-info__boton.btn-en-carrito,
+.detalle-info__boton.btn-agotado {
+  background: #ccc !important;
+  cursor: not-allowed;
+  color: #666;
+}
+
+.detalle-info__boton.btn-en-carrito:hover,
+.detalle-info__boton.btn-agotado:hover {
+  background: #ccc !important;
+}
+
 .detalle-info__descripcion-container {
   margin-top: 12px;
   padding-top: 8px;

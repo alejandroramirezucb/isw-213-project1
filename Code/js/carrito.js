@@ -3,6 +3,7 @@ const carritoServicio = new CarritoServicio();
 const actualizadorContador = new ActualizadorContador(carritoServicio);
 
 let supa = null;
+let stockVerificadoEnSesion = false; 
 
 async function inicializarSupabase() {
   try {
@@ -58,7 +59,12 @@ async function mostrarCarrito() {
     return;
   }
 
-  const carritoActualizado = await verificarStockCarrito(carrito);
+  let carritoActualizado = carrito;
+  if (!stockVerificadoEnSesion) {
+    carritoActualizado = await verificarStockCarrito(carrito);
+    stockVerificadoEnSesion = true;
+  }
+
   renderizarProductosCarrito(contenedor, carritoActualizado);
   actualizarTotalCarrito(elementoTotal, carritoActualizado);
   actualizadorContador.actualizar();
@@ -196,31 +202,22 @@ async function cambiarCantidad(indice, cambio) {
     return;
   }
 
-  try {
-    const infoStock = await productoServicio.verificarStock(item.id);
-
-    if (!infoStock.disponible || infoStock.stock === 0) {
-      showToast('Este producto ya no está disponible.', { type: 'warning' });
-      await eliminarProducto(indice);
-      return;
-    }
-
-    if (cantidadNueva > infoStock.stock) {
-      showToast(`Solo hay ${infoStock.stock} unidades disponibles.`, {
-        type: 'warning',
-      });
-      return;
-    }
-
-    carritoServicio.actualizarCantidad(indice, cantidadNueva);
-    await mostrarCarrito();
-  } catch (error) {
-    console.error('Error al verificar stock:', error);
-    showToast(
-      'Error al actualizar la cantidad. Por favor, intente nuevamente.',
-      { type: 'error' },
-    );
+  const stockActual = item.stock || 999;
+  
+  if (cantidadNueva > stockActual) {
+    showToast(`Solo hay ${stockActual} unidades disponibles.`, {
+      type: 'warning',
+    });
+    return;
   }
+
+  carritoServicio.actualizarCantidad(indice, cantidadNueva);
+  
+  const contenedor = document.getElementById('lista-carrito');
+  const elementoTotal = document.getElementById('total-precio');
+  const carritoActualizado = carritoServicio.obtenerCarrito();
+  renderizarProductosCarrito(contenedor, carritoActualizado);
+  actualizarTotalCarrito(elementoTotal, carritoActualizado);
 }
 
 async function actualizarCantidad(indice, nuevaCantidadStr) {
@@ -238,33 +235,24 @@ async function actualizarCantidad(indice, nuevaCantidadStr) {
 
   const item = carrito[indice];
 
-  try {
-    const infoStock = await productoServicio.verificarStock(item.id);
+  // Validar contra el stock que ya tenemos (sin hacer fetch)
+  const stockActual = item.stock || 999;
 
-    if (!infoStock.disponible || infoStock.stock === 0) {
-      showToast('Este producto ya no está disponible.', { type: 'warning' });
-      await eliminarProducto(indice);
-      return;
-    }
-
-    if (nuevaCantidad > infoStock.stock) {
-      showToast(`Solo hay ${infoStock.stock} unidades disponibles.`, {
-        type: 'warning',
-      });
-      await mostrarCarrito();
-      return;
-    }
-
-    carritoServicio.actualizarCantidad(indice, nuevaCantidad);
+  if (nuevaCantidad > stockActual) {
+    showToast(`Solo hay ${stockActual} unidades disponibles.`, {
+      type: 'warning',
+    });
     await mostrarCarrito();
-  } catch (error) {
-    console.error('Error al verificar stock:', error);
-    showToast(
-      'Error al actualizar la cantidad. Por favor, intente nuevamente.',
-      { type: 'error' },
-    );
-    await mostrarCarrito();
+    return;
   }
+
+  carritoServicio.actualizarCantidad(indice, nuevaCantidad);
+  
+  const contenedor = document.getElementById('lista-carrito');
+  const elementoTotal = document.getElementById('total-precio');
+  const carritoActualizado = carritoServicio.obtenerCarrito();
+  renderizarProductosCarrito(contenedor, carritoActualizado);
+  actualizarTotalCarrito(elementoTotal, carritoActualizado);
 }
 
 async function eliminarProducto(indice) {
@@ -324,12 +312,23 @@ async function finalizarCompra() {
       return;
     }
 
-    const carritoActualizado = await verificarStockCarrito(carrito);
-    if (!carritoActualizado || carritoActualizado.length === 0) {
-      showToast('No hay productos disponibles en el carrito.', {
-        type: 'warning',
-      });
-      return;
+    // El stock ya fue verificado al cargar la página
+    if (!stockVerificadoEnSesion) {
+      const carritoActualizado = await verificarStockCarrito(carrito);
+      if (!carritoActualizado || carritoActualizado.length === 0) {
+        showToast('No hay productos disponibles en el carrito.', {
+          type: 'warning',
+        });
+        return;
+      }
+    } else {
+      // Usar el carrito tal como está
+      if (carrito.length === 0) {
+        showToast('No hay productos disponibles en el carrito.', {
+          type: 'warning',
+        });
+        return;
+      }
     }
 
     const entregaNode = document.querySelector(
