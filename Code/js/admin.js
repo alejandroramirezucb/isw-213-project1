@@ -45,6 +45,7 @@ function inicializarPanelAdmin(clienteSupabase) {
   configurarModalProducto(clienteSupabase);
   configurarReportes(clienteSupabase);
   configurarAlertasUI(clienteSupabase);
+  configurarMonitoreoRutas(clienteSupabase);
 }
 
 function configurarPestanas() {
@@ -972,4 +973,290 @@ function configurarAlertasUI(clienteSupabase) {
   btnActualizar.addEventListener('click', function () {
     cargarAlertasStock(clienteSupabase);
   });
+}
+
+var mapaRutaInstancia = null;
+
+function configurarMonitoreoRutas(clienteSupabase) {
+  cargarListaChoferes(clienteSupabase);
+
+  var inputFechaRuta = document.getElementById('fecha-ruta');
+  var hoyStr = new Date().toISOString().split('T')[0];
+  if (inputFechaRuta) {
+    inputFechaRuta.setAttribute('max', hoyStr);
+    inputFechaRuta.value = hoyStr;
+  }
+
+  var btnConsultar = document.getElementById('btn-consultar-ruta');
+  btnConsultar.addEventListener('click', function () {
+    var choferId = document.getElementById('seleccion-chofer').value;
+    var fechaRuta = document.getElementById('fecha-ruta').value;
+
+    if (!choferId) {
+      if (window.showToast) {
+        window.showToast('Selecciona un chofer', { tipo: 'warning' });
+      }
+      return;
+    }
+
+    if (!fechaRuta) {
+      if (window.showToast) {
+        window.showToast('Selecciona una fecha', { tipo: 'warning' });
+      }
+      return;
+    }
+
+    consultarRutaChofer(clienteSupabase, choferId, fechaRuta);
+  });
+}
+
+function cargarListaChoferes(clienteSupabase) {
+  var selectChofer = document.getElementById('seleccion-chofer');
+  if (!selectChofer) return;
+
+  clienteSupabase
+    .from('usuarios')
+    .select('id, nombre_completo')
+    .eq('rol', 'chofer')
+    .order('nombre_completo')
+    .then(function (resultado) {
+      var choferes = resultado.data || [];
+
+      while (selectChofer.options.length > 1) {
+        selectChofer.remove(1);
+      }
+
+      choferes.forEach(function (chofer) {
+        var opcion = document.createElement('option');
+        opcion.value = chofer.id;
+        opcion.textContent = chofer.nombre_completo;
+        selectChofer.appendChild(opcion);
+      });
+    });
+}
+
+function consultarRutaChofer(clienteSupabase, choferId, fechaRuta) {
+  var fechaInicio = fechaRuta + 'T00:00:00';
+  var fechaFin = fechaRuta + 'T23:59:59';
+
+  clienteSupabase
+    .from('envios')
+    .select('id, pedido_id, fecha_asignacion')
+    .eq('chofer_id', choferId)
+    .then(function (resultadoEnvios) {
+      var envios = resultadoEnvios.data || [];
+
+      if (!envios.length) {
+        if (window.showToast) {
+          window.showToast('Este chofer no tiene envíos registrados', {
+            tipo: 'info',
+          });
+        }
+        document.getElementById('contenedor-mapa-ruta').style.display = 'none';
+        document.getElementById('contenedor-entregas-chofer').style.display =
+          'none';
+        return;
+      }
+
+      var envioIds = envios.map(function (e) {
+        return e.id;
+      });
+
+      Promise.all([
+        clienteSupabase
+          .from('historial_ubicaciones')
+          .select('envio_id, latitud, longitud, fecha_registro')
+          .in('envio_id', envioIds)
+          .gte('fecha_registro', fechaInicio)
+          .lte('fecha_registro', fechaFin)
+          .order('fecha_registro', { ascending: true }),
+        clienteSupabase
+          .from('pedidos')
+          .select(
+            'id, direccion_destino, estado, fecha_entrega_final, usuario_id',
+          )
+          .in(
+            'id',
+            envios.map(function (e) {
+              return e.pedido_id;
+            }),
+          ),
+      ]).then(function (resultados) {
+        var ubicaciones = resultados[0].data || [];
+        var pedidos = resultados[1].data || [];
+
+        renderizarMapaRuta(ubicaciones);
+        cargarDetalleEntregasChofer(
+          clienteSupabase,
+          pedidos,
+          envios,
+          fechaRuta,
+        );
+      });
+    });
+}
+
+function renderizarMapaRuta(ubicaciones) {
+  var contenedorMapa = document.getElementById('contenedor-mapa-ruta');
+
+  if (!ubicaciones.length) {
+    contenedorMapa.style.display = 'none';
+    if (window.showToast) {
+      window.showToast('No hay registros GPS para esta fecha', {
+        tipo: 'info',
+      });
+    }
+    return;
+  }
+
+  contenedorMapa.style.display = 'block';
+
+  if (mapaRutaInstancia) {
+    mapaRutaInstancia.remove();
+    mapaRutaInstancia = null;
+  }
+
+  var primerPunto = ubicaciones[0];
+  mapaRutaInstancia = L.map('mapa-ruta').setView(
+    [parseFloat(primerPunto.latitud), parseFloat(primerPunto.longitud)],
+    14,
+  );
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+  }).addTo(mapaRutaInstancia);
+
+  var coordenadas = ubicaciones.map(function (u) {
+    return [parseFloat(u.latitud), parseFloat(u.longitud)];
+  });
+
+  L.polyline(coordenadas, { color: '#034e8b', weight: 4 }).addTo(
+    mapaRutaInstancia,
+  );
+
+  var iconoInicio = L.divIcon({
+    className: 'panel-admin__marcador-inicio',
+    html: '<div style="background:#2e7d32;color:white;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;">Inicio</div>',
+    iconSize: [50, 24],
+  });
+
+  var iconoFin = L.divIcon({
+    className: 'panel-admin__marcador-fin',
+    html: '<div style="background:#c62828;color:white;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;">Fin</div>',
+    iconSize: [50, 24],
+  });
+
+  L.marker(coordenadas[0], { icon: iconoInicio }).addTo(mapaRutaInstancia);
+  L.marker(coordenadas[coordenadas.length - 1], { icon: iconoFin }).addTo(
+    mapaRutaInstancia,
+  );
+
+  coordenadas.forEach(function (coord, indice) {
+    var hora = new Date(ubicaciones[indice].fecha_registro).toLocaleTimeString(
+      'es-BO',
+    );
+    L.circleMarker(coord, {
+      radius: 5,
+      color: '#034e8b',
+      fillColor: '#034e8b',
+      fillOpacity: 0.7,
+    })
+      .bindPopup('Punto ' + (indice + 1) + ' - ' + hora)
+      .addTo(mapaRutaInstancia);
+  });
+
+  var grupo = L.latLngBounds(coordenadas);
+  mapaRutaInstancia.fitBounds(grupo, { padding: [30, 30] });
+}
+
+function cargarDetalleEntregasChofer(
+  clienteSupabase,
+  pedidos,
+  envios,
+  fechaRuta,
+) {
+  var contenedor = document.getElementById('contenedor-entregas-chofer');
+  var tbody = document.getElementById('tabla-entregas-chofer-body');
+
+  var mapaEnvios = {};
+  envios.forEach(function (e) {
+    mapaEnvios[e.pedido_id] = e;
+  });
+
+  var pedidosFiltrados = pedidos.filter(function (p) {
+    if (!p.fecha_entrega_final) return false;
+    var fechaEntrega = p.fecha_entrega_final.split('T')[0];
+    return fechaEntrega === fechaRuta;
+  });
+
+  if (!pedidosFiltrados.length && !pedidos.length) {
+    contenedor.style.display = 'none';
+    return;
+  }
+
+  var pedidosMostrar = pedidosFiltrados.length ? pedidosFiltrados : pedidos;
+  contenedor.style.display = 'block';
+
+  var usuarioIds = pedidosMostrar.map(function (p) {
+    return p.usuario_id;
+  });
+
+  clienteSupabase
+    .from('usuarios')
+    .select('id, nombre_completo')
+    .in('id', usuarioIds)
+    .then(function (resultadoUsuarios) {
+      var usuarios = resultadoUsuarios.data || [];
+      var mapaUsuarios = {};
+      usuarios.forEach(function (u) {
+        mapaUsuarios[u.id] = u.nombre_completo;
+      });
+
+      while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+      }
+
+      pedidosMostrar.forEach(function (pedido) {
+        var tr = document.createElement('tr');
+
+        var tdPedido = document.createElement('td');
+        tdPedido.className = 'panel-admin__tabla-td';
+        tdPedido.textContent = '#' + pedido.id;
+        tr.appendChild(tdPedido);
+
+        var tdCliente = document.createElement('td');
+        tdCliente.className = 'panel-admin__tabla-td';
+        tdCliente.textContent =
+          mapaUsuarios[pedido.usuario_id] || 'Desconocido';
+        tr.appendChild(tdCliente);
+
+        var tdDireccion = document.createElement('td');
+        tdDireccion.className = 'panel-admin__tabla-td';
+        tdDireccion.textContent = pedido.direccion_destino || 'Sin dirección';
+        tr.appendChild(tdDireccion);
+
+        var tdHora = document.createElement('td');
+        tdHora.className = 'panel-admin__tabla-td';
+        if (pedido.fecha_entrega_final) {
+          tdHora.textContent = new Date(
+            pedido.fecha_entrega_final,
+          ).toLocaleTimeString('es-BO');
+        } else {
+          tdHora.textContent = 'Pendiente';
+        }
+        tr.appendChild(tdHora);
+
+        var tdEstado = document.createElement('td');
+        tdEstado.className = 'panel-admin__tabla-td';
+        var spanEstado = document.createElement('span');
+        var claseEstadoMod = (pedido.estado || '').replace(/\s+/g, '-');
+        spanEstado.className =
+          'panel-admin__estado panel-admin__estado--' + claseEstadoMod;
+        spanEstado.textContent = pedido.estado || '';
+        tdEstado.appendChild(spanEstado);
+        tr.appendChild(tdEstado);
+
+        tbody.appendChild(tr);
+      });
+    });
 }

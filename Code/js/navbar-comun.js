@@ -72,16 +72,14 @@ function actualizarIconoUsuario() {
       if (sesion) {
         enlaceUsuario.classList.add('usuario-logueado');
         enlaceUsuario.href = '/perfil';
-        mostrarIconoAdminSiCorresponde(clienteSupabase, sesion.user);
+        mostrarIconosPorRol(clienteSupabase, sesion.user);
       } else {
         enlaceUsuario.classList.remove('usuario-logueado');
         enlaceUsuario.href = '/login';
-        ocultarIconoAdmin();
+        ocultarIconosRol();
       }
     }
 
-    // onAuthStateChange dispara inmediatamente con el estado actual (INITIAL_SESSION)
-    // y tambien cuando cambia (SIGNED_IN, SIGNED_OUT), siendo mas confiable que getSession
     clienteSupabase.auth.onAuthStateChange(function (evento, sesion) {
       aplicarEstadoSesion(sesion);
       if (sesion && (evento === 'INITIAL_SESSION' || evento === 'SIGNED_IN')) {
@@ -89,14 +87,13 @@ function actualizarIconoUsuario() {
       }
     });
 
-    // Chequeo inmediato como respaldo por si onAuthStateChange tarda
     clienteSupabase.auth.getSession().then(function (resultado) {
       aplicarEstadoSesion(resultado.data.session);
     });
   });
 }
 
-function mostrarIconoAdminSiCorresponde(clienteSupabase, usuario) {
+function mostrarIconosPorRol(clienteSupabase, usuario) {
   clienteSupabase
     .from('usuarios')
     .select('rol')
@@ -104,25 +101,31 @@ function mostrarIconoAdminSiCorresponde(clienteSupabase, usuario) {
     .single()
     .then(function (resultado) {
       if (resultado.error) return;
+      var rol = resultado.data ? resultado.data.rol : '';
       var enlaceAdmin = document.querySelector(
         '.barra-navegacion__enlace-icono--admin',
       );
-      if (!enlaceAdmin) return;
-      if (resultado.data && resultado.data.rol === 'administrador') {
-        enlaceAdmin.style.display = 'block';
-      } else {
-        enlaceAdmin.style.display = 'none';
+      var enlaceChofer = document.querySelector(
+        '.barra-navegacion__enlace-icono--chofer',
+      );
+      if (enlaceAdmin) {
+        enlaceAdmin.style.display = rol === 'administrador' ? 'block' : 'none';
+      }
+      if (enlaceChofer) {
+        enlaceChofer.style.display = rol === 'chofer' ? 'block' : 'none';
       }
     });
 }
 
-function ocultarIconoAdmin() {
+function ocultarIconosRol() {
   var enlaceAdmin = document.querySelector(
     '.barra-navegacion__enlace-icono--admin',
   );
-  if (enlaceAdmin) {
-    enlaceAdmin.style.display = 'none';
-  }
+  var enlaceChofer = document.querySelector(
+    '.barra-navegacion__enlace-icono--chofer',
+  );
+  if (enlaceAdmin) enlaceAdmin.style.display = 'none';
+  if (enlaceChofer) enlaceChofer.style.display = 'none';
 }
 
 function suscribirsePedidosUsuario(clienteSupabase, idUsuario) {

@@ -419,3 +419,21 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.crear_usuario_nuevo();
 $$
+
+CREATE TABLE historial_estados_pedido (
+id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+pedido_id INT REFERENCES pedidos(id) ON DELETE CASCADE,
+estado tipo_estado_pedido NOT NULL,
+fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.historial_estados_pedido ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Permitir lectura de historial estados"
+ON historial_estados_pedido FOR SELECT USING (true);
+
+CREATE POLICY "Permitir inserción de historial estados"
+ON historial_estados_pedido FOR INSERT WITH CHECK (true);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE pedidos;
+ALTER PUBLICATION supabase_realtime ADD TABLE historial_estados_pedido;

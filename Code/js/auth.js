@@ -68,6 +68,8 @@ function registrarUsuario() {
   var correo = document.getElementById('correoRegistro');
   var contrasena = document.getElementById('contrasenaRegistro');
   var confirmar = document.getElementById('confirmarContrasena');
+  var telefonoElem = document.getElementById('telefonoRegistro');
+  var telefonoValor = telefonoElem ? telefonoElem.value.trim() : null;
   var rolElem = document.getElementById('rolRegistro');
   var rolValor = rolElem ? rolElem.value : 'cliente';
 
@@ -116,26 +118,30 @@ function registrarUsuario() {
           resultado.data.user,
           nombre.value.trim(),
           rolValor,
+          telefonoValor,
         );
       })
       .then(function () {
         if (window.showToast) {
-          window.showToast(
-            'Registro exitoso. Revisa tu correo para confirmar.',
-            {
-              tipo: 'success',
-              duracion: 5000,
-            },
-          );
+          window.showToast('Registro exitoso', {
+            tipo: 'success',
+            duracion: 3000,
+          });
         }
         setTimeout(function () {
-          window.location.href = '/login';
-        }, 2000);
+          window.location.href = '/';
+        }, 1500);
       });
   });
 }
 
-function guardarUsuarioEnBaseDatos(clienteSupabase, usuario, nombre, rol) {
+function guardarUsuarioEnBaseDatos(
+  clienteSupabase,
+  usuario,
+  nombre,
+  rol,
+  telefono,
+) {
   if (!usuario) return Promise.resolve();
   var rolFinal = rol || 'cliente';
 
@@ -145,6 +151,7 @@ function guardarUsuarioEnBaseDatos(clienteSupabase, usuario, nombre, rol) {
       id: usuario.id,
       correo_electronico: usuario.email,
       nombre_completo: nombre,
+      telefono: telefono || null,
       rol: rolFinal,
     })
     .then(function (resultado) {

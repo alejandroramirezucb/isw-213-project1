@@ -5,7 +5,7 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0" />
-    <title>Historial de Pedidos - Raidencenter</title>
+    <title>Mis Pedidos - Raidencenter</title>
     <link
       rel="stylesheet"
       href="/css/styles.css" />
@@ -14,101 +14,238 @@
       href="/css/navbar.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
-      .pagina-historial {
-        max-width: 800px;
+      .pagina-pedidos {
+        max-width: 900px;
         margin: 6rem auto 2rem;
         padding: 0 1.5rem;
       }
-      .pagina-historial__titulo {
+      .pagina-pedidos__titulo {
         font-size: 1.5rem;
         margin-bottom: 1.5rem;
         color: #1a1a2e;
       }
-      .historial__lista {
+      .pedidos__lista {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.2rem;
       }
-      .historial__mensaje-vacio {
+      .pedidos__mensaje-vacio {
         text-align: center;
         color: #888;
         font-size: 1.1rem;
         padding: 3rem 0;
       }
-      .historial__pedido {
+      .pedido-tarjeta {
         background: white;
         border-radius: 12px;
-        padding: 1.5rem;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        transition: box-shadow 0.2s;
       }
-      .historial__pedido-cabecera {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 1rem;
+      .pedido-tarjeta:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       }
-      .historial__pedido-numero {
-        font-size: 1.1rem;
-        color: #1a1a2e;
-        margin: 0 0 0.3rem 0;
-      }
-      .historial__pedido-fecha {
-        font-size: 0.85rem;
-        color: #888;
-      }
-      .historial__estado {
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        text-transform: capitalize;
-      }
-      .historial__estado--pendiente {
-        background: #fff3cd;
-        color: #856404;
-      }
-      .historial__estado--confirmado {
-        background: #d1ecf1;
-        color: #0c5460;
-      }
-      .historial__estado--enviado {
-        background: #cce5ff;
-        color: #004085;
-      }
-      .historial__estado--entregado {
-        background: #d4edda;
-        color: #155724;
-      }
-      .historial__estado--cancelado {
-        background: #f8d7da;
-        color: #721c24;
-      }
-      .historial__estado--recibido {
-        background: #e8f0fe;
-        color: #1a56a0;
-      }
-      .historial__pedido-detalles {
+      .pedido-tarjeta__cabecera {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: 16px 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+      }
+      .pedido-tarjeta__info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .pedido-tarjeta__numero {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #1a1a2e;
+      }
+      .pedido-tarjeta__fecha {
+        font-size: 0.82rem;
+        color: #888;
+      }
+      .pedido-tarjeta__estado-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+      .pedido-tarjeta__estado-badge--recibido {
+        background: #e8f0fe;
+        color: #1a56a0;
+      }
+      .pedido-tarjeta__estado-badge--en-proceso {
+        background: #fff3e0;
+        color: #e65100;
+      }
+      .pedido-tarjeta__estado-badge--enviado {
+        background: #e8eaf6;
+        color: #283593;
+      }
+      .pedido-tarjeta__estado-badge--trasladandose {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+      .pedido-tarjeta__estado-badge--listo-para-entregarse {
+        background: #f3e5f5;
+        color: #6a1b9a;
+      }
+      .pedido-tarjeta__estado-badge--entregado {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .pedido-tarjeta__estado-badge--cerrado {
+        background: #e0e0e0;
+        color: #424242;
+      }
+      .pedido-tarjeta__cuerpo {
+        padding: 20px;
+        display: none;
+      }
+      .pedido-tarjeta__cuerpo--visible {
+        display: block;
+      }
+      .pedido-tarjeta__detalles {
+        display: flex;
+        justify-content: space-between;
         flex-wrap: wrap;
         gap: 0.5rem;
+        margin-bottom: 20px;
         font-size: 0.9rem;
         color: #555;
       }
-      .historial__pedido-total {
+      .pedido-tarjeta__total {
         font-weight: 600;
         color: #034e8b;
         font-size: 1rem;
+      }
+      .linea-tiempo {
+        position: relative;
+        padding: 0 0 0 32px;
+        margin: 0;
+        list-style: none;
+      }
+      .linea-tiempo::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: #e0e0e0;
+      }
+      .linea-tiempo__paso {
+        position: relative;
+        padding-bottom: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .linea-tiempo__paso:last-child {
+        padding-bottom: 0;
+      }
+      .linea-tiempo__punto {
+        position: absolute;
+        left: -26px;
+        top: 4px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px #e0e0e0;
+        z-index: 1;
+      }
+      .linea-tiempo__paso--completado .linea-tiempo__punto {
+        background: #034e8b;
+        box-shadow: 0 0 0 2px #034e8b;
+      }
+      .linea-tiempo__paso--actual .linea-tiempo__punto {
+        background: #ff9800;
+        box-shadow: 0 0 0 2px #ff9800;
+        animation: pulsoPunto 1.5s infinite;
+      }
+      @keyframes pulsoPunto {
+        0%,
+        100% {
+          box-shadow: 0 0 0 2px #ff9800;
+        }
+        50% {
+          box-shadow: 0 0 0 5px rgba(255, 152, 0, 0.3);
+        }
+      }
+      .linea-tiempo__nombre-estado {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #333;
+      }
+      .linea-tiempo__paso--pendiente .linea-tiempo__nombre-estado {
+        color: #aaa;
+      }
+      .linea-tiempo__fecha-estado {
+        font-size: 0.78rem;
+        color: #888;
+      }
+      .pedido-tarjeta__acciones {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .pedido-tarjeta__boton {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+      }
+      .pedido-tarjeta__boton:active {
+        transform: scale(0.97);
+      }
+      .pedido-tarjeta__boton--confirmar {
+        background: #2e7d32;
+        color: white;
+      }
+      .pedido-tarjeta__boton--confirmar:hover {
+        background: #1b5e20;
+      }
+      .pedido-tarjeta__boton--deshabilitado {
+        background: #e0e0e0;
+        color: #999;
+        cursor: not-allowed;
+      }
+      .pedido-tarjeta__confirmacion-texto {
+        font-size: 0.85rem;
+        color: #2e7d32;
+        font-weight: 500;
+      }
+      .pedido-tarjeta__flecha {
+        font-size: 1.2rem;
+        transition: transform 0.2s;
+        color: #888;
+      }
+      .pedido-tarjeta__flecha--abierto {
+        transform: rotate(180deg);
       }
     </style>
   </head>
   <body>
     <header id="navbar-container"></header>
 
-    <main class="pagina-historial">
-      <h1 class="pagina-historial__titulo">Historial de Pedidos</h1>
-      <div class="historial__lista"></div>
+    <main class="pagina-pedidos">
+      <h1 class="pagina-pedidos__titulo">Mis Pedidos</h1>
+      <div class="pedidos__lista"></div>
     </main>
 
     <script src="/js/utilidades/ClienteSupabase.js"></script>

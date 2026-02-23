@@ -1,18 +1,32 @@
+var ESTADOS_PEDIDO = [
+  'recibido',
+  'en proceso',
+  'enviado',
+  'trasladandose',
+  'listo para entregarse',
+  'entregado',
+];
+
+var clienteSupabaseGlobal = null;
+var usuarioIdGlobal = null;
+
 document.addEventListener('DOMContentLoaded', function () {
   cargarNavbar().then(function () {
-    cargarHistorialPedidos();
+    cargarMisPedidos();
   });
 });
 
-function cargarHistorialPedidos() {
-  var contenedorHistorial = document.querySelector('.historial__lista');
-  if (!contenedorHistorial) return;
+function cargarMisPedidos() {
+  var contenedorPedidos = document.querySelector('.pedidos__lista');
+  if (!contenedorPedidos) return;
 
   obtenerClienteSupabase().then(function (clienteSupabase) {
     if (!clienteSupabase) {
       window.location.href = '/login';
       return;
     }
+
+    clienteSupabaseGlobal = clienteSupabase;
 
     clienteSupabase.auth.getSession().then(function (resultado) {
       var sesion = resultado.data.session;
@@ -21,127 +35,370 @@ function cargarHistorialPedidos() {
         return;
       }
 
-      clienteSupabase
-        .from('pedidos')
-        .select(
-          'id, monto_total, estado, fecha_creacion, direccion_destino, metodo_entrega',
-        )
-        .eq('usuario_id', sesion.user.id)
-        .order('fecha_creacion', { ascending: false })
-        .then(function (resultadoPedidos) {
-          if (resultadoPedidos.error) {
-            if (window.showToast) {
-              window.showToast('Error al cargar historial', { tipo: 'error' });
-            }
-            return;
-          }
-
-          var pedidos = resultadoPedidos.data || [];
-
-          if (pedidos.length === 0) {
-            var mensaje = document.createElement('p');
-            mensaje.className = 'historial__mensaje-vacio';
-            mensaje.textContent = 'No tienes pedidos registrados';
-            contenedorHistorial.appendChild(mensaje);
-            return;
-          }
-
-          var pedidoIds = pedidos.map(function (p) {
-            return p.id;
-          });
-
-          clienteSupabase
-            .from('detalles_pedido')
-            .select(
-              'id, pedido_id, cantidad, precio_unitario_venta, producto_id',
-            )
-            .in('pedido_id', pedidoIds)
-            .then(function (resultadoDetalles) {
-              var detalles = resultadoDetalles.data || [];
-
-              pedidos.forEach(function (pedido) {
-                pedido.detalles = detalles.filter(function (d) {
-                  return d.pedido_id === pedido.id;
-                });
-              });
-
-              renderizarPedidos(contenedorHistorial, pedidos);
-            });
-        });
+      usuarioIdGlobal = sesion.user.id;
+      obtenerPedidosConHistorial(
+        clienteSupabase,
+        sesion.user.id,
+        contenedorPedidos,
+      );
+      suscribirseACambiosPedidos(
+        clienteSupabase,
+        sesion.user.id,
+        contenedorPedidos,
+      );
     });
   });
 }
 
-function renderizarPedidos(contenedor, pedidos) {
+function obtenerPedidosConHistorial(clienteSupabase, usuarioId, contenedor) {
+  clienteSupabase
+    .from('pedidos')
+    .select(
+      'id, monto_total, estado, fecha_creacion, direccion_destino, metodo_entrega, confirmacion_cliente, fecha_entrega_final',
+    )
+    .eq('usuario_id', usuarioId)
+    .order('fecha_creacion', { ascending: false })
+    .then(function (resultadoPedidos) {
+      if (resultadoPedidos.error) {
+        if (window.showToast) {
+          window.showToast('Error al cargar pedidos', { tipo: 'error' });
+        }
+        return;
+      }
+
+      var pedidos = resultadoPedidos.data || [];
+
+      if (pedidos.length === 0) {
+        var mensaje = document.createElement('p');
+        mensaje.className = 'pedidos__mensaje-vacio';
+        mensaje.textContent = 'No tienes pedidos registrados';
+        while (contenedor.firstChild)
+          contenedor.removeChild(contenedor.firstChild);
+        contenedor.appendChild(mensaje);
+        return;
+      }
+
+      var pedidoIds = pedidos.map(function (p) {
+        return p.id;
+      });
+
+      Promise.all([
+        clienteSupabase
+          .from('detalles_pedido')
+          .select('id, pedido_id, cantidad, precio_unitario_venta, producto_id')
+          .in('pedido_id', pedidoIds),
+        clienteSupabase
+          .from('historial_estados_pedido')
+          .select('pedido_id, estado, fecha_cambio')
+          .in('pedido_id', pedidoIds)
+          .order('fecha_cambio', { ascending: true }),
+      ]).then(function (resultados) {
+        var detalles = resultados[0].data || [];
+        var historialEstados = resultados[1].data || [];
+
+        pedidos.forEach(function (pedido) {
+          pedido.detalles = detalles.filter(function (d) {
+            return d.pedido_id === pedido.id;
+          });
+          pedido.historial_estados = historialEstados.filter(function (h) {
+            return h.pedido_id === pedido.id;
+          });
+        });
+
+        renderizarPedidosConTimeline(contenedor, pedidos);
+      });
+    });
+}
+
+function renderizarPedidosConTimeline(contenedor, pedidos) {
   while (contenedor.firstChild) contenedor.removeChild(contenedor.firstChild);
   pedidos.forEach(function (pedido) {
-    contenedor.appendChild(crearElementoPedido(pedido));
+    contenedor.appendChild(crearTarjetaPedido(pedido));
   });
 }
 
-function crearElementoPedido(pedido) {
+function crearTarjetaPedido(pedido) {
   var articulo = document.createElement('article');
-  articulo.className = 'historial__pedido';
+  articulo.className = 'pedido-tarjeta';
+  articulo.id = 'pedido-tarjeta-' + pedido.id;
 
-  var fecha = new Date(pedido.fecha_creacion).toLocaleDateString('es-BO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
-  var cabecera = document.createElement('header');
-  cabecera.className = 'historial__pedido-cabecera';
+  var cabecera = document.createElement('div');
+  cabecera.className = 'pedido-tarjeta__cabecera';
 
   var infoDiv = document.createElement('div');
+  infoDiv.className = 'pedido-tarjeta__info';
 
-  var h3 = document.createElement('h3');
-  h3.className = 'historial__pedido-numero';
-  h3.textContent = 'Pedido #' + pedido.id;
+  var numeroPedido = document.createElement('span');
+  numeroPedido.className = 'pedido-tarjeta__numero';
+  numeroPedido.textContent = 'Pedido #' + pedido.id;
+  infoDiv.appendChild(numeroPedido);
 
-  var time = document.createElement('time');
-  time.className = 'historial__pedido-fecha';
-  time.textContent = fecha;
-
-  infoDiv.appendChild(h3);
-  infoDiv.appendChild(time);
-
-  var estadoTexto = pedido.estado || 'pendiente';
-  var claseEstadoMod = estadoTexto.replace(/\s+/g, '-');
-  var estadoSpan = document.createElement('span');
-  estadoSpan.className =
-    'historial__estado historial__estado--' + claseEstadoMod;
-  estadoSpan.textContent = estadoTexto;
+  var fechaPedido = document.createElement('span');
+  fechaPedido.className = 'pedido-tarjeta__fecha';
+  fechaPedido.textContent = new Date(pedido.fecha_creacion).toLocaleDateString(
+    'es-BO',
+    {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    },
+  );
+  infoDiv.appendChild(fechaPedido);
 
   cabecera.appendChild(infoDiv);
-  cabecera.appendChild(estadoSpan);
+
+  var divDerecho = document.createElement('div');
+  divDerecho.style.display = 'flex';
+  divDerecho.style.alignItems = 'center';
+  divDerecho.style.gap = '10px';
+
+  var estadoBadge = document.createElement('span');
+  var claseEstadoMod = (pedido.estado || '').replace(/\s+/g, '-');
+  estadoBadge.className =
+    'pedido-tarjeta__estado-badge pedido-tarjeta__estado-badge--' +
+    claseEstadoMod;
+  estadoBadge.textContent = pedido.estado || 'recibido';
+  divDerecho.appendChild(estadoBadge);
+
+  var flecha = document.createElement('span');
+  flecha.className = 'pedido-tarjeta__flecha';
+  flecha.textContent = '▼';
+  divDerecho.appendChild(flecha);
+
+  cabecera.appendChild(divDerecho);
+
+  var cuerpo = document.createElement('div');
+  cuerpo.className = 'pedido-tarjeta__cuerpo';
+
+  cabecera.addEventListener('click', function () {
+    var estaVisible = cuerpo.classList.contains(
+      'pedido-tarjeta__cuerpo--visible',
+    );
+    cuerpo.classList.toggle('pedido-tarjeta__cuerpo--visible');
+    flecha.classList.toggle('pedido-tarjeta__flecha--abierto', !estaVisible);
+  });
 
   var detallesDiv = document.createElement('div');
-  detallesDiv.className = 'historial__pedido-detalles';
+  detallesDiv.className = 'pedido-tarjeta__detalles';
 
   var detalles = pedido.detalles || [];
   var cantidadProductos = detalles.reduce(function (suma, d) {
     return suma + d.cantidad;
   }, 0);
 
-  var pCantidad = document.createElement('p');
+  var pCantidad = document.createElement('span');
   pCantidad.textContent = cantidadProductos + ' producto(s)';
-
-  var pMetodo = document.createElement('p');
-  pMetodo.textContent =
-    'Método: ' +
-    (pedido.metodo_entrega === 'delivery' ? 'Delivery' : 'Recojo en almacén');
-
-  var pTotal = document.createElement('p');
-  pTotal.className = 'historial__pedido-total';
-  pTotal.textContent =
-    'Total: Bs. ' + parseFloat(pedido.monto_total || 0).toFixed(2);
-
   detallesDiv.appendChild(pCantidad);
+
+  var pMetodo = document.createElement('span');
+  pMetodo.textContent =
+    pedido.metodo_entrega === 'delivery' ? 'Delivery' : 'Recojo en almacén';
   detallesDiv.appendChild(pMetodo);
+
+  var pTotal = document.createElement('span');
+  pTotal.className = 'pedido-tarjeta__total';
+  pTotal.textContent = 'Bs. ' + parseFloat(pedido.monto_total || 0).toFixed(2);
   detallesDiv.appendChild(pTotal);
 
+  cuerpo.appendChild(detallesDiv);
+
+  var lineaTiempo = crearLineaTiempo(pedido);
+  cuerpo.appendChild(lineaTiempo);
+
+  if (pedido.estado === 'entregado' && !pedido.confirmacion_cliente) {
+    var acciones = document.createElement('div');
+    acciones.className = 'pedido-tarjeta__acciones';
+
+    var btnConfirmar = document.createElement('button');
+    btnConfirmar.className =
+      'pedido-tarjeta__boton pedido-tarjeta__boton--confirmar';
+    btnConfirmar.textContent = 'Confirmar Recepción';
+    btnConfirmar.addEventListener('click', function () {
+      confirmarRecepcionPedido(pedido.id);
+    });
+    acciones.appendChild(btnConfirmar);
+
+    cuerpo.appendChild(acciones);
+  }
+
+  if (pedido.estado === 'cerrado' || pedido.confirmacion_cliente) {
+    var textoConfirmado = document.createElement('div');
+    textoConfirmado.className = 'pedido-tarjeta__acciones';
+    var spanTexto = document.createElement('span');
+    spanTexto.className = 'pedido-tarjeta__confirmacion-texto';
+    spanTexto.textContent = '✓ Pedido finalizado y confirmado';
+    textoConfirmado.appendChild(spanTexto);
+    cuerpo.appendChild(textoConfirmado);
+  }
+
   articulo.appendChild(cabecera);
-  articulo.appendChild(detallesDiv);
+  articulo.appendChild(cuerpo);
 
   return articulo;
+}
+
+function crearLineaTiempo(pedido) {
+  var ul = document.createElement('ul');
+  ul.className = 'linea-tiempo';
+
+  var historial = pedido.historial_estados || [];
+  var mapaFechas = {};
+  historial.forEach(function (h) {
+    mapaFechas[h.estado] = h.fecha_cambio;
+  });
+
+  var estadoActualIndex = ESTADOS_PEDIDO.indexOf(pedido.estado);
+  if (estadoActualIndex === -1 && pedido.estado === 'cerrado') {
+    estadoActualIndex = ESTADOS_PEDIDO.length;
+  }
+
+  var nombresEstados = {
+    recibido: 'Recibido',
+    'en proceso': 'En Proceso',
+    enviado: 'Enviado',
+    trasladandose: 'Trasladándose',
+    'listo para entregarse': 'Listo para Entregarse',
+    entregado: 'Entregado',
+  };
+
+  ESTADOS_PEDIDO.forEach(function (estado, indice) {
+    var li = document.createElement('li');
+    var claseModificador = '';
+
+    if (indice < estadoActualIndex) {
+      claseModificador = 'linea-tiempo__paso--completado';
+    } else if (indice === estadoActualIndex) {
+      claseModificador = 'linea-tiempo__paso--actual';
+    } else {
+      claseModificador = 'linea-tiempo__paso--pendiente';
+    }
+
+    li.className = 'linea-tiempo__paso ' + claseModificador;
+
+    var punto = document.createElement('div');
+    punto.className = 'linea-tiempo__punto';
+    li.appendChild(punto);
+
+    var nombreEstado = document.createElement('span');
+    nombreEstado.className = 'linea-tiempo__nombre-estado';
+    nombreEstado.textContent = nombresEstados[estado] || estado;
+    li.appendChild(nombreEstado);
+
+    if (mapaFechas[estado]) {
+      var fechaEstado = document.createElement('span');
+      fechaEstado.className = 'linea-tiempo__fecha-estado';
+      fechaEstado.textContent = new Date(mapaFechas[estado]).toLocaleString(
+        'es-BO',
+        {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+      );
+      li.appendChild(fechaEstado);
+    }
+
+    ul.appendChild(li);
+  });
+
+  if (pedido.estado === 'cerrado') {
+    var liCerrado = document.createElement('li');
+    liCerrado.className = 'linea-tiempo__paso linea-tiempo__paso--completado';
+
+    var puntoCerrado = document.createElement('div');
+    puntoCerrado.className = 'linea-tiempo__punto';
+    liCerrado.appendChild(puntoCerrado);
+
+    var nombreCerrado = document.createElement('span');
+    nombreCerrado.className = 'linea-tiempo__nombre-estado';
+    nombreCerrado.textContent = 'Cerrado';
+    liCerrado.appendChild(nombreCerrado);
+
+    if (mapaFechas['cerrado']) {
+      var fechaCerrado = document.createElement('span');
+      fechaCerrado.className = 'linea-tiempo__fecha-estado';
+      fechaCerrado.textContent = new Date(mapaFechas['cerrado']).toLocaleString(
+        'es-BO',
+        {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+      );
+      liCerrado.appendChild(fechaCerrado);
+    }
+
+    ul.appendChild(liCerrado);
+  }
+
+  return ul;
+}
+
+function confirmarRecepcionPedido(pedidoId) {
+  fetch('/api/pedidos/' + pedidoId + '/confirmar-recepcion', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+  })
+    .then(function (respuesta) {
+      return respuesta.json();
+    })
+    .then(function (data) {
+      if (data.error) {
+        if (window.showToast) {
+          window.showToast('Error al confirmar: ' + data.error, {
+            tipo: 'error',
+          });
+        }
+        return;
+      }
+
+      if (window.showToast) {
+        window.showToast('Pedido confirmado y cerrado exitosamente', {
+          tipo: 'success',
+          duracion: 5000,
+        });
+      }
+
+      var contenedor = document.querySelector('.pedidos__lista');
+      obtenerPedidosConHistorial(
+        clienteSupabaseGlobal,
+        usuarioIdGlobal,
+        contenedor,
+      );
+    });
+}
+
+function suscribirseACambiosPedidos(clienteSupabase, usuarioId, contenedor) {
+  clienteSupabase
+    .channel('mis-pedidos-' + usuarioId)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'pedidos',
+        filter: 'usuario_id=eq.' + usuarioId,
+      },
+      function (payload) {
+        var pedidoActualizado = payload.new;
+
+        if (pedidoActualizado.estado === 'listo para entregarse') {
+          if (window.showToast) {
+            window.showToast(
+              '¡Tu pedido #' +
+                pedidoActualizado.id +
+                ' está listo para entregarse! El chofer está cerca.',
+              { tipo: 'success', duracion: 8000 },
+            );
+          }
+        }
+
+        obtenerPedidosConHistorial(clienteSupabase, usuarioId, contenedor);
+      },
+    )
+    .subscribe();
 }

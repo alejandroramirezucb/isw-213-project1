@@ -18,6 +18,9 @@
       href="/css/styles.css" />
     <link
       rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
       href="/css/admin.css" />
   </head>
   <body>
@@ -51,6 +54,11 @@
           class="panel-admin__pestana"
           data-seccion="alertas">
           Alertas de Stock
+        </button>
+        <button
+          class="panel-admin__pestana"
+          data-seccion="monitoreo-rutas">
+          Monitoreo de Rutas
         </button>
       </nav>
 
@@ -265,6 +273,75 @@
         </div>
       </section>
 
+      <section
+        class="panel-admin__seccion"
+        id="seccion-monitoreo-rutas">
+        <h2 class="panel-admin__seccion-titulo">Monitoreo de Rutas</h2>
+        <div class="panel-admin__formulario-reporte">
+          <div class="panel-admin__campo">
+            <label
+              class="panel-admin__etiqueta"
+              for="seleccion-chofer">
+              Chofer
+            </label>
+            <select
+              id="seleccion-chofer"
+              class="panel-admin__entrada panel-admin__entrada--select">
+              <option value="">Seleccionar chofer</option>
+            </select>
+          </div>
+          <div class="panel-admin__campo">
+            <label
+              class="panel-admin__etiqueta"
+              for="fecha-ruta">
+              Fecha
+            </label>
+            <input
+              type="date"
+              id="fecha-ruta"
+              class="panel-admin__entrada" />
+          </div>
+          <button
+            class="panel-admin__boton panel-admin__boton--primario"
+            id="btn-consultar-ruta">
+            Consultar Ruta
+          </button>
+        </div>
+
+        <div
+          class="panel-admin__mapa-contenedor"
+          id="contenedor-mapa-ruta"
+          style="display: none">
+          <h3 class="panel-admin__resumen-titulo">Ruta del Chofer</h3>
+          <div
+            id="mapa-ruta"
+            class="panel-admin__mapa"></div>
+        </div>
+
+        <div
+          class="panel-admin__entregas-chofer"
+          id="contenedor-entregas-chofer"
+          style="display: none">
+          <h3 class="panel-admin__resumen-titulo">Detalle de Entregas</h3>
+          <div class="panel-admin__tabla-contenedor">
+            <table class="panel-admin__tabla">
+              <thead class="panel-admin__tabla-cabecera">
+                <tr>
+                  <th class="panel-admin__tabla-th">Pedido</th>
+                  <th class="panel-admin__tabla-th">Cliente</th>
+                  <th class="panel-admin__tabla-th">Dirección</th>
+                  <th class="panel-admin__tabla-th">Hora de Llegada</th>
+                  <th class="panel-admin__tabla-th">Estado</th>
+                </tr>
+              </thead>
+              <tbody
+                class="panel-admin__tabla-cuerpo"
+                id="tabla-entregas-chofer-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <div
         class="panel-admin__modal-overlay"
         id="modal-producto"
@@ -385,6 +462,7 @@
     </main>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>

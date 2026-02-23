@@ -195,6 +195,15 @@ aplicacion.post('/api/pedidos', async (req, res) => {
       pagoData = pagoInsertado[0];
     }
 
+    await supabase.from('historial_estados_pedido').insert({
+      pedido_id: pedidoId,
+      estado: 'recibido',
+    });
+
+    if (metodo_entrega === 'delivery') {
+      simularCicloPedido(pedidoId, direccion_destino);
+    }
+
     return res.json({
       pedido: pedidoData,
       detalles: detallesData,
@@ -238,6 +247,195 @@ aplicacion.get('/perfil', (peticion, respuesta) => {
 aplicacion.get('/admin', (peticion, respuesta) => {
   respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'admin.html'));
 });
+
+aplicacion.get('/chofer', (peticion, respuesta) => {
+  respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'chofer.html'));
+});
+
+aplicacion.post('/api/envios/ubicacion', async (req, res) => {
+  try {
+    const { envio_id, latitud, longitud } = req.body;
+    if (!envio_id || latitud === undefined || longitud === undefined) {
+      return res
+        .status(400)
+        .json({ error: 'envio_id, latitud y longitud son requeridos' });
+    }
+    const supabase = require('./db');
+    const { data, error } = await supabase
+      .from('historial_ubicaciones')
+      .insert({ envio_id, latitud, longitud })
+      .select();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ubicacion: data[0] });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+aplicacion.patch('/api/envios/:envioId/evidencia', async (req, res) => {
+  try {
+    const { envioId } = req.params;
+    const { foto_evidencia_url } = req.body;
+    if (!foto_evidencia_url) {
+      return res.status(400).json({ error: 'foto_evidencia_url es requerido' });
+    }
+    const supabase = require('./db');
+    const { data, error } = await supabase
+      .from('envios')
+      .update({ foto_evidencia_url })
+      .eq('id', envioId)
+      .select();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ envio: data[0] });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+aplicacion.patch('/api/pedidos/:pedidoId/estado', async (req, res) => {
+  try {
+    const { pedidoId } = req.params;
+    const { estado } = req.body;
+    if (!estado) {
+      return res.status(400).json({ error: 'estado es requerido' });
+    }
+    const supabase = require('./db');
+    var updateData = { estado };
+    if (estado === 'entregado') {
+      updateData.fecha_entrega_final = new Date().toISOString();
+    }
+    const { data, error } = await supabase
+      .from('pedidos')
+      .update(updateData)
+      .eq('id', pedidoId)
+      .select();
+    if (error) return res.status(500).json({ error: error.message });
+
+    await supabase.from('historial_estados_pedido').insert({
+      pedido_id: pedidoId,
+      estado,
+    });
+
+    return res.json({ pedido: data[0] });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+aplicacion.patch(
+  '/api/pedidos/:pedidoId/confirmar-recepcion',
+  async (req, res) => {
+    try {
+      const { pedidoId } = req.params;
+      const supabase = require('./db');
+
+      const { data: pedidoActual } = await supabase
+        .from('pedidos')
+        .select('estado, confirmacion_cliente')
+        .eq('id', pedidoId)
+        .single();
+
+      if (!pedidoActual || pedidoActual.estado !== 'entregado') {
+        return res
+          .status(400)
+          .json({ error: 'El pedido debe estar en estado entregado' });
+      }
+
+      if (pedidoActual.confirmacion_cliente) {
+        return res.status(400).json({ error: 'El pedido ya fue confirmado' });
+      }
+
+      const { data, error } = await supabase
+        .from('pedidos')
+        .update({ estado: 'cerrado', confirmacion_cliente: true })
+        .eq('id', pedidoId)
+        .select();
+
+      if (error) return res.status(500).json({ error: error.message });
+
+      await supabase.from('historial_estados_pedido').insert({
+        pedido_id: pedidoId,
+        estado: 'cerrado',
+      });
+
+      return res.json({ pedido: data[0] });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+);
+
+aplicacion.get('/api/pedidos/:pedidoId/historial-estados', async (req, res) => {
+  try {
+    const { pedidoId } = req.params;
+    const supabase = require('./db');
+    const { data, error } = await supabase
+      .from('historial_estados_pedido')
+      .select('estado, fecha_cambio')
+      .eq('pedido_id', pedidoId)
+      .order('fecha_cambio', { ascending: true });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ historial: data });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+aplicacion.get('/api/choferes', async (req, res) => {
+  try {
+    const supabase = require('./db');
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('id, nombre_completo')
+      .eq('rol', 'chofer')
+      .order('nombre_completo');
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ choferes: data });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+async function simularCicloPedido(pedidoId, direccionDestino) {
+  const supabase = require('./db');
+
+  const avanzarEstado = async (nuevoEstado, extraData) => {
+    const datosActualizar = { estado: nuevoEstado, ...extraData };
+    await supabase.from('pedidos').update(datosActualizar).eq('id', pedidoId);
+    await supabase.from('historial_estados_pedido').insert({
+      pedido_id: pedidoId,
+      estado: nuevoEstado,
+    });
+  };
+
+  const asignarChofer = async () => {
+    const { data: choferes } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('rol', 'chofer')
+      .limit(5);
+
+    if (!choferes || choferes.length === 0) return;
+
+    const choferAzar = choferes[Math.floor(Math.random() * choferes.length)];
+
+    await supabase.from('envios').insert({
+      pedido_id: pedidoId,
+      chofer_id: choferAzar.id,
+      latitud_destino: null,
+      longitud_destino: null,
+    });
+  };
+
+  setTimeout(async () => {
+    await avanzarEstado('en proceso');
+  }, 12000);
+
+  setTimeout(async () => {
+    await avanzarEstado('enviado');
+    await asignarChofer();
+  }, 25000);
+}
 
 aplicacion.get('/historial', (peticion, respuesta) => {
   respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'historial.html'));

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Chofer - Raidencenter</title>
+    <link
+      rel="icon"
+      href="/assets/icon.png"
+      type="image/png" />
+    <link
+      rel="stylesheet"
+      href="/css/navbar.css" />
+    <link
+      rel="stylesheet"
+      href="/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="/css/chofer.css" />
+  </head>
+  <body>
+    <header id="navbar-container"></header>
+
+    <main class="panel-chofer">
+      <section class="panel-chofer__encabezado">
+        <h1 class="panel-chofer__titulo">Mis Entregas</h1>
+        <p class="panel-chofer__subtitulo">
+          Gestiona tus pedidos asignados y registra evidencias de entrega
+        </p>
+      </section>
+
+      <nav class="panel-chofer__navegacion">
+        <button
+          class="panel-chofer__pestana panel-chofer__pestana--activa"
+          data-seccion="pendientes">
+          Pendientes
+        </button>
+        <button
+          class="panel-chofer__pestana"
+          data-seccion="en-curso">
+          En Curso
+        </button>
+        <button
+          class="panel-chofer__pestana"
+          data-seccion="completadas">
+          Completadas
+        </button>
+      </nav>
+
+      <section
+        class="panel-chofer__seccion panel-chofer__seccion--activa"
+        id="seccion-pendientes">
+        <div
+          class="panel-chofer__lista"
+          id="lista-pendientes">
+          <p class="panel-chofer__cargando">Cargando entregas pendientes...</p>
+        </div>
+      </section>
+
+      <section
+        class="panel-chofer__seccion"
+        id="seccion-en-curso">
+        <div
+          class="panel-chofer__lista"
+          id="lista-en-curso">
+          <p class="panel-chofer__cargando">Cargando entregas en curso...</p>
+        </div>
+      </section>
+
+      <section
+        class="panel-chofer__seccion"
+        id="seccion-completadas">
+        <div
+          class="panel-chofer__lista"
+          id="lista-completadas">
+          <p class="panel-chofer__cargando">Cargando entregas completadas...</p>
+        </div>
+      </section>
+
+      <div
+        class="panel-chofer__modal-overlay"
+        id="modal-evidencia"
+        style="display: none">
+        <div class="panel-chofer__modal">
+          <div class="panel-chofer__modal-cabecera">
+            <h3 class="panel-chofer__modal-titulo">
+              Registrar Evidencia de Entrega
+            </h3>
+            <button
+              class="panel-chofer__modal-cerrar"
+              id="btn-cerrar-evidencia">
+              &times;
+            </button>
+          </div>
+          <form
+            class="panel-chofer__modal-formulario"
+            id="form-evidencia">
+            <div class="panel-chofer__campo">
+              <label
+                class="panel-chofer__etiqueta"
+                for="evidencia-foto">
+                Fotografía del paquete entregado
+              </label>
+              <div
+                class="panel-chofer__zona-archivo"
+                id="zona-archivo">
+                <input
+                  type="file"
+                  id="evidencia-foto"
+                  accept="image/*"
+                  capture="environment"
+                  class="panel-chofer__entrada-archivo"
+                  required />
+                <div
+                  class="panel-chofer__archivo-placeholder"
+                  id="archivo-placeholder">
+                  <span class="panel-chofer__archivo-icono">&#128247;</span>
+                  <span>Toca para tomar o seleccionar foto</span>
+                </div>
+                <img
+                  class="panel-chofer__preview-imagen"
+                  id="preview-imagen"
+                  alt="Vista previa"
+                  style="display: none" />
+              </div>
+            </div>
+            <div class="panel-chofer__campo">
+              <label class="panel-chofer__etiqueta">Ubicación GPS Actual</label>
+              <div
+                class="panel-chofer__ubicacion-info"
+                id="ubicacion-actual">
+                Obteniendo ubicación...
+              </div>
+            </div>
+            <input
+              type="hidden"
+              id="evidencia-pedido-id" />
+            <input
+              type="hidden"
+              id="evidencia-envio-id" />
+            <div class="panel-chofer__modal-acciones">
+              <button
+                type="button"
+                class="panel-chofer__boton panel-chofer__boton--secundario"
+                id="btn-cancelar-evidencia">
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="panel-chofer__boton panel-chofer__boton--primario">
+                Confirmar Entrega
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="/js/utilidades/ClienteSupabase.js"></script>
+    <script src="/js/utilidades/Toaster.js"></script>
+    <script src="/js/navbar-comun.js"></script>
+    <script src="/js/navbar-global.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
+    <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/chofer.js"></script>
+  </body>
+</html>
