@@ -2,6 +2,7 @@ var productoServicio = new ProductoServicio();
 var carritoServicio = new CarritoServicio();
 var actualizadorContador = new ActualizadorContador(carritoServicio);
 var stockVerificadoEnSesion = false;
+var COSTO_DELIVERY = 15;
 
 document.addEventListener('DOMContentLoaded', function () {
   cargarNavbar().then(function () {
@@ -18,19 +19,36 @@ function configurarMetodoEntrega() {
   var radios = document.querySelectorAll('input[name="metodo-entrega"]');
   radios.forEach(function (radio) {
     radio.addEventListener('change', function () {
-      var campo = document.getElementById('campo-direccion');
-      if (campo) {
-        campo.style.display = radio.value === 'delivery' ? 'block' : 'none';
+      var campoDir = document.getElementById('campo-direccion');
+      var infoAlmacen = document.getElementById('info-almacen');
+      var esDelivery = radio.value === 'delivery';
+
+      if (campoDir) {
+        campoDir.classList.toggle('campo-adicional--oculto', !esDelivery);
       }
+      if (infoAlmacen) {
+        infoAlmacen.classList.toggle('campo-adicional--oculto', esDelivery);
+      }
+
+      var carrito = carritoServicio.obtenerCarrito();
+      var elementoTotal = document.getElementById('total-precio');
+      actualizarTotalCarrito(elementoTotal, carrito);
     });
   });
+}
+
+function obtenerMetodoEntregaSeleccionado() {
+  var nodo = document.querySelector('input[name="metodo-entrega"]:checked');
+  return nodo ? nodo.value : 'recojo_almacen';
 }
 
 function configurarEventosPago() {
   var btnCerrar = document.getElementById('btn-cerrar-modal');
   if (btnCerrar) {
     btnCerrar.onclick = function () {
-      document.getElementById('modal-pago').style.display = 'none';
+      document
+        .getElementById('modal-pago')
+        .classList.remove('modal-pago--visible');
     };
   }
 
@@ -38,9 +56,9 @@ function configurarEventosPago() {
   if (formTarjeta) {
     formTarjeta.onsubmit = function (e) {
       e.preventDefault();
-      formTarjeta.style.display = 'none';
+      formTarjeta.classList.add('form-tarjeta--oculto');
       var areaEstado = document.getElementById('estado-tarjeta');
-      if (areaEstado) areaEstado.style.display = 'block';
+      if (areaEstado) areaEstado.classList.add('modal-pago__estado--visible');
 
       setTimeout(function () {
         realizarPedidoFinal('pagado');
@@ -109,7 +127,9 @@ function verificarStockCarrito(carrito) {
         if (!infoStock.disponible || infoStock.stock === 0) {
           if (window.showToast) {
             window.showToast(
-              'El producto "' + item.nombre + '" ya no está disponible y será eliminado del carrito.',
+              'El producto "' +
+                item.nombre +
+                '" ya no está disponible y será eliminado del carrito.',
               { tipo: 'warning', duracion: 6000 },
             );
           }
@@ -120,7 +140,11 @@ function verificarStockCarrito(carrito) {
         if (item.cantidad > infoStock.stock) {
           if (window.showToast) {
             window.showToast(
-              'El producto "' + item.nombre + '" tiene menos stock. Se ajustó a ' + infoStock.stock + ' unidades.',
+              'El producto "' +
+                item.nombre +
+                '" tiene menos stock. Se ajustó a ' +
+                infoStock.stock +
+                ' unidades.',
               { tipo: 'warning', duracion: 6000 },
             );
           }
@@ -149,7 +173,10 @@ function renderizarProductosCarrito(contenedor, carrito) {
   while (contenedor.firstChild) contenedor.removeChild(contenedor.firstChild);
 
   carrito.forEach(function (producto) {
-    var subtotal = CalculadorPrecio.calcularSubtotal(producto.precio, producto.cantidad);
+    var subtotal = CalculadorPrecio.calcularSubtotal(
+      producto.precio,
+      producto.cantidad,
+    );
     var stock = producto.stock || 999;
 
     var divItem = document.createElement('div');
@@ -170,7 +197,8 @@ function renderizarProductosCarrito(contenedor, carrito) {
 
     var divPrecio = document.createElement('div');
     divPrecio.className = 'item-carrito__precio';
-    divPrecio.textContent = 'Bs. ' + CalculadorPrecio.formatearPrecio(producto.precio);
+    divPrecio.textContent =
+      'Bs. ' + CalculadorPrecio.formatearPrecio(producto.precio);
     divInfo.appendChild(divPrecio);
 
     var divStock = document.createElement('div');
@@ -234,11 +262,15 @@ function actualizarTotalCarrito(elementoTotal, carrito) {
   var cantidadTotal = carrito.reduce(function (total, item) {
     return total + item.cantidad;
   }, 0);
-  var precioTotal = carritoServicio.obtenerPrecioTotal();
+  var precioProductos = carritoServicio.obtenerPrecioTotal();
+  var metodo = obtenerMetodoEntregaSeleccionado();
+  var costoEnvio = metodo === 'delivery' ? COSTO_DELIVERY : 0;
+  var precioTotal = precioProductos + costoEnvio;
 
   var contenedorResumen = document.getElementById('resumen-detalle');
   if (contenedorResumen) {
-    while (contenedorResumen.firstChild) contenedorResumen.removeChild(contenedorResumen.firstChild);
+    while (contenedorResumen.firstChild)
+      contenedorResumen.removeChild(contenedorResumen.firstChild);
 
     var divResumenTotal = document.createElement('div');
     divResumenTotal.className = 'resumen-total';
@@ -248,10 +280,26 @@ function actualizarTotalCarrito(elementoTotal, carrito) {
     var spanProdLabel = document.createElement('span');
     spanProdLabel.textContent = 'Productos:';
     var spanProdVal = document.createElement('span');
-    spanProdVal.textContent = cantidadTotal + ' unidad' + (cantidadTotal !== 1 ? 'es' : '');
+    spanProdVal.textContent =
+      cantidadTotal + ' unidad' + (cantidadTotal !== 1 ? 'es' : '');
     divLineaProductos.appendChild(spanProdLabel);
     divLineaProductos.appendChild(spanProdVal);
     divResumenTotal.appendChild(divLineaProductos);
+
+    var divLineaEnvio = document.createElement('div');
+    divLineaEnvio.className = 'resumen-linea';
+    var spanEnvioLabel = document.createElement('span');
+    spanEnvioLabel.textContent = 'Costo de envío:';
+    var spanEnvioVal = document.createElement('span');
+    if (costoEnvio > 0) {
+      spanEnvioVal.textContent = 'Bs. ' + costoEnvio.toFixed(2);
+    } else {
+      spanEnvioVal.className = 'resumen-envio-gratis';
+      spanEnvioVal.textContent = 'Gratis';
+    }
+    divLineaEnvio.appendChild(spanEnvioLabel);
+    divLineaEnvio.appendChild(spanEnvioVal);
+    divResumenTotal.appendChild(divLineaEnvio);
 
     var divLineaTotal = document.createElement('div');
     divLineaTotal.className = 'resumen-linea total';
@@ -272,19 +320,23 @@ function actualizarTotalCarrito(elementoTotal, carrito) {
 
 function cambiarCantidad(idProducto, cambio) {
   var carrito = carritoServicio.obtenerCarrito();
-  var item = carrito.find(function (p) { return p.id === idProducto; });
+  var item = carrito.find(function (p) {
+    return p.id === idProducto;
+  });
   if (!item) return;
 
   var cantidadNueva = item.cantidad + cambio;
 
   if (cantidadNueva < 1) {
     if (window.showConfirm) {
-      window.showConfirm('¿Deseas eliminar este producto del carrito?', {
-        textoConfirmar: 'Eliminar',
-        textoCancelar: 'Cancelar',
-      }).then(function (confirmado) {
-        if (confirmado) eliminarProducto(idProducto, item.nombre);
-      });
+      window
+        .showConfirm('¿Deseas eliminar este producto del carrito?', {
+          textoConfirmar: 'Eliminar',
+          textoCancelar: 'Cancelar',
+        })
+        .then(function (confirmado) {
+          if (confirmado) eliminarProducto(idProducto, item.nombre);
+        });
     }
     return;
   }
@@ -292,7 +344,9 @@ function cambiarCantidad(idProducto, cambio) {
   var stockActual = item.stock || 999;
   if (cantidadNueva > stockActual) {
     if (window.showToast) {
-      window.showToast('Solo hay ' + stockActual + ' unidades disponibles.', { tipo: 'warning' });
+      window.showToast('Solo hay ' + stockActual + ' unidades disponibles.', {
+        tipo: 'warning',
+      });
     }
     return;
   }
@@ -312,13 +366,17 @@ function actualizarCantidad(idProducto, nuevaCantidadStr) {
   }
 
   var carrito = carritoServicio.obtenerCarrito();
-  var item = carrito.find(function (p) { return p.id === idProducto; });
+  var item = carrito.find(function (p) {
+    return p.id === idProducto;
+  });
   if (!item) return;
 
   var stockActual = item.stock || 999;
   if (nuevaCantidad > stockActual) {
     if (window.showToast) {
-      window.showToast('Solo hay ' + stockActual + ' unidades disponibles.', { tipo: 'warning' });
+      window.showToast('Solo hay ' + stockActual + ' unidades disponibles.', {
+        tipo: 'warning',
+      });
     }
     mostrarCarrito();
     return;
@@ -330,15 +388,17 @@ function actualizarCantidad(idProducto, nuevaCantidadStr) {
 
 function eliminarProducto(idProducto, nombreProducto) {
   if (window.showConfirm) {
-    window.showConfirm(
-      '¿Estás seguro de eliminar "' + nombreProducto + '" del carrito?',
-      { textoConfirmar: 'Eliminar', textoCancelar: 'Cancelar' },
-    ).then(function (confirmado) {
-      if (confirmado) {
-        carritoServicio.eliminarProducto(idProducto);
-        mostrarCarrito();
-      }
-    });
+    window
+      .showConfirm(
+        '¿Estás seguro de eliminar "' + nombreProducto + '" del carrito?',
+        { textoConfirmar: 'Eliminar', textoCancelar: 'Cancelar' },
+      )
+      .then(function (confirmado) {
+        if (confirmado) {
+          carritoServicio.eliminarProducto(idProducto);
+          mostrarCarrito();
+        }
+      });
   } else {
     carritoServicio.eliminarProducto(idProducto);
     mostrarCarrito();
@@ -376,48 +436,63 @@ function finalizarCompra() {
     return;
   }
 
-  var entregaNode = document.querySelector('input[name="metodo-entrega"]:checked');
+  var entregaNode = document.querySelector(
+    'input[name="metodo-entrega"]:checked',
+  );
   var pagoNode = document.querySelector('input[name="metodo-pago"]:checked');
   var direccionEl = document.getElementById('direccion');
   var direccion = direccionEl ? direccionEl.value : null;
 
   var entrega = entregaNode ? entregaNode.value : 'recojo_almacen';
   var pago = pagoNode ? pagoNode.value : 'efectivo';
+  var costoEnvio = entrega === 'delivery' ? COSTO_DELIVERY : 0;
+  var total = carritoServicio.obtenerPrecioTotal() + costoEnvio;
 
   if (entrega === 'delivery' && (!direccion || !direccion.trim())) {
     if (window.showToast) {
-      window.showToast('Por favor ingresa la dirección de entrega.', { tipo: 'warning' });
+      window.showToast('Por favor ingresa la dirección de entrega.', {
+        tipo: 'warning',
+      });
     }
     return;
   }
 
-  var total = carritoServicio.obtenerPrecioTotal();
+  var pagoQR = document.getElementById('pago-qr');
+  var pagoTarjetaEl = document.getElementById('pago-tarjeta');
+  var estadoTarjeta = document.getElementById('estado-tarjeta');
+  var formTarjeta = document.getElementById('form-tarjeta');
+  var modal = document.getElementById('modal-pago');
 
   if (pago === 'efectivo') {
     realizarPedidoFinal('pendiente');
   } else if (pago === 'tarjeta') {
-    var modal = document.getElementById('modal-pago');
-    document.getElementById('pago-qr').style.display = 'none';
-    document.getElementById('pago-tarjeta').style.display = 'block';
-    document.getElementById('monto-tarjeta').textContent = 'Bs. ' + total.toFixed(2);
-    document.getElementById('form-tarjeta').style.display = 'block';
-    document.getElementById('estado-tarjeta').style.display = 'none';
-    modal.style.display = 'block';
+    pagoQR.classList.remove('modal-pago__panel--visible');
+    pagoTarjetaEl.classList.add('modal-pago__panel--visible');
+    formTarjeta.classList.remove('form-tarjeta--oculto');
+    estadoTarjeta.classList.remove('modal-pago__estado--visible');
+    document.getElementById('monto-tarjeta').textContent =
+      'Bs. ' + total.toFixed(2);
+    modal.classList.add('modal-pago--visible');
   } else if (pago === 'qr') {
-    var modal = document.getElementById('modal-pago');
-    document.getElementById('pago-tarjeta').style.display = 'none';
-    document.getElementById('pago-qr').style.display = 'block';
+    pagoTarjetaEl.classList.remove('modal-pago__panel--visible');
+    pagoQR.classList.add('modal-pago__panel--visible');
     document.getElementById('monto-qr').textContent = 'Bs. ' + total.toFixed(2);
-    document.getElementById('texto-estado-qr').textContent = 'Esperando confirmación del banco...';
+    document.getElementById('texto-estado-qr').textContent =
+      'Esperando confirmación del banco...';
     var qrImg = document.getElementById('qr-img');
     if (qrImg) {
-      var qrData = encodeURIComponent('Raidencenter|Monto:' + total.toFixed(2) + '|Bs');
-      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + qrData;
+      var qrData = encodeURIComponent(
+        'Raidencenter|Monto:' + total.toFixed(2) + '|Bs',
+      );
+      qrImg.src =
+        'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
+        qrData;
     }
-    modal.style.display = 'block';
+    modal.classList.add('modal-pago--visible');
 
     setTimeout(function () {
-      document.getElementById('texto-estado-qr').textContent = '¡Pago confirmado por el banco!';
+      document.getElementById('texto-estado-qr').textContent =
+        '¡Pago confirmado por el banco!';
       setTimeout(function () {
         realizarPedidoFinal('pagado');
       }, 1200);
@@ -434,14 +509,20 @@ function realizarPedidoFinal(estadoPago) {
       if (!sesion) return;
 
       var carrito = carritoServicio.obtenerCarrito();
-      var total = carritoServicio.obtenerPrecioTotal();
-      var entregaNode = document.querySelector('input[name="metodo-entrega"]:checked');
-      var pagoNode = document.querySelector('input[name="metodo-pago"]:checked');
+      var precioProductos = carritoServicio.obtenerPrecioTotal();
+      var entregaNode = document.querySelector(
+        'input[name="metodo-entrega"]:checked',
+      );
+      var pagoNode = document.querySelector(
+        'input[name="metodo-pago"]:checked',
+      );
       var direccionEl = document.getElementById('direccion');
       var direccion = direccionEl ? direccionEl.value : null;
 
       var entrega = entregaNode ? entregaNode.value : 'recojo_almacen';
       var pago = pagoNode ? pagoNode.value : 'efectivo';
+      var costoEnvio = entrega === 'delivery' ? COSTO_DELIVERY : 0;
+      var total = precioProductos + costoEnvio;
 
       var detalles = carrito.map(function (item) {
         return {
@@ -480,17 +561,21 @@ function realizarPedidoFinal(estadoPago) {
         .then(function () {
           carritoServicio.vaciarCarrito();
           if (window.showToast) {
-            window.showToast('¡Compra realizada con éxito!', { tipo: 'success' });
+            window.showToast('¡Compra realizada con éxito!', {
+              tipo: 'success',
+            });
           }
           var modal = document.getElementById('modal-pago');
-          if (modal) modal.style.display = 'none';
+          if (modal) modal.classList.remove('modal-pago--visible');
           setTimeout(function () {
             window.location.href = '/historial';
           }, 1200);
         })
         .catch(function (err) {
           if (window.showToast) {
-            window.showToast('Error al procesar el pedido: ' + err.message, { tipo: 'error' });
+            window.showToast('Error al procesar el pedido: ' + err.message, {
+              tipo: 'error',
+            });
           }
         });
     });

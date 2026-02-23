@@ -227,10 +227,14 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
   z-index: 3000;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 20px;
+}
+
+.panel-chofer__modal-overlay--visible {
+  display: flex;
 }
 
 .panel-chofer__modal {
@@ -344,6 +348,15 @@
   max-height: 200px;
   border-radius: 8px;
   object-fit: cover;
+  display: none;
+}
+
+.panel-chofer__preview-imagen--visible {
+  display: block;
+}
+
+.panel-chofer__archivo-placeholder--oculto {
+  display: none;
 }
 
 .panel-chofer__ubicacion-info {

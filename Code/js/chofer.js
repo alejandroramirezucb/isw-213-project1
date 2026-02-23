@@ -392,13 +392,32 @@ function renderizarTarjetas(
     }
 
     if (tipo === 'en-curso') {
-      var btnEntregar = document.createElement('button');
-      btnEntregar.className = 'panel-chofer__boton panel-chofer__boton--exito';
-      btnEntregar.textContent = 'Marcar Entregado';
-      btnEntregar.addEventListener('click', function () {
-        abrirModalEvidencia(pedido.id, envio.id);
-      });
-      acciones.appendChild(btnEntregar);
+      if (pedido.estado === 'trasladandose') {
+        var btnLlegue = document.createElement('button');
+        btnLlegue.className =
+          'panel-chofer__boton panel-chofer__boton--advertencia';
+        btnLlegue.textContent = 'Llegué al destino';
+        btnLlegue.addEventListener('click', function () {
+          marcarListoParaEntregarse(
+            clienteSupabase,
+            pedido.id,
+            envio.id,
+            choferId,
+          );
+        });
+        acciones.appendChild(btnLlegue);
+      }
+
+      if (pedido.estado === 'listo para entregarse') {
+        var btnEntregar = document.createElement('button');
+        btnEntregar.className =
+          'panel-chofer__boton panel-chofer__boton--exito';
+        btnEntregar.textContent = 'Marcar Entregado';
+        btnEntregar.addEventListener('click', function () {
+          abrirModalEvidencia(pedido.id, envio.id);
+        });
+        acciones.appendChild(btnEntregar);
+      }
     }
 
     tarjeta.appendChild(acciones);
@@ -466,6 +485,39 @@ function iniciarEntrega(clienteSupabase, pedidoId, envioId, choferId) {
     });
 }
 
+function marcarListoParaEntregarse(
+  clienteSupabase,
+  pedidoId,
+  envioId,
+  choferId,
+) {
+  fetch('/api/pedidos/' + pedidoId + '/estado', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado: 'listo para entregarse' }),
+  })
+    .then(function (respuesta) {
+      return respuesta.json();
+    })
+    .then(function (data) {
+      if (data.error) {
+        if (window.showToast) {
+          window.showToast('Error: ' + data.error, { tipo: 'error' });
+        }
+        return;
+      }
+
+      if (window.showToast) {
+        window.showToast('Pedido listo para entregarse - Cliente notificado', {
+          tipo: 'success',
+          duracion: 5000,
+        });
+      }
+
+      cargarEntregasEnCurso(clienteSupabase, choferId);
+    });
+}
+
 function iniciarRastreoGPS(envioId) {
   detenerRastreoGPS();
   envioEnCursoId = envioId;
@@ -509,9 +561,13 @@ function abrirModalEvidencia(pedidoId, envioId) {
   document.getElementById('evidencia-pedido-id').value = pedidoId;
   document.getElementById('evidencia-envio-id').value = envioId;
   document.getElementById('evidencia-foto').value = '';
-  document.getElementById('preview-imagen').style.display = 'none';
-  document.getElementById('archivo-placeholder').style.display = 'flex';
-  document.getElementById('modal-evidencia').style.display = 'flex';
+  var previewImg = document.getElementById('preview-imagen');
+  var placeholder = document.getElementById('archivo-placeholder');
+  previewImg.classList.remove('panel-chofer__preview-imagen--visible');
+  placeholder.classList.remove('panel-chofer__archivo-placeholder--oculto');
+  document
+    .getElementById('modal-evidencia')
+    .classList.add('panel-chofer__modal-overlay--visible');
   obtenerUbicacionParaModal();
 }
 
@@ -547,16 +603,16 @@ function configurarModalEvidencia(clienteSupabase, choferId) {
   var placeholder = document.getElementById('archivo-placeholder');
 
   btnCerrar.addEventListener('click', function () {
-    modal.style.display = 'none';
+    modal.classList.remove('panel-chofer__modal-overlay--visible');
   });
 
   btnCancelar.addEventListener('click', function () {
-    modal.style.display = 'none';
+    modal.classList.remove('panel-chofer__modal-overlay--visible');
   });
 
   modal.addEventListener('click', function (evento) {
     if (evento.target === modal) {
-      modal.style.display = 'none';
+      modal.classList.remove('panel-chofer__modal-overlay--visible');
     }
   });
 
@@ -565,8 +621,8 @@ function configurarModalEvidencia(clienteSupabase, choferId) {
       var lector = new FileReader();
       lector.onload = function (e) {
         previewImg.src = e.target.result;
-        previewImg.style.display = 'block';
-        placeholder.style.display = 'none';
+        previewImg.classList.add('panel-chofer__preview-imagen--visible');
+        placeholder.classList.add('panel-chofer__archivo-placeholder--oculto');
       };
       lector.readAsDataURL(inputFoto.files[0]);
     }
@@ -639,7 +695,9 @@ function subirEvidenciaYConfirmar(
       enviarUbicacionFinal(envioId);
       detenerRastreoGPS();
 
-      document.getElementById('modal-evidencia').style.display = 'none';
+      document
+        .getElementById('modal-evidencia')
+        .classList.remove('panel-chofer__modal-overlay--visible');
 
       if (window.showToast) {
         window.showToast('Entrega confirmada con evidencia', {

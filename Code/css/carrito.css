@@ -264,6 +264,36 @@
   box-sizing: border-box;
 }
 
+.campo-adicional--oculto {
+  display: none;
+}
+
+.campo-adicional--almacen {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.campo-adicional__almacen-titulo {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #0369a1;
+  margin: 0 0 0.25rem;
+}
+
+.campo-adicional__almacen-direccion {
+  font-size: 0.875rem;
+  color: #374151;
+  margin: 0 0 0.2rem;
+}
+
+.campo-adicional__almacen-horario {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+}
+
 .total-final {
   display: flex;
   justify-content: space-between;
@@ -341,6 +371,30 @@
   height: 100%;
   background-color: rgba(0, 0, 0, 0.7);
   z-index: 2000;
+}
+
+.modal-pago--visible {
+  display: block;
+}
+
+.modal-pago__panel {
+  display: none;
+}
+
+.modal-pago__panel--visible {
+  display: block;
+}
+
+.modal-pago__estado {
+  display: none;
+}
+
+.modal-pago__estado--visible {
+  display: block;
+}
+
+.form-tarjeta--oculto {
+  display: none;
 }
 
 .modal-pago__contenido {
@@ -486,4 +540,9 @@
     max-width: 100%;
     position: static;
   }
+}
+
+.resumen-envio-gratis {
+  color: #16a34a;
+  font-weight: 600;
 }

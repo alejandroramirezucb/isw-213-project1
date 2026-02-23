@@ -195,14 +195,14 @@ aplicacion.post('/api/pedidos', async (req, res) => {
       pagoData = pagoInsertado[0];
     }
 
-    await supabase.from('historial_estados_pedido').insert({
-      pedido_id: pedidoId,
-      estado: 'orden realizada',
-    });
-
-    if (metodo_entrega === 'delivery') {
-      simularCicloPedido(pedidoId, direccion_destino);
-    }
+    await supabase
+      .from('historial_estados_pedido')
+      .insert({
+        pedido_id: pedidoId,
+        estado: 'orden realizada',
+      })
+      .then(function () {})
+      .catch(function () {});
 
     return res.json({
       pedido: pedidoData,
@@ -311,10 +311,34 @@ aplicacion.patch('/api/pedidos/:pedidoId/estado', async (req, res) => {
       .select();
     if (error) return res.status(500).json({ error: error.message });
 
-    await supabase.from('historial_estados_pedido').insert({
-      pedido_id: pedidoId,
-      estado,
-    });
+    await supabase
+      .from('historial_estados_pedido')
+      .insert({
+        pedido_id: pedidoId,
+        estado,
+      })
+      .then(function () {})
+      .catch(function () {});
+
+    if (estado === 'enviado') {
+      const { data: choferes } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('rol', 'chofer')
+        .limit(5);
+
+      if (choferes && choferes.length > 0) {
+        const choferAzar =
+          choferes[Math.floor(Math.random() * choferes.length)];
+        const pedidoActual = data[0];
+        await supabase.from('envios').insert({
+          pedido_id: pedidoId,
+          chofer_id: choferAzar.id,
+          latitud_destino: null,
+          longitud_destino: null,
+        });
+      }
+    }
 
     return res.json({ pedido: data[0] });
   } catch (err) {
@@ -353,10 +377,14 @@ aplicacion.patch(
 
       if (error) return res.status(500).json({ error: error.message });
 
-      await supabase.from('historial_estados_pedido').insert({
-        pedido_id: pedidoId,
-        estado: 'cerrado',
-      });
+      await supabase
+        .from('historial_estados_pedido')
+        .insert({
+          pedido_id: pedidoId,
+          estado: 'cerrado',
+        })
+        .then(function () {})
+        .catch(function () {});
 
       return res.json({ pedido: data[0] });
     } catch (err) {
@@ -396,49 +424,61 @@ aplicacion.get('/api/choferes', async (req, res) => {
   }
 });
 
-async function simularCicloPedido(pedidoId, direccionDestino) {
-  const supabase = require('./db');
-
-  const avanzarEstado = async (nuevoEstado, extraData) => {
-    const datosActualizar = { estado: nuevoEstado, ...extraData };
-    await supabase.from('pedidos').update(datosActualizar).eq('id', pedidoId);
-    await supabase.from('historial_estados_pedido').insert({
-      pedido_id: pedidoId,
-      estado: nuevoEstado,
-    });
-  };
-
-  const asignarChofer = async () => {
-    const { data: choferes } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('rol', 'chofer')
-      .limit(5);
-
-    if (!choferes || choferes.length === 0) return;
-
-    const choferAzar = choferes[Math.floor(Math.random() * choferes.length)];
-
-    await supabase.from('envios').insert({
-      pedido_id: pedidoId,
-      chofer_id: choferAzar.id,
-      latitud_destino: null,
-      longitud_destino: null,
-    });
-  };
-
-  setTimeout(async () => {
-    await avanzarEstado('en proceso');
-  }, 12000);
-
-  setTimeout(async () => {
-    await avanzarEstado('enviado');
-    await asignarChofer();
-  }, 25000);
-}
-
 aplicacion.get('/historial', (peticion, respuesta) => {
   respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'historial.html'));
+});
+
+aplicacion.get('/api/pedidos/admin', async (req, res) => {
+  try {
+    const supabase = require('./db');
+
+    const { data: pedidos, error } = await supabase
+      .from('pedidos')
+      .select(
+        'id, usuario_id, monto_total, estado, metodo_entrega, direccion_destino, fecha_creacion, fecha_entrega_final, confirmacion_cliente',
+      )
+      .order('fecha_creacion', { ascending: false });
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    if (!pedidos || pedidos.length === 0) {
+      return res.json({ pedidos: [] });
+    }
+
+    var usuarioIds = pedidos.map(function (p) {
+      return p.usuario_id;
+    });
+
+    const { data: usuarios } = await supabase
+      .from('usuarios')
+      .select('id, nombre_completo, correo_electronico')
+      .in('id', usuarioIds);
+
+    var mapaUsuarios = {};
+    (usuarios || []).forEach(function (u) {
+      mapaUsuarios[u.id] = u;
+    });
+
+    var pedidosEnriquecidos = pedidos.map(function (pedido) {
+      var usuario = mapaUsuarios[pedido.usuario_id] || {};
+      return {
+        id: pedido.id,
+        monto_total: pedido.monto_total,
+        estado: pedido.estado,
+        metodo_entrega: pedido.metodo_entrega,
+        direccion_destino: pedido.direccion_destino,
+        fecha_creacion: pedido.fecha_creacion,
+        fecha_entrega_final: pedido.fecha_entrega_final,
+        confirmacion_cliente: pedido.confirmacion_cliente,
+        nombre_cliente: usuario.nombre_completo || 'Desconocido',
+        correo_cliente: usuario.correo_electronico || '',
+      };
+    });
+
+    return res.json({ pedidos: pedidosEnriquecidos });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 aplicacion.post('/api/devoluciones', async (req, res) => {

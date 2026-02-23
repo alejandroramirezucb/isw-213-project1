@@ -65,12 +65,24 @@
               </div>
               <div
                 id="campo-direccion"
-                class="campo-adicional"
-                style="display: none">
+                class="campo-adicional campo-adicional--oculto">
                 <label for="direccion">Dirección de Entrega:</label>
                 <textarea
                   id="direccion"
                   placeholder="Ej. Av. Siempre Viva 123..."></textarea>
+              </div>
+              <div
+                id="info-almacen"
+                class="campo-adicional campo-adicional--almacen">
+                <p class="campo-adicional__almacen-titulo">
+                  Dirección del almacén:
+                </p>
+                <p class="campo-adicional__almacen-direccion">
+                  Av. San Martín 450, Santa Cruz de la Sierra
+                </p>
+                <p class="campo-adicional__almacen-horario">
+                  Lun–Vie 9:00–18:00 · Sáb 9:00–13:00
+                </p>
               </div>
             </div>
 
@@ -128,7 +140,7 @@
         </button>
         <div
           id="pago-qr"
-          style="display: none">
+          class="modal-pago__panel">
           <h3>Pago por Código QR</h3>
           <p>
             Escanea el código con tu app bancaria para pagar
@@ -150,7 +162,7 @@
 
         <div
           id="pago-tarjeta"
-          style="display: none">
+          class="modal-pago__panel">
           <h3>Pago con Tarjeta</h3>
           <p>Monto a pagar: <strong id="monto-tarjeta">Bs. 0.00</strong></p>
           <form
@@ -190,7 +202,7 @@
           </form>
           <div
             id="estado-tarjeta"
-            style="display: none">
+            class="modal-pago__estado">
             <p class="estado-simulacion">
               Procesando con la pasarela de pagos...
             </p>

@@ -47,6 +47,7 @@ function inicializarPanelAdmin(clienteSupabase) {
   configurarAlertasUI(clienteSupabase);
   configurarMonitoreoRutas(clienteSupabase);
   configurarDevoluciones();
+  configurarGestionPedidos(clienteSupabase);
 }
 
 function configurarPestanas() {
@@ -215,20 +216,20 @@ function configurarModalProducto(clienteSupabase) {
   btnCrear.addEventListener('click', function () {
     limpiarFormulario();
     document.getElementById('modal-titulo').textContent = 'Nuevo Producto';
-    modal.style.display = 'flex';
+    modal.classList.add('panel-admin__modal-overlay--visible');
   });
 
   btnCerrar.addEventListener('click', function () {
-    modal.style.display = 'none';
+    modal.classList.remove('panel-admin__modal-overlay--visible');
   });
 
   btnCancelar.addEventListener('click', function () {
-    modal.style.display = 'none';
+    modal.classList.remove('panel-admin__modal-overlay--visible');
   });
 
   modal.addEventListener('click', function (evento) {
     if (evento.target === modal) {
-      modal.style.display = 'none';
+      modal.classList.remove('panel-admin__modal-overlay--visible');
     }
   });
 
@@ -261,7 +262,9 @@ function abrirModalEdicion(producto) {
   document.getElementById('producto-categoria').value =
     producto.categoria_id || '';
   document.getElementById('producto-imagen').value = producto.url_imagen || '';
-  document.getElementById('modal-producto').style.display = 'flex';
+  document
+    .getElementById('modal-producto')
+    .classList.add('panel-admin__modal-overlay--visible');
 }
 
 function guardarProducto(clienteSupabase) {
@@ -299,7 +302,9 @@ function guardarProducto(clienteSupabase) {
       return;
     }
 
-    document.getElementById('modal-producto').style.display = 'none';
+    document
+      .getElementById('modal-producto')
+      .classList.remove('panel-admin__modal-overlay--visible');
     if (window.showToast) {
       window.showToast(id ? 'Producto actualizado' : 'Producto creado', {
         tipo: 'success',
@@ -1505,7 +1510,7 @@ function procesarAccionDevolucion() {
     })
     .then(function (datos) {
       if (datos.error) {
-        mostrarToast(datos.error, 'error');
+        if (window.showToast) window.showToast(datos.error, { tipo: 'error' });
         return;
       }
 
@@ -1513,9 +1518,235 @@ function procesarAccionDevolucion() {
         tipoAccion === 'aprobar'
           ? 'Devolución aprobada correctamente'
           : 'Devolución rechazada correctamente';
-      mostrarToast(mensajeExito, 'exito');
+      if (window.showToast) window.showToast(mensajeExito, { tipo: 'success' });
 
       cerrarModalObservaciones();
       cargarDevoluciones();
+    });
+}
+
+var pedidosCargadosGlobal = [];
+var clienteSupabasePedidosGlobal = null;
+
+function configurarGestionPedidos(clienteSupabase) {
+  clienteSupabasePedidosGlobal = clienteSupabase;
+  cargarPedidosAdmin();
+  configurarFiltrosPedidos();
+  configurarConfirmacionQR();
+}
+
+function cargarPedidosAdmin() {
+  fetch('/api/pedidos/admin')
+    .then(function (respuesta) {
+      return respuesta.json();
+    })
+    .then(function (datos) {
+      pedidosCargadosGlobal = datos.pedidos || [];
+      renderizarTablaPedidosAdmin(pedidosCargadosGlobal);
+    });
+}
+
+function renderizarTablaPedidosAdmin(pedidos) {
+  var tbody = document.getElementById('tabla-pedidos-admin-body');
+  var mensajeVacio = document.getElementById('mensaje-sin-pedidos-admin');
+
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (pedidos.length === 0) {
+    if (mensajeVacio)
+      mensajeVacio.classList.add('panel-admin__mensaje-vacio--visible');
+    return;
+  }
+
+  if (mensajeVacio)
+    mensajeVacio.classList.remove('panel-admin__mensaje-vacio--visible');
+
+  for (var i = 0; i < pedidos.length; i++) {
+    tbody.appendChild(crearFilaPedidoAdmin(pedidos[i]));
+  }
+}
+
+function crearFilaPedidoAdmin(pedido) {
+  var tr = document.createElement('tr');
+  tr.className = 'panel-admin__tabla-fila';
+
+  var tdId = document.createElement('td');
+  tdId.className = 'panel-admin__tabla-td';
+  tdId.textContent = '#' + (pedido.id || '').toString().slice(0, 8);
+  tr.appendChild(tdId);
+
+  var tdCliente = document.createElement('td');
+  tdCliente.className = 'panel-admin__tabla-td';
+  tdCliente.textContent = pedido.nombre_cliente || 'Desconocido';
+  tr.appendChild(tdCliente);
+
+  var tdTotal = document.createElement('td');
+  tdTotal.className = 'panel-admin__tabla-td';
+  tdTotal.textContent = 'Bs. ' + parseFloat(pedido.monto_total || 0).toFixed(2);
+  tr.appendChild(tdTotal);
+
+  var tdMetodo = document.createElement('td');
+  tdMetodo.className = 'panel-admin__tabla-td';
+  var etiquetaMetodo = document.createElement('span');
+  etiquetaMetodo.className =
+    pedido.metodo_entrega === 'recojo_almacen'
+      ? 'panel-admin__etiqueta-metodo panel-admin__etiqueta-metodo--almacen'
+      : 'panel-admin__etiqueta-metodo panel-admin__etiqueta-metodo--delivery';
+  etiquetaMetodo.textContent =
+    pedido.metodo_entrega === 'recojo_almacen' ? 'Recojo Almacén' : 'Delivery';
+  tdMetodo.appendChild(etiquetaMetodo);
+  tr.appendChild(tdMetodo);
+
+  var tdEstado = document.createElement('td');
+  tdEstado.className = 'panel-admin__tabla-td';
+  var claseEstado = (pedido.estado || '').replace(/\s+/g, '-');
+  var spanEstado = document.createElement('span');
+  spanEstado.className =
+    'panel-admin__estado panel-admin__estado--' + claseEstado;
+  spanEstado.textContent = pedido.estado || '';
+  tdEstado.appendChild(spanEstado);
+  tr.appendChild(tdEstado);
+
+  var tdAcciones = document.createElement('td');
+  tdAcciones.className =
+    'panel-admin__tabla-td panel-admin__tabla-td--acciones';
+
+  var siguienteEstado = obtenerSiguienteEstadoAdmin(pedido);
+  if (siguienteEstado) {
+    var botonAvanzar = document.createElement('button');
+    botonAvanzar.className = 'panel-admin__boton panel-admin__boton--avanzar';
+    botonAvanzar.textContent = obtenerTextoBtnEstado(siguienteEstado);
+    botonAvanzar.setAttribute('data-pedido-id', pedido.id);
+    botonAvanzar.setAttribute('data-siguiente-estado', siguienteEstado);
+    botonAvanzar.addEventListener('click', function () {
+      var id = this.getAttribute('data-pedido-id');
+      var estado = this.getAttribute('data-siguiente-estado');
+      avanzarEstadoPedido(id, estado);
+    });
+    tdAcciones.appendChild(botonAvanzar);
+  }
+
+  tr.appendChild(tdAcciones);
+  return tr;
+}
+
+function obtenerSiguienteEstadoAdmin(pedido) {
+  var estado = pedido.estado;
+  var metodo = pedido.metodo_entrega;
+
+  if (estado === 'orden realizada' || estado === 'recibido')
+    return 'en proceso';
+
+  if (metodo === 'recojo_almacen') {
+    if (estado === 'en proceso') return 'listo para entregarse';
+    return null;
+  }
+
+  if (metodo === 'delivery') {
+    if (estado === 'en proceso') return 'enviado';
+    return null;
+  }
+
+  return null;
+}
+
+function obtenerTextoBtnEstado(estado) {
+  var textos = {
+    'orden realizada': 'Procesar',
+    recibido: 'Procesar',
+    'en proceso': 'Procesar',
+    enviado: 'Marcar Enviado',
+    'listo para entregarse': 'Listo para Retiro',
+  };
+  return textos[estado] || estado;
+}
+
+function avanzarEstadoPedido(pedidoId, nuevoEstado) {
+  fetch('/api/pedidos/' + pedidoId + '/estado', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado: nuevoEstado }),
+  })
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (datos) {
+      if (datos.error) {
+        if (window.showToast) window.showToast(datos.error, { tipo: 'error' });
+        return;
+      }
+      if (window.showToast)
+        window.showToast('Estado actualizado: ' + nuevoEstado, {
+          tipo: 'success',
+        });
+      cargarPedidosAdmin();
+    });
+}
+
+function configurarFiltrosPedidos() {
+  var botones = document.querySelectorAll('[data-filtro-pedido]');
+
+  botones.forEach(function (boton) {
+    boton.addEventListener('click', function () {
+      botones.forEach(function (b) {
+        b.classList.remove('panel-admin__boton--filtro-activo');
+      });
+      boton.classList.add('panel-admin__boton--filtro-activo');
+
+      var filtro = boton.getAttribute('data-filtro-pedido');
+
+      if (filtro === 'todos') {
+        renderizarTablaPedidosAdmin(pedidosCargadosGlobal);
+      } else {
+        var pedidosFiltrados = pedidosCargadosGlobal.filter(function (p) {
+          return p.estado === filtro;
+        });
+        renderizarTablaPedidosAdmin(pedidosFiltrados);
+      }
+    });
+  });
+}
+
+function configurarConfirmacionQR() {
+  var boton = document.getElementById('btn-confirmar-qr');
+  var entrada = document.getElementById('qr-pedido-id');
+
+  if (!boton || !entrada) return;
+
+  boton.addEventListener('click', function () {
+    var pedidoId = entrada.value.trim();
+    if (!pedidoId) {
+      if (window.showToast)
+        window.showToast('Ingresa o escanea el ID del pedido', {
+          tipo: 'warning',
+        });
+      return;
+    }
+    confirmarRetiroAlmacen(pedidoId, entrada);
+  });
+}
+
+function confirmarRetiroAlmacen(pedidoId, campoEntrada) {
+  fetch('/api/pedidos/' + pedidoId + '/estado', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado: 'entregado' }),
+  })
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (datos) {
+      if (datos.error) {
+        if (window.showToast) window.showToast(datos.error, { tipo: 'error' });
+        return;
+      }
+      if (window.showToast)
+        window.showToast('Retiro confirmado. Pedido marcado como entregado.', {
+          tipo: 'success',
+        });
+      if (campoEntrada) campoEntrada.value = '';
+      cargarPedidosAdmin();
     });
 }

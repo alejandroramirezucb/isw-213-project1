@@ -1,4 +1,4 @@
-var ESTADOS_PEDIDO = [
+var ESTADOS_DELIVERY = [
   'orden realizada',
   'en proceso',
   'enviado',
@@ -7,15 +7,34 @@ var ESTADOS_PEDIDO = [
   'entregado',
 ];
 
-var clienteSupabaseGlobal = null;
+var ESTADOS_RECOJO = [
+  'orden realizada',
+  'en proceso',
+  'listo para entregarse',
+  'entregado',
+];
+
+var clienteSupabaseHistorial = null;
 var usuarioIdGlobal = null;
 
 function obtenerEtiquetaEstado(estado) {
   if (!estado) return '';
-  if (estado === 'orden realizada') return 'Orden Realizada';
-  return estado.replace(/-/g, ' ').replace(/\b\w/g, function (c) {
-    return c.toUpperCase();
-  });
+  var etiquetas = {
+    'orden realizada': 'Orden Realizada',
+    recibido: 'Recibido',
+    'en proceso': 'En Proceso',
+    enviado: 'Enviado',
+    trasladandose: 'Trasladándose',
+    'listo para entregarse': 'Listo para Entregarse',
+    entregado: 'Entregado',
+    cerrado: 'Cerrado',
+  };
+  return (
+    etiquetas[estado] ||
+    estado.replace(/-/g, ' ').replace(/\b\w/g, function (c) {
+      return c.toUpperCase();
+    })
+  );
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -35,7 +54,7 @@ function cargarMisPedidos() {
       return;
     }
 
-    clienteSupabaseGlobal = clienteSupabase;
+    clienteSupabaseHistorial = clienteSupabase;
 
     clienteSupabase.auth.getSession().then(function (resultado) {
       var sesion = resultado.data.session;
@@ -107,26 +126,30 @@ function obtenerPedidosConHistorial(clienteSupabase, usuarioId, contenedor) {
             'id, pedido_id, motivo_devolucion, estado_devolucion, fecha_solicitud',
           )
           .in('pedido_id', pedidoIds),
-      ]).then(function (resultados) {
-        var detalles = resultados[0].data || [];
-        var historialEstados = resultados[1].data || [];
-        var devoluciones = resultados[2].data || [];
+      ])
+        .then(function (resultados) {
+          var detalles = resultados[0].data || [];
+          var historialEstados = resultados[1].data || [];
+          var devoluciones = resultados[2].data || [];
 
-        pedidos.forEach(function (pedido) {
-          pedido.detalles = detalles.filter(function (d) {
-            return d.pedido_id === pedido.id;
-          });
-          pedido.historial_estados = historialEstados.filter(function (h) {
-            return h.pedido_id === pedido.id;
-          });
-          pedido.devolucion =
-            devoluciones.filter(function (d) {
+          pedidos.forEach(function (pedido) {
+            pedido.detalles = detalles.filter(function (d) {
               return d.pedido_id === pedido.id;
-            })[0] || null;
-        });
+            });
+            pedido.historial_estados = historialEstados.filter(function (h) {
+              return h.pedido_id === pedido.id;
+            });
+            pedido.devolucion =
+              devoluciones.filter(function (d) {
+                return d.pedido_id === pedido.id;
+              })[0] || null;
+          });
 
-        renderizarPedidosConTimeline(contenedor, pedidos);
-      });
+          renderizarPedidosConTimeline(contenedor, pedidos);
+        })
+        .catch(function () {
+          renderizarPedidosConTimeline(contenedor, pedidos);
+        });
     });
 }
 
@@ -250,6 +273,11 @@ function crearTarjetaPedido(pedido) {
     cuerpo.appendChild(textoConfirmado);
   }
 
+  var seccionQR = crearSeccionQRRecojo(pedido);
+  if (seccionQR) {
+    cuerpo.appendChild(seccionQR);
+  }
+
   var seccionDevolucion = crearSeccionDevolucion(pedido);
   if (seccionDevolucion) {
     cuerpo.appendChild(seccionDevolucion);
@@ -259,6 +287,48 @@ function crearTarjetaPedido(pedido) {
   articulo.appendChild(cuerpo);
 
   return articulo;
+}
+
+function crearSeccionQRRecojo(pedido) {
+  if (pedido.metodo_entrega !== 'recojo_almacen') return null;
+
+  var estadosMostrarQR = [
+    'orden realizada',
+    'en proceso',
+    'listo para entregarse',
+  ];
+  if (estadosMostrarQR.indexOf(pedido.estado) === -1) return null;
+
+  var seccion = document.createElement('div');
+  seccion.className = 'pedido-tarjeta__seccion-qr';
+
+  var titulo = document.createElement('p');
+  titulo.className = 'pedido-tarjeta__qr-titulo';
+  titulo.textContent =
+    pedido.estado === 'listo para entregarse'
+      ? '¡Tu pedido está listo! Muestra este código QR al retirar en almacén'
+      : 'Código QR para retiro en almacén (Av. San Martín 450, Santa Cruz)';
+  seccion.appendChild(titulo);
+
+  var contenedorQR = document.createElement('div');
+  contenedorQR.className = 'pedido-tarjeta__qr-contenedor';
+
+  var imagenQR = document.createElement('img');
+  imagenQR.className = 'pedido-tarjeta__qr-imagen';
+  imagenQR.alt = 'QR de retiro pedido #' + pedido.id;
+  imagenQR.src =
+    'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' +
+    encodeURIComponent(pedido.id);
+  contenedorQR.appendChild(imagenQR);
+
+  var idTexto = document.createElement('span');
+  idTexto.className = 'pedido-tarjeta__qr-id';
+  idTexto.textContent = 'ID: ' + pedido.id.toString().slice(0, 8).toUpperCase();
+  contenedorQR.appendChild(idTexto);
+
+  seccion.appendChild(contenedorQR);
+
+  return seccion;
 }
 
 function crearLineaTiempo(pedido) {
@@ -271,13 +341,19 @@ function crearLineaTiempo(pedido) {
     mapaFechas[h.estado] = h.fecha_cambio;
   });
 
-  var estadoActualIndex = ESTADOS_PEDIDO.indexOf(pedido.estado);
+  var estadosPedido =
+    pedido.metodo_entrega === 'delivery' ? ESTADOS_DELIVERY : ESTADOS_RECOJO;
+
+  var estadoNormalizado =
+    pedido.estado === 'recibido' ? 'orden realizada' : pedido.estado;
+  var estadoActualIndex = estadosPedido.indexOf(estadoNormalizado);
   if (estadoActualIndex === -1 && pedido.estado === 'cerrado') {
-    estadoActualIndex = ESTADOS_PEDIDO.length;
+    estadoActualIndex = estadosPedido.length;
   }
 
   var nombresEstados = {
     'orden realizada': 'Orden Realizada',
+    recibido: 'Recibido',
     'en proceso': 'En Proceso',
     enviado: 'Enviado',
     trasladandose: 'Trasladándose',
@@ -285,7 +361,7 @@ function crearLineaTiempo(pedido) {
     entregado: 'Entregado',
   };
 
-  ESTADOS_PEDIDO.forEach(function (estado, indice) {
+  estadosPedido.forEach(function (estado, indice) {
     var li = document.createElement('li');
     var claseModificador = '';
 
@@ -389,7 +465,7 @@ function confirmarRecepcionPedido(pedidoId) {
 
       var contenedor = document.querySelector('.pedidos__lista');
       obtenerPedidosConHistorial(
-        clienteSupabaseGlobal,
+        clienteSupabaseHistorial,
         usuarioIdGlobal,
         contenedor,
       );
@@ -566,7 +642,7 @@ function enviarSolicitudDevolucion() {
   var nombreArchivo = 'factura_' + pedidoId + '_' + Date.now() + '.jpg';
   var rutaArchivo = 'facturas/' + nombreArchivo;
 
-  clienteSupabaseGlobal.storage
+  clienteSupabaseHistorial.storage
     .from('devoluciones')
     .upload(rutaArchivo, archivoFoto, { contentType: archivoFoto.type })
     .then(function (resultadoSubida) {
@@ -575,7 +651,7 @@ function enviarSolicitudDevolucion() {
       if (resultadoSubida.error) {
         urlFoto = 'factura_local_' + pedidoId + '_' + Date.now();
       } else {
-        var urlData = clienteSupabaseGlobal.storage
+        var urlData = clienteSupabaseHistorial.storage
           .from('devoluciones')
           .getPublicUrl(rutaArchivo);
         urlFoto = urlData.data.publicUrl;
@@ -615,7 +691,7 @@ function enviarSolicitudDevolucion() {
 
       var contenedor = document.querySelector('.pedidos__lista');
       obtenerPedidosConHistorial(
-        clienteSupabaseGlobal,
+        clienteSupabaseHistorial,
         usuarioIdGlobal,
         contenedor,
       );

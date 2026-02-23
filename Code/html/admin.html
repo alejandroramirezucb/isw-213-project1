@@ -65,6 +65,11 @@
           data-seccion="devoluciones">
           Devoluciones
         </button>
+        <button
+          class="panel-admin__pestana"
+          data-seccion="pedidos">
+          Gestión de Pedidos
+        </button>
       </nav>
 
       <section
@@ -451,10 +456,99 @@
         </div>
       </aside>
 
+      <section
+        class="panel-admin__seccion"
+        id="seccion-pedidos">
+        <h2 class="panel-admin__seccion-titulo">Gestión de Pedidos</h2>
+
+        <div class="panel-admin__pedidos-herramientas">
+          <div class="panel-admin__confirmar-qr">
+            <label
+              class="panel-admin__etiqueta"
+              for="qr-pedido-id">
+              Confirmar retiro en almacén (escaneo QR)
+            </label>
+            <div class="panel-admin__confirmar-qr-fila">
+              <input
+                type="text"
+                id="qr-pedido-id"
+                class="panel-admin__entrada panel-admin__confirmar-qr-entrada"
+                placeholder="ID del pedido..." />
+              <button
+                class="panel-admin__boton panel-admin__boton--primario"
+                id="btn-confirmar-qr">
+                Confirmar Retiro
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <nav class="panel-admin__devoluciones-filtros">
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro panel-admin__boton--filtro-activo"
+            data-filtro-pedido="todos">
+            Todos
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-pedido="orden realizada">
+            Orden Realizada
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-pedido="en proceso">
+            En Proceso
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-pedido="enviado">
+            Enviado
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-pedido="trasladandose">
+            Trasladándose
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-pedido="listo para entregarse">
+            Listo para Entregarse
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-pedido="entregado">
+            Entregado
+          </button>
+        </nav>
+
+        <div class="panel-admin__tabla-contenedor">
+          <table class="panel-admin__tabla">
+            <thead class="panel-admin__tabla-cabecera">
+              <tr>
+                <th class="panel-admin__tabla-th">Pedido</th>
+                <th class="panel-admin__tabla-th">Cliente</th>
+                <th class="panel-admin__tabla-th">Total</th>
+                <th class="panel-admin__tabla-th">Método</th>
+                <th class="panel-admin__tabla-th">Estado</th>
+                <th class="panel-admin__tabla-th">Acciones</th>
+              </tr>
+            </thead>
+            <tbody
+              class="panel-admin__tabla-cuerpo"
+              id="tabla-pedidos-admin-body"></tbody>
+          </table>
+        </div>
+
+        <p
+          class="panel-admin__mensaje-vacio"
+          id="mensaje-sin-pedidos-admin">
+          No hay pedidos registrados.
+        </p>
+      </section>
+
       <div
         class="panel-admin__modal-overlay"
-        id="modal-producto"
-        style="display: none">
+        id="modal-producto">
         <div class="panel-admin__modal">
           <div class="panel-admin__modal-cabecera">
             <h3

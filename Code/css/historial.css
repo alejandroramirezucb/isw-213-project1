@@ -81,6 +81,11 @@
   color: #1a56a0;
 }
 
+.pedido-tarjeta__estado-badge--recibido {
+  background: #e8f0fe;
+  color: #1a56a0;
+}
+
 .pedido-tarjeta__estado-badge--en-proceso {
   background: #fff3e0;
   color: #e65100;
@@ -431,4 +436,42 @@
 
 .modal-devolucion__boton--enviar:hover {
   background: #e68900;
+}
+
+.pedido-tarjeta__seccion-qr {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.pedido-tarjeta__qr-titulo {
+  font-size: 0.875rem;
+  color: #0369a1;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.pedido-tarjeta__qr-contenedor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pedido-tarjeta__qr-imagen {
+  width: 150px;
+  height: 150px;
+  border: 3px solid #0284c7;
+  border-radius: 8px;
+}
+
+.pedido-tarjeta__qr-id {
+  font-family: monospace;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0369a1;
+  letter-spacing: 0.1em;
 }
