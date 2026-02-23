@@ -72,9 +72,11 @@ function actualizarIconoUsuario() {
       if (sesion) {
         enlaceUsuario.classList.add('usuario-logueado');
         enlaceUsuario.href = '/perfil';
+        mostrarIconoAdminSiCorresponde(clienteSupabase, sesion.user);
       } else {
         enlaceUsuario.classList.remove('usuario-logueado');
         enlaceUsuario.href = '/login';
+        ocultarIconoAdmin();
       }
     }
 
@@ -92,6 +94,35 @@ function actualizarIconoUsuario() {
       aplicarEstadoSesion(resultado.data.session);
     });
   });
+}
+
+function mostrarIconoAdminSiCorresponde(clienteSupabase, usuario) {
+  clienteSupabase
+    .from('usuarios')
+    .select('rol')
+    .eq('id', usuario.id)
+    .single()
+    .then(function (resultado) {
+      if (resultado.error) return;
+      var enlaceAdmin = document.querySelector(
+        '.barra-navegacion__enlace-icono--admin',
+      );
+      if (!enlaceAdmin) return;
+      if (resultado.data && resultado.data.rol === 'administrador') {
+        enlaceAdmin.style.display = 'block';
+      } else {
+        enlaceAdmin.style.display = 'none';
+      }
+    });
+}
+
+function ocultarIconoAdmin() {
+  var enlaceAdmin = document.querySelector(
+    '.barra-navegacion__enlace-icono--admin',
+  );
+  if (enlaceAdmin) {
+    enlaceAdmin.style.display = 'none';
+  }
 }
 
 function suscribirsePedidosUsuario(clienteSupabase, idUsuario) {

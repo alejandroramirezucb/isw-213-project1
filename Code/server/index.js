@@ -235,6 +235,10 @@ aplicacion.get('/perfil', (peticion, respuesta) => {
   respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'perfil.html'));
 });
 
+aplicacion.get('/admin', (peticion, respuesta) => {
+  respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'admin.html'));
+});
+
 aplicacion.get('/historial', (peticion, respuesta) => {
   respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'historial.html'));
 });

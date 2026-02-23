@@ -68,6 +68,8 @@ function registrarUsuario() {
   var correo = document.getElementById('correoRegistro');
   var contrasena = document.getElementById('contrasenaRegistro');
   var confirmar = document.getElementById('confirmarContrasena');
+  var rolElem = document.getElementById('rolRegistro');
+  var rolValor = rolElem ? rolElem.value : 'cliente';
 
   if (!correo || !contrasena || !nombre) {
     if (window.showToast) {
@@ -96,7 +98,7 @@ function registrarUsuario() {
         email: correo.value.trim(),
         password: contrasena.value,
         options: {
-          data: { nombre: nombre.value.trim() },
+          data: { nombre: nombre.value.trim(), rol: rolValor },
         },
       })
       .then(function (resultado) {
@@ -113,6 +115,7 @@ function registrarUsuario() {
           clienteSupabase,
           resultado.data.user,
           nombre.value.trim(),
+          rolValor,
         );
       })
       .then(function () {
@@ -132,8 +135,9 @@ function registrarUsuario() {
   });
 }
 
-function guardarUsuarioEnBaseDatos(clienteSupabase, usuario, nombre) {
+function guardarUsuarioEnBaseDatos(clienteSupabase, usuario, nombre, rol) {
   if (!usuario) return Promise.resolve();
+  var rolFinal = rol || 'cliente';
 
   return clienteSupabase
     .from('usuarios')
@@ -141,7 +145,7 @@ function guardarUsuarioEnBaseDatos(clienteSupabase, usuario, nombre) {
       id: usuario.id,
       correo_electronico: usuario.email,
       nombre_completo: nombre,
-      rol: 'cliente',
+      rol: rolFinal,
     })
     .then(function (resultado) {
       if (resultado.error) {
@@ -152,7 +156,7 @@ function guardarUsuarioEnBaseDatos(clienteSupabase, usuario, nombre) {
             id: usuario.id,
             correo_electronico: usuario.email,
             nombre_completo: nombre,
-            rol: 'cliente',
+            rol: rolFinal,
           }),
         });
       }

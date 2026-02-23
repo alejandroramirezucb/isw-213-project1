@@ -146,6 +146,25 @@
               placeholder="Repite la contraseña"
               required />
           </div>
+          <div class="tarjeta-autenticacion__campo">
+            <label
+              class="tarjeta-autenticacion__etiqueta"
+              for="rolRegistro">
+              Tipo de cuenta
+            </label>
+            <select
+              id="rolRegistro"
+              class="tarjeta-autenticacion__entrada"
+              required>
+              <option
+                value="cliente"
+                selected>
+                Cliente
+              </option>
+              <option value="administrador">Administrador</option>
+              <option value="chofer">Chofer</option>
+            </select>
+          </div>
           <button
             type="submit"
             class="tarjeta-autenticacion__boton">
