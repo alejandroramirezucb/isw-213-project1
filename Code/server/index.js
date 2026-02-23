@@ -7,7 +7,6 @@ const ServicioProductos = require('./servicios/ServicioProductos');
 const ControladorProductos = require('./controladores/ControladorProductos');
 
 if (!validarConfiguracion()) {
-  console.error('Error: Configuración incompleta. Revisa tu archivo .env');
   process.exit(1);
 }
 
@@ -29,46 +28,28 @@ aplicacion.get('/config', (peticion, respuesta) => {
 });
 
 aplicacion.get('/api/navbar', (peticion, respuesta) => {
-  const rutaNavbar = ruta.join(__dirname, '..', 'html', 'navbar.html');
-  respuesta.sendFile(rutaNavbar);
+  respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'navbar.html'));
 });
 
 aplicacion.get('/api/producto-tarjeta', (peticion, respuesta) => {
-  const rutaTarjeta = ruta.join(
-    __dirname,
-    '..',
-    'html',
-    'producto-tarjeta.html',
+  respuesta.sendFile(
+    ruta.join(__dirname, '..', 'html', 'producto-tarjeta.html'),
   );
-  respuesta.sendFile(rutaTarjeta);
 });
 
 aplicacion.get('/api/productos', (peticion, respuesta) =>
   controladorProductos.obtenerTodos(peticion, respuesta),
 );
 
-aplicacion.post('/api/usuarios/fallback', express.json(), async (req, res) => {
+aplicacion.post('/api/usuarios/fallback', async (req, res) => {
   try {
     const { id, nombre_completo, correo_electronico, telefono, rol } = req.body;
+
     if (!id || !correo_electronico) {
       return res.status(400).json({ error: 'ID y correo son obligatorios' });
     }
 
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.warn(
-        '[fallback] SUPABASE_SERVICE_ROLE_KEY no está configurada. ' +
-          'Sin ella, RLS bloqueará el INSERT en public.usuarios. ' +
-          'Obtén la clave en: Supabase Dashboard → Settings → API → service_role key',
-      );
-    }
-
     const supabase = require('./db');
-    console.log(
-      '[fallback] Intentando upsert en usuarios. id=' +
-        id +
-        ' email=' +
-        correo_electronico,
-    );
 
     const { data, error } = await supabase
       .from('usuarios')
@@ -85,12 +66,6 @@ aplicacion.post('/api/usuarios/fallback', express.json(), async (req, res) => {
       .select();
 
     if (error) {
-      console.error(
-        '[fallback] Error upsert usuarios:',
-        error.code,
-        error.message,
-        error.details,
-      );
       if (error.code === '42501') {
         return res.status(500).json({
           error:
@@ -100,49 +75,45 @@ aplicacion.post('/api/usuarios/fallback', express.json(), async (req, res) => {
       if (error.code === '23503') {
         return res.status(500).json({
           error:
-            'El usuario aún no existe en auth.users (FK violation). Espera un momento e intenta de nuevo.',
+            'El usuario aún no existe en auth.users. Espera un momento e intenta de nuevo.',
         });
       }
       return res.status(500).json({ error: error.message });
     }
 
-    console.log('[fallback] Upsert exitoso en usuarios:', data);
     return res.json({ success: true, message: 'Usuario sincronizado' });
   } catch (err) {
-    console.error('[fallback] Error crítico:', err.message);
     return res.status(500).json({ error: err.message });
   }
 });
 
-aplicacion.post(
-  '/api/productos/stock-batch',
-  express.json(),
-  async (peticion, respuesta) => {
-    try {
-      const ids =
-        peticion.body && Array.isArray(peticion.body.ids)
-          ? peticion.body.ids
-          : [];
-      if (!ids.length)
-        return respuesta.status(400).json({ error: 'ids array required' });
+aplicacion.post('/api/productos/stock-batch', async (peticion, respuesta) => {
+  try {
+    const ids =
+      peticion.body && Array.isArray(peticion.body.ids)
+        ? peticion.body.ids
+        : [];
 
-      const supabase = require('./db');
-      const { data, error } = await supabase
-        .from('productos')
-        .select('id, stock_disponible')
-        .in('id', ids);
-
-      if (error) return respuesta.status(500).json({ error: error.message });
-
-      return respuesta.json({ stocks: data });
-    } catch (err) {
-      console.error('Error stock-batch:', err);
-      return respuesta.status(500).json({ error: err.message });
+    if (!ids.length) {
+      return respuesta
+        .status(400)
+        .json({ error: 'Se requiere un arreglo de ids' });
     }
-  },
-);
 
-aplicacion.post('/api/pedidos', express.json(), async (req, res) => {
+    const supabase = require('./db');
+    const { data, error } = await supabase
+      .from('productos')
+      .select('id, stock_disponible')
+      .in('id', ids);
+
+    if (error) return respuesta.status(500).json({ error: error.message });
+    return respuesta.json({ stocks: data });
+  } catch (err) {
+    return respuesta.status(500).json({ error: err.message });
+  }
+});
+
+aplicacion.post('/api/pedidos', async (req, res) => {
   try {
     const {
       usuario_id,
@@ -156,12 +127,12 @@ aplicacion.post('/api/pedidos', express.json(), async (req, res) => {
     if (!usuario_id || !Array.isArray(detalles) || detalles.length === 0) {
       return res
         .status(400)
-        .json({ error: 'usuario_id and detalles[] required' });
+        .json({ error: 'usuario_id y detalles[] son requeridos' });
     }
 
     const supabase = require('./db');
 
-    const { data: pedidoData, error: errPedido } = await supabase
+    const { data: pedidoData, error: errorPedido } = await supabase
       .from('pedidos')
       .insert({
         usuario_id,
@@ -173,36 +144,32 @@ aplicacion.post('/api/pedidos', express.json(), async (req, res) => {
       .select()
       .single();
 
-    if (errPedido) {
-      console.error('[api/pedidos] error crear pedido:', errPedido);
-      return res.status(500).json({ error: errPedido.message || errPedido });
+    if (errorPedido) {
+      return res.status(500).json({ error: errorPedido.message });
     }
 
     const pedidoId = pedidoData.id;
 
-    const detallesToInsert = detalles.map((d) => ({
+    const detallesParaInsertar = detalles.map((detalle) => ({
       pedido_id: pedidoId,
-      producto_id: d.producto_id,
-      cantidad: d.cantidad,
-      precio_unitario_venta: d.precio_unitario_venta,
+      producto_id: detalle.producto_id,
+      cantidad: detalle.cantidad,
+      precio_unitario_venta: detalle.precio_unitario_venta,
     }));
 
-    const { data: detallesData, error: errDetalles } = await supabase
+    const { data: detallesData, error: errorDetalles } = await supabase
       .from('detalles_pedido')
-      .insert(detallesToInsert)
+      .insert(detallesParaInsertar)
       .select();
 
-    if (errDetalles) {
+    if (errorDetalles) {
       await supabase.from('pedidos').delete().eq('id', pedidoId);
-      console.error('[api/pedidos] error insertar detalles:', errDetalles);
-      return res
-        .status(500)
-        .json({ error: errDetalles.message || errDetalles });
+      return res.status(500).json({ error: errorDetalles.message });
     }
 
     let pagoData = null;
     if (pago && typeof pago === 'object') {
-      const pagoToInsert = {
+      const pagoParaInsertar = {
         pedido_id: pedidoId,
         metodo_pago: pago.metodo_pago || 'efectivo',
         estado_pago: pago.estado_pago || 'pendiente',
@@ -211,21 +178,21 @@ aplicacion.post('/api/pedidos', express.json(), async (req, res) => {
         referencia_transaccion: pago.referencia_transaccion || null,
         monto_total_pagado: pago.monto_total_pagado || monto_total || 0,
       };
-      const { data: pagoInserted, error: errPago } = await supabase
+
+      const { data: pagoInsertado, error: errorPago } = await supabase
         .from('pagos')
-        .insert(pagoToInsert)
+        .insert(pagoParaInsertar)
         .select();
 
-      if (errPago) {
+      if (errorPago) {
         await supabase
           .from('detalles_pedido')
           .delete()
           .in('pedido_id', [pedidoId]);
         await supabase.from('pedidos').delete().eq('id', pedidoId);
-        console.error('[api/pedidos] error insertar pago:', errPago);
-        return res.status(500).json({ error: errPago.message || errPago });
+        return res.status(500).json({ error: errorPago.message });
       }
-      pagoData = pagoInserted[0];
+      pagoData = pagoInsertado[0];
     }
 
     return res.json({
@@ -234,8 +201,7 @@ aplicacion.post('/api/pedidos', express.json(), async (req, res) => {
       pago: pagoData,
     });
   } catch (err) {
-    console.error('[api/pedidos] excepción:', err.message || err);
-    return res.status(500).json({ error: err.message || String(err) });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -254,8 +220,7 @@ aplicacion.get('/producto/:id', (peticion, respuesta) => {
 });
 
 aplicacion.get('/carrito', (peticion, respuesta) => {
-  const rutaCarrito = ruta.join(__dirname, '..', 'html', 'carrito.html');
-  respuesta.sendFile(rutaCarrito);
+  respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'carrito.html'));
 });
 
 aplicacion.get('/login', (peticion, respuesta) => {
@@ -287,7 +252,6 @@ aplicacion.use((peticion, respuesta) => {
 });
 
 const puerto = process.env.PORT || 3000;
-
 aplicacion.listen(puerto, () => {
   console.log('Servidor iniciado en puerto ' + puerto);
 });

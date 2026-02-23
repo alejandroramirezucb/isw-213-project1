@@ -1,21 +1,27 @@
-﻿class ActualizadorContador {
-    constructor(carritoServicio) {
-        this.carritoServicio = carritoServicio;
-    }
+class ActualizadorContador {
+  constructor(carritoServicio) {
+    this.carritoServicio = carritoServicio;
+  }
 
-    actualizar() {
-        const cantidadTotal = this.carritoServicio.obtenerCantidadTotal();
-        const contador = document.querySelector('.cart-count');
-        if (contador) {
-            const anterior = parseInt(contador.textContent) || 0;
-            contador.textContent = cantidadTotal;
-            contador.style.display = cantidadTotal > 0 ? 'inline-flex' : 'none';
-            if (cantidadTotal !== anterior) {
-                contador.classList.remove('badge-animado');
-                void contador.offsetWidth;
-                contador.classList.add('badge-animado');
-                setTimeout(() => contador.classList.remove('badge-animado'), 500);
-            }
-        }
+  actualizar() {
+    var cantidadTotal = this.carritoServicio.obtenerCantidadTotal();
+    var contador = document.querySelector(
+      '.barra-navegacion__contador-carrito',
+    );
+
+    if (!contador) return;
+
+    var valorAnterior = parseInt(contador.textContent) || 0;
+    contador.textContent = cantidadTotal;
+    contador.style.display = cantidadTotal > 0 ? 'inline-flex' : 'none';
+
+    if (cantidadTotal !== valorAnterior) {
+      contador.classList.remove('insignia-animada');
+      void contador.offsetWidth;
+      contador.classList.add('insignia-animada');
+      setTimeout(function () {
+        contador.classList.remove('insignia-animada');
+      }, 500);
     }
+  }
 }

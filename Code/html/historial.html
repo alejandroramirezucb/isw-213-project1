@@ -1,348 +1,122 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0" />
-    <title>Historial de Compras - Raidencenter</title>
-    <link
-      rel="icon"
-      href="/assets/icon.png"
-      type="image/png" />
-    <link
-      rel="stylesheet"
-      href="/css/navbar.css" />
+    <title>Historial de Pedidos - Raidencenter</title>
     <link
       rel="stylesheet"
       href="/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="/css/navbar.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
-      .contenedor-historial {
-        max-width: 1200px;
-        margin: 100px auto;
-        padding: 30px;
+      .pagina-historial {
+        max-width: 800px;
+        margin: 6rem auto 2rem;
+        padding: 0 1.5rem;
       }
-      .historial-header {
-        margin-bottom: 30px;
-        padding-bottom: 15px;
+      .pagina-historial__titulo {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: #1a1a2e;
       }
-      .historial-header h1 {
-        color: #000;
-        margin: 0;
-      }
-      .filtros-historial {
+      .historial__lista {
         display: flex;
-        gap: 15px;
-        margin-bottom: 25px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 1rem;
       }
-      .filtro-item {
-        flex: 1;
-        min-width: 200px;
+      .historial__mensaje-vacio {
+        text-align: center;
+        color: #888;
+        font-size: 1.1rem;
+        padding: 3rem 0;
       }
-      .filtro-item label {
-        display: block;
-        margin-bottom: 5px;
-        font-size: 14px;
-        color: #666;
-        font-weight: 500;
-      }
-      .filtro-item select,
-      .filtro-item input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        box-sizing: border-box;
-      }
-      .lista-pedidos-historial {
-        display: grid;
-        gap: 20px;
-      }
-      .pedido-card {
+      .historial__pedido {
         background: white;
-        border: 1px solid #e0e0e0;
         border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        transition: box-shadow 0.3s;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
       }
-      .pedido-card:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      .historial__pedido-cabecera {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
       }
-      .pedido-header {
+      .historial__pedido-numero {
+        font-size: 1.1rem;
+        color: #1a1a2e;
+        margin: 0 0 0.3rem 0;
+      }
+      .historial__pedido-fecha {
+        font-size: 0.85rem;
+        color: #888;
+      }
+      .historial__estado {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: capitalize;
+      }
+      .historial__estado--pendiente {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .historial__estado--confirmado {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+      .historial__estado--enviado {
+        background: #cce5ff;
+        color: #004085;
+      }
+      .historial__estado--entregado {
+        background: #d4edda;
+        color: #155724;
+      }
+      .historial__estado--cancelado {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .historial__estado--recibido {
+        background: #e8f0fe;
+        color: #1a56a0;
+      }
+      .historial__pedido-detalles {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #f0f0f0;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #555;
       }
-      .pedido-numero {
-        font-size: 18px;
-        font-weight: bold;
+      .historial__pedido-total {
+        font-weight: 600;
         color: #034e8b;
-      }
-      .pedido-fecha {
-        color: #888;
-        font-size: 14px;
-      }
-      .pedido-estado {
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        text-transform: uppercase;
-      }
-      .estado-recibido {
-        background: #e0f7f5;
-        color: #00796b;
-      }
-      .estado-en-proceso {
-        background: #fff3e0;
-        color: #f57c00;
-      }
-      .estado-enviado {
-        background: #e8f5e9;
-        color: #388e3c;
-      }
-      .estado-trasladandose {
-        background: #fff9c4;
-        color: #f9a825;
-      }
-      .estado-listo-para-entregarse {
-        background: #f3e5f5;
-        color: #7b1fa2;
-      }
-      .estado-entregado {
-        background: #c8e6c9;
-        color: #2e7d32;
-      }
-      .estado-cerrado {
-        background: #e0e0e0;
-        color: #616161;
-      }
-      .pedido-detalles {
-        margin: 15px 0;
-      }
-      .detalle-linea {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        font-size: 14px;
-      }
-      .detalle-label {
-        color: #666;
-      }
-      .detalle-valor {
-        font-weight: 500;
-        color: #333;
-      }
-      .linea-tiempo {
-        margin: 20px 0;
-        padding: 20px;
-        background: #f9f9f9;
-        border-radius: 8px;
-      }
-      .linea-tiempo-titulo {
-        font-weight: bold;
-        color: #034e8b;
-        margin-bottom: 15px;
-        font-size: 15px;
-      }
-      .estado-timeline {
-        position: relative;
-        padding-left: 30px;
-        margin-bottom: 15px;
-      }
-      .estado-timeline::before {
-        content: '';
-        position: absolute;
-        left: 7px;
-        top: 25px;
-        bottom: -15px;
-        width: 2px;
-        background: #ddd;
-      }
-      .estado-timeline:last-child::before {
-        display: none;
-      }
-      .estado-punto {
-        position: absolute;
-        left: 0;
-        top: 5px;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #ddd;
-        border: 3px solid white;
-        box-shadow: 0 0 0 2px #ddd;
-      }
-      .estado-activo .estado-punto {
-        background: #034e8b;
-        box-shadow: 0 0 0 2px #034e8b;
-      }
-      .estado-nombre {
-        font-weight: 500;
-        color: #333;
-        font-size: 14px;
-      }
-      .estado-fecha {
-        font-size: 12px;
-        color: #888;
-        margin-top: 2px;
-      }
-      .pedido-productos {
-        margin: 15px 0;
-        padding: 15px;
-        background: #f9f9f9;
-        border-radius: 8px;
-      }
-      .producto-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        font-size: 14px;
-      }
-      .pedido-acciones {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid #f0f0f0;
-      }
-      .btn-accion {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.3s;
-      }
-      .btn-factura {
-        background: #034e8b;
-        color: white;
-      }
-      .btn-factura:hover {
-        background: #023d6d;
-      }
-      .btn-detalles {
-        background: #f0f0f0;
-        color: #333;
-      }
-      .btn-detalles:hover {
-        background: #e0e0e0;
-      }
-      .btn-accion:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-      .mensaje-vacio {
-        text-align: center;
-        padding: 60px 20px;
-        color: #888;
-      }
-      .mensaje-vacio h3 {
-        color: #666;
-        margin-bottom: 10px;
-      }
-      .info-pago {
-        background: #fff3e0;
-        padding: 12px;
-        border-radius: 8px;
-        margin-top: 10px;
-      }
-      .info-pago-titulo {
-        font-weight: bold;
-        color: #f57c00;
-        margin-bottom: 8px;
-      }
-      .cuota-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 0;
-        font-size: 13px;
-      }
-      .cuota-pendiente {
-        color: #d32f2f;
-      }
-      .cuota-pagada {
-        color: #388e3c;
+        font-size: 1rem;
       }
     </style>
   </head>
   <body>
-    <header id="navbar-placeholder"></header>
+    <header id="navbar-container"></header>
 
-    <main class="contenedor-historial">
-      <div class="historial-header">
-        <h1>Historial de Compras</h1>
-      </div>
-
-      <div class="filtros-historial">
-        <div class="filtro-item">
-          <label for="filtro-estado">Estado del Pedido</label>
-          <select id="filtro-estado">
-            <option value="">Todos los estados</option>
-            <option value="recibido">Orden realizada</option>
-            <option value="en proceso">En Proceso</option>
-            <option value="enviado">Enviado</option>
-            <option value="trasladandose">Trasladándose</option>
-            <option value="listo para entregarse">Listo para Entregarse</option>
-            <option value="entregado">Entregado</option>
-            <option value="cerrado">Cerrado</option>
-          </select>
-        </div>
-        <div class="filtro-item">
-          <label for="filtro-fecha-desde">Desde</label>
-          <input
-            type="date"
-            id="filtro-fecha-desde" />
-        </div>
-        <div class="filtro-item">
-          <label for="filtro-fecha-hasta">Hasta</label>
-          <input
-            type="date"
-            id="filtro-fecha-hasta" />
-        </div>
-        <div
-          class="filtro-item"
-          style="display: flex; align-items: flex-end">
-          <button
-            id="btn-aplicar-filtros"
-            class="btn-accion btn-factura"
-            style="width: 100%">
-            Aplicar Filtros
-          </button>
-        </div>
-      </div>
-
-      <div
-        id="lista-pedidos-historial"
-        class="lista-pedidos-historial">
-        <div class="mensaje-vacio">
-          <h3>Cargando pedidos...</h3>
-        </div>
-      </div>
+    <main class="pagina-historial">
+      <h1 class="pagina-historial__titulo">Historial de Pedidos</h1>
+      <div class="historial__lista"></div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/utilidades/ClienteSupabase.js"></script>
     <script src="/js/utilidades/Toaster.js"></script>
+    <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
     <script src="/js/navbar-comun.js"></script>
     <script src="/js/navbar-global.js"></script>
-    <script src="/js/servicios/CarritoServicio.js"></script>
-    <script src="/js/utilidades/ActualizadorContador.js"></script>
     <script src="/js/historial.js"></script>
-    <script>
-      fetch('/api/navbar')
-        .then((res) => res.text())
-        .then((html) => {
-          document.getElementById('navbar-placeholder').innerHTML = html;
-          actualizarIconoUsuario();
-          const actualizador = new ActualizadorContador(new CarritoServicio());
-          actualizador.actualizar();
-        });
-    </script>
   </body>
 </html>

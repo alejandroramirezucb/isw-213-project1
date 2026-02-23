@@ -1,139 +1,164 @@
-﻿let supa = null;
-
-async function inicializarSupabase() {
-  const res = await fetch('/config');
-  const { supabaseUrl, supabaseKey } = await res.json();
-  supa = window.supabase.createClient(supabaseUrl, supabaseKey);
-}
+document.addEventListener('DOMContentLoaded', function () {
+  cargarNavbar().then(function () {
+    obtenerClienteSupabase().then(function (clienteSupabase) {
+      if (!clienteSupabase) {
+        window.location.href = '/login';
+        return;
+      }
+      clienteSupabase.auth.getSession().then(function (resultado) {
+        var sesion = resultado.data.session;
+        if (!sesion) {
+          window.location.href = '/login';
+          return;
+        }
+        cargarDatosUsuario(clienteSupabase, sesion.user);
+        cargarPedidos(clienteSupabase, sesion.user.id);
+        configurarLogout(clienteSupabase);
+      });
+    });
+  });
+});
 
 function getEstadoLabel(estado) {
   if (!estado) return '';
   if (estado === 'recibido') return 'Orden realizada';
-  return estado.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return estado.replace(/-/g, ' ').replace(/\b\w/g, function (c) {
+    return c.toUpperCase();
+  });
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await inicializarSupabase();
+function cargarDatosUsuario(clienteSupabase, user) {
+  clienteSupabase
+    .from('usuarios')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+    .then(function (resultado) {
+      var nombre;
 
-  const {
-    data: { session },
-  } = await supa.auth.getSession();
+      if (resultado.error) {
+        console.error('Error al cargar datos del usuario:', resultado.error);
+        nombre =
+          (user.user_metadata && user.user_metadata.nombre_completo) ||
+          user.email.split('@')[0];
+        document.getElementById('user-nombre').textContent = nombre;
+        document.getElementById('user-email').textContent = user.email;
+        document.getElementById('user-avatar').textContent = nombre
+          .charAt(0)
+          .toUpperCase();
+        return;
+      }
 
-  if (!session) {
-    window.location.href = '/login';
-    return;
-  }
+      var usuario = resultado.data;
+      nombre = usuario.nombre_completo || user.email.split('@')[0];
+      document.getElementById('user-nombre').textContent = nombre;
+      document.getElementById('user-email').textContent =
+        usuario.correo_electronico;
+      document.getElementById('user-avatar').textContent = nombre
+        .charAt(0)
+        .toUpperCase();
 
-  await cargarDatosUsuario(session.user);
-  await cargarPedidos(session.user.id);
-  configurarLogout();
-});
+      if (usuario.telefono) {
+        var telefonoElem = document.getElementById('user-telefono');
+        if (telefonoElem) {
+          telefonoElem.textContent = usuario.telefono;
+        }
+      }
 
-async function cargarDatosUsuario(user) {
-  try {
-    const { data: usuario, error } = await supa
-      .from('usuarios')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (error) {
-      console.error('Error al cargar datos del usuario:', error);
-      const nombre =
-        user.user_metadata.nombre_completo || user.email.split('@')[0];
+      var rolElem = document.getElementById('user-rol');
+      if (rolElem && usuario.rol) {
+        var rolTexto =
+          usuario.rol === 'administrador'
+            ? 'Administrador'
+            : usuario.rol === 'chofer'
+              ? 'Chofer'
+              : 'Cliente';
+        rolElem.textContent = rolTexto;
+      }
+    })
+    .catch(function (err) {
+      console.error('Error:', err);
+      var nombre =
+        (user.user_metadata && user.user_metadata.nombre_completo) ||
+        user.email.split('@')[0];
       document.getElementById('user-nombre').textContent = nombre;
       document.getElementById('user-email').textContent = user.email;
       document.getElementById('user-avatar').textContent = nombre
         .charAt(0)
         .toUpperCase();
-      return;
-    }
-
-    const nombre = usuario.nombre_completo || user.email.split('@')[0];
-    document.getElementById('user-nombre').textContent = nombre;
-    document.getElementById('user-email').textContent =
-      usuario.correo_electronico;
-    document.getElementById('user-avatar').textContent = nombre
-      .charAt(0)
-      .toUpperCase();
-
-    if (usuario.telefono) {
-      const telefonoElem = document.getElementById('user-telefono');
-      if (telefonoElem) {
-        telefonoElem.textContent = usuario.telefono;
-      }
-    }
-
-    const rolElem = document.getElementById('user-rol');
-    if (rolElem && usuario.rol) {
-      const rolTexto =
-        usuario.rol === 'administrador'
-          ? 'Administrador'
-          : usuario.rol === 'chofer'
-            ? 'Chofer'
-            : 'Cliente';
-      rolElem.textContent = rolTexto;
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    const nombre =
-      user.user_metadata.nombre_completo || user.email.split('@')[0];
-    document.getElementById('user-nombre').textContent = nombre;
-    document.getElementById('user-email').textContent = user.email;
-    document.getElementById('user-avatar').textContent = nombre
-      .charAt(0)
-      .toUpperCase();
-  }
+    });
 }
 
-async function cargarPedidos(userId) {
-  const contenedor = document.getElementById('lista-pedidos');
+function cargarPedidos(clienteSupabase, userId) {
+  var contenedor = document.getElementById('lista-pedidos');
 
-  const { data: pedidos, error } = await supa
+  clienteSupabase
     .from('pedidos')
     .select('*')
     .eq('usuario_id', userId)
     .order('fecha_creacion', { ascending: false })
-    .limit(5);
+    .limit(5)
+    .then(function (resultado) {
+      if (resultado.error) {
+        console.error('Error al cargar pedidos:', resultado.error);
+        return;
+      }
 
-  if (error) {
-    console.error('Error al cargar pedidos:', error);
-    return;
-  }
+      var pedidos = resultado.data;
 
-  if (pedidos && pedidos.length > 0) {
-    contenedor.innerHTML = '';
-    pedidos.forEach((pedido) => {
-      const div = document.createElement('div');
-      div.className = 'item-pedido';
-      const fecha = new Date(pedido.fecha_creacion).toLocaleDateString('es-BO');
+      if (pedidos && pedidos.length > 0) {
+        while (contenedor.firstChild)
+          contenedor.removeChild(contenedor.firstChild);
 
-      div.innerHTML = `
-                <div class="pedido-info">
-                    <span class="pedido-id">Pedido #${pedido.id}</span>
-                    <span class="pedido-fecha">${fecha} - Bs. ${pedido.monto_total.toFixed(2)}</span>
-                </div>
-                <div class="pedido-estado estado-${pedido.estado.replace(/ /g, '-')}">${getEstadoLabel(pedido.estado)}</div>
-            `;
-      contenedor.appendChild(div);
+        pedidos.forEach(function (pedido) {
+          var div = document.createElement('div');
+          div.className = 'item-pedido';
+
+          var divInfo = document.createElement('div');
+          divInfo.className = 'pedido-info';
+
+          var spanId = document.createElement('span');
+          spanId.className = 'pedido-id';
+          spanId.textContent = 'Pedido #' + pedido.id;
+          divInfo.appendChild(spanId);
+
+          var fecha = new Date(pedido.fecha_creacion).toLocaleDateString(
+            'es-BO',
+          );
+          var spanFecha = document.createElement('span');
+          spanFecha.className = 'pedido-fecha';
+          spanFecha.textContent =
+            fecha + ' - Bs. ' + pedido.monto_total.toFixed(2);
+          divInfo.appendChild(spanFecha);
+
+          div.appendChild(divInfo);
+
+          var divEstado = document.createElement('div');
+          divEstado.className =
+            'pedido-estado estado-' + pedido.estado.replace(/ /g, '-');
+          divEstado.textContent = getEstadoLabel(pedido.estado);
+          div.appendChild(divEstado);
+
+          contenedor.appendChild(div);
+        });
+      } else {
+        while (contenedor.firstChild)
+          contenedor.removeChild(contenedor.firstChild);
+        var p = document.createElement('p');
+        p.style.cssText = 'color: #888; text-align: center; padding: 20px;';
+        p.textContent = 'No tienes pedidos aún';
+        contenedor.appendChild(p);
+      }
     });
-
-    const verTodosBtn = document.createElement('a');
-    verTodosBtn.href = '/historial';
-    verTodosBtn.className = 'btn-ver-todos';
-    verTodosBtn.textContent = 'Ver Todos los Pedidos';
-    verTodosBtn.style.cssText =
-      'display: block; text-align: center; margin-top: 15px; padding: 10px; background: #034e8b; color: white; border-radius: 8px; text-decoration: none; font-weight: 500;';
-    contenedor.appendChild(verTodosBtn);
-  } else {
-    contenedor.innerHTML =
-      '<p style="color: #888; text-align: center; padding: 20px;">No tienes pedidos aún</p>';
-  }
 }
 
-function configurarLogout() {
-  document.getElementById('btn-logout').addEventListener('click', async () => {
-    await supa.auth.signOut();
-    window.location.href = '/login';
+function configurarLogout(clienteSupabase) {
+  var btnLogout = document.getElementById('btn-logout');
+  if (!btnLogout) return;
+
+  btnLogout.addEventListener('click', function () {
+    clienteSupabase.auth.signOut().then(function () {
+      window.location.href = '/login';
+    });
   });
 }

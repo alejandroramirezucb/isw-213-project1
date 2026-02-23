@@ -10,10 +10,13 @@ body {
 }
 
 .contenedor-productos {
+  padding: 20px;
+}
+
+.productos-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  padding: 20px;
   justify-content: center;
 }
 
@@ -30,28 +33,10 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-.btn-exito {
+.boton-exito {
   background-color: #28a745 !important;
   transform: scale(1.05);
   transition: all 0.2s ease;
-}
-
-.item-carrito {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.item-carrito img {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 8px;
 }
 
 .combobox {
@@ -79,7 +64,7 @@ body {
   border-color: #034e8b;
 }
 
-.toaster-container {
+.toaster-contenedor {
   position: fixed;
   right: 20px;
   top: 20px;
@@ -89,7 +74,8 @@ body {
   gap: 10px;
   max-width: 360px;
 }
-.toast {
+
+.notificacion-emergente {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -104,20 +90,24 @@ body {
   transition: all 220ms ease;
   font-size: 14px;
 }
-.toast--show {
+
+.notificacion-emergente--visible {
   transform: translateY(0);
   opacity: 1;
 }
-.toast__message {
+
+.notificacion-emergente__mensaje {
   flex: 1;
   padding-right: 8px;
 }
-.toast__actions {
+
+.notificacion-emergente__acciones {
   display: flex;
   gap: 8px;
   align-items: center;
 }
-.toast__btn {
+
+.notificacion-emergente__boton {
   border: none;
   background: transparent;
   cursor: pointer;
@@ -125,37 +115,43 @@ body {
   border-radius: 8px;
   font-weight: 600;
 }
-.toast__btn--close {
+
+.notificacion-emergente__boton--cerrar {
   color: rgba(0, 0, 0, 0.45);
 }
-.toast__btn--action {
+
+.notificacion-emergente__boton--accion {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.toast--success {
+.notificacion-emergente--exito {
   background: linear-gradient(135deg, #e6fbf2, #d7f7ea);
   border: 1px solid #c7efd7;
 }
-.toast--error {
+
+.notificacion-emergente--error {
   background: linear-gradient(135deg, #fff0f0, #ffdede);
   border: 1px solid #ffc6c6;
 }
-.toast--warning {
+
+.notificacion-emergente--advertencia {
   background: linear-gradient(135deg, #fff9ec, #fff2d6);
   border: 1px solid #ffe0a8;
 }
-.toast--info {
+
+.notificacion-emergente--info {
   background: linear-gradient(135deg, #eef7ff, #e6f0ff);
   border: 1px solid #cfe6ff;
 }
 
-.toast--confirm .toast__btn--ok {
+.notificacion-emergente--confirmar .notificacion-emergente__boton--aceptar {
   background: #034e8b;
   color: #fff;
   padding: 6px 10px;
 }
-.toast--confirm .toast__btn--cancel {
+
+.notificacion-emergente--confirmar .notificacion-emergente__boton--cancelar {
   background: transparent;
   color: #333;
   padding: 6px 10px;

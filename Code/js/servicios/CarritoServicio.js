@@ -1,128 +1,113 @@
-﻿class CarritoServicio {
+class CarritoServicio {
   constructor() {
-    this.claveLocalStorage = 'carrito';
-  }
-
-  _normalizarItem(item = {}) {
-    const precioNum = Number(item.precio ?? item.price ?? 0) || 0;
-    const cantidadNum = Number(item.cantidad ?? item.quantity ?? 1) || 0;
-    const imagen =
-      item.imagen || item.url_imagen || (item.images && item.images[0]) || '';
-
-    return {
-      id: item.id,
-      nombre: item.nombre || item.name || '',
-      name: item.name || item.nombre || '',
-      precio: precioNum,
-      price: precioNum,
-      imagen,
-      url_imagen: imagen,
-      images:
-        Array.isArray(item.images) && item.images.length
-          ? item.images
-          : imagen
-            ? [imagen]
-            : [],
-      cantidad: cantidadNum,
-      stock: item.stock ?? item.stock_disponible ?? null,
-    };
+    this.claveAlmacenamiento = 'raidencenter_carrito';
   }
 
   obtenerCarrito() {
-    let parsed = [];
     try {
-      const rawStr = localStorage.getItem(this.claveLocalStorage);
-      if (!rawStr) parsed = [];
-      else {
-        const tmp = JSON.parse(rawStr);
-        if (Array.isArray(tmp)) parsed = tmp;
-        else if (tmp && typeof tmp === 'object' && tmp.id !== undefined)
-          parsed = [tmp];
-        else parsed = [];
-      }
-    } catch (err) {
-      console.warn(
-        'Error leyendo carrito desde localStorage, limpiando valor inválido:',
-        err,
-      );
-      parsed = [];
-      localStorage.removeItem(this.claveLocalStorage);
+      var datos = localStorage.getItem(this.claveAlmacenamiento);
+      if (!datos) return [];
+      var carrito = JSON.parse(datos);
+      return carrito.map(this._normalizarItem);
+    } catch (error) {
+      localStorage.removeItem(this.claveAlmacenamiento);
+      return [];
     }
+  }
 
-    return parsed.map((it) => this._normalizarItem(it));
+  _normalizarItem(item) {
+    return {
+      id: item.id,
+      nombre: item.nombre || item.name || '',
+      precio: parseFloat(item.precio || item.price || 0),
+      imagen: item.imagen || item.image || item.url_imagen || '',
+      cantidad: parseInt(item.cantidad || item.quantity || 1),
+      stock: parseInt(item.stock || item.stock_disponible || 0),
+    };
   }
 
   guardarCarrito(carrito) {
-    const normalizados = (Array.isArray(carrito) ? carrito : []).map((it) =>
-      this._normalizarItem(it),
-    );
-    localStorage.setItem(this.claveLocalStorage, JSON.stringify(normalizados));
-    try {
-      console.debug('CarritoGuardado:', this.claveLocalStorage, normalizados);
-    } catch (e) {}
+    localStorage.setItem(this.claveAlmacenamiento, JSON.stringify(carrito));
   }
 
-  agregarProducto(producto, cantidad = 1) {
-    console.debug('AgregarProducto llamado:', producto, 'cantidad=', cantidad);
-    const carrito = this.obtenerCarrito();
-    const indice = carrito.findIndex((item) => item.id === producto.id);
-    const cantidadNum = Number(cantidad) || 0;
+  agregarProducto(producto, cantidad) {
+    cantidad = cantidad || 1;
+    var carrito = this.obtenerCarrito();
+    var indice = carrito.findIndex(function (item) {
+      return item.id === producto.id;
+    });
 
     if (indice !== -1) {
-      carrito[indice].cantidad =
-        Number(carrito[indice].cantidad || 0) + cantidadNum;
+      var nuevaCantidad = carrito[indice].cantidad + cantidad;
+      if (nuevaCantidad > carrito[indice].stock) {
+        return { exito: false, mensaje: 'Stock insuficiente' };
+      }
+      carrito[indice].cantidad = nuevaCantidad;
     } else {
-      const nuevo = this._normalizarItem({
-        ...producto,
-        cantidad: cantidadNum,
+      var imagenProducto = producto.imagen || producto.imagenes?.[0] || '';
+      carrito.push({
+        id: producto.id,
+        nombre: producto.nombre,
+        precio: parseFloat(producto.precio),
+        imagen: imagenProducto,
+        cantidad: cantidad,
+        stock: parseInt(producto.stock || 0),
       });
-      carrito.push(nuevo);
     }
 
     this.guardarCarrito(carrito);
-    console.debug('Carrito tras agregar:', carrito);
-    return carrito;
+    return { exito: true, carrito: carrito };
   }
 
-  actualizarCantidad(indiceProducto, nuevaCantidad) {
-    const carrito = this.obtenerCarrito();
-    const nueva = Number(nuevaCantidad) || 0;
-
-    if (indiceProducto >= 0 && indiceProducto < carrito.length) {
-      carrito[indiceProducto].cantidad = nueva;
-      this.guardarCarrito(carrito);
-    }
-
-    return carrito;
+  eliminarProducto(idProducto) {
+    var carrito = this.obtenerCarrito();
+    var carritoFiltrado = carrito.filter(function (item) {
+      return item.id !== idProducto;
+    });
+    this.guardarCarrito(carritoFiltrado);
+    return carritoFiltrado;
   }
 
-  eliminarProducto(indiceProducto) {
-    const carrito = this.obtenerCarrito();
-    if (indiceProducto >= 0 && indiceProducto < carrito.length) {
-      carrito.splice(indiceProducto, 1);
-      this.guardarCarrito(carrito);
+  actualizarCantidad(idProducto, nuevaCantidad) {
+    var carrito = this.obtenerCarrito();
+    var producto = carrito.find(function (item) {
+      return item.id === idProducto;
+    });
+
+    if (!producto) return carrito;
+
+    if (nuevaCantidad <= 0) {
+      return this.eliminarProducto(idProducto);
     }
-    return carrito;
+
+    if (nuevaCantidad > producto.stock && producto.stock > 0) {
+      return { exito: false, mensaje: 'Stock insuficiente', carrito: carrito };
+    }
+
+    producto.cantidad = nuevaCantidad;
+    this.guardarCarrito(carrito);
+    return { exito: true, carrito: carrito };
+  }
+
+  vaciarCarrito() {
+    this.guardarCarrito([]);
   }
 
   obtenerCantidadTotal() {
-    const carrito = this.obtenerCarrito();
-    return carrito.reduce(
-      (total, item) => total + (Number(item.cantidad) || 0),
-      0,
-    );
+    var carrito = this.obtenerCarrito();
+    return carrito.reduce(function (total, item) {
+      return total + item.cantidad;
+    }, 0);
   }
 
   obtenerPrecioTotal() {
-    const carrito = this.obtenerCarrito();
-    return carrito.reduce(
-      (total, item) =>
-        total + (Number(item.precio) || 0) * (Number(item.cantidad) || 0),
-      0,
-    );
+    var carrito = this.obtenerCarrito();
+    return carrito.reduce(function (total, item) {
+      return total + item.precio * item.cantidad;
+    }, 0);
   }
 
   limpiarCarrito() {
-    localStorage.removeItem(this.claveLocalStorage);
+    this.vaciarCarrito();
   }
 }

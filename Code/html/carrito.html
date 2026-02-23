@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -24,7 +24,7 @@
       href="/css/styles.css" />
   </head>
   <body>
-    <header id="navbar-placeholder"></header>
+    <header id="navbar-container"></header>
 
     <main class="contenedor-carrito">
       <div class="carrito-grid">
@@ -200,50 +200,15 @@
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="/js/utilidades/ClienteSupabase.js"></script>
     <script src="/js/utilidades/Toaster.js"></script>
-    <script src="/js/navbar-comun.js"></script>
-    <script src="/js/navbar-global.js"></script>
     <script src="/js/servicios/ProductoServicio.js"></script>
     <script src="/js/servicios/CarritoServicio.js"></script>
     <script src="/js/utilidades/CalculadorPrecio.js"></script>
     <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/navbar-comun.js"></script>
+    <script src="/js/navbar-global.js"></script>
     <script src="/js/carrito.js"></script>
-    <script>
-      fetch('/api/navbar')
-        .then((res) => res.text())
-        .then((html) => {
-          document.getElementById('navbar-placeholder').innerHTML = html;
-          actualizarIconoUsuario();
-          const actualizadorContador = new ActualizadorContador(
-            new CarritoServicio(),
-          );
-          actualizadorContador.actualizar();
-
-          inicializarDropdownCategorias();
-
-          const aplicarFiltrosDesdePagina = () => {
-            const precioMin = document.getElementById(
-              'filtro-precio-minimo',
-            )?.value;
-            const precioMax = document.getElementById(
-              'filtro-precio-maximo',
-            )?.value;
-            const soloDisp = document.getElementById(
-              'filtro-solo-disponibles',
-            )?.checked;
-            const params = new URLSearchParams();
-            if (precioMin) params.set('precioMinimo', precioMin);
-            if (precioMax) params.set('precioMaximo', precioMax);
-            if (soloDisp) params.set('soloDisponibles', 'true');
-            if (params.toString())
-              window.location.href = '/?' + params.toString() + '&filtros=show';
-          };
-
-          document
-            .getElementById('btn-aplicar-filtros')
-            ?.addEventListener('click', aplicarFiltrosDesdePagina);
-        });
-    </script>
   </body>
 </html>

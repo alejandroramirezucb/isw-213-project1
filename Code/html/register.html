@@ -5,199 +5,167 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0" />
-    <title>Registro - Raidencenter</title>
-    <link
-      rel="icon"
-      href="/assets/icon.png"
-      type="image/png" />
-    <link
-      rel="stylesheet"
-      href="/css/navbar.css" />
+    <title>Registrarse - Raidencenter</title>
     <link
       rel="stylesheet"
       href="/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="/css/navbar.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
-      .contenedor-login {
-        max-width: 420px;
-        margin: 80px auto;
-        padding: 30px;
+      .pagina-autenticacion {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 80px);
+        padding: 2rem;
+        background: #f5f5f5;
+      }
+      .tarjeta-autenticacion {
         background: white;
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        text-align: center;
-      }
-      .contenedor-login h1 {
-        color: #034e8b;
-        margin-bottom: 18px;
-      }
-      .form-grupo {
-        margin-bottom: 12px;
-        text-align: left;
-      }
-      .form-grupo label {
-        display: block;
-        margin-bottom: 6px;
-        color: #666;
-      }
-      .form-grupo input,
-      .form-grupo select {
+        padding: 2.5rem;
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        box-sizing: border-box;
+        max-width: 420px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
       }
-      .telefono-input {
-        display: flex;
-        gap: 8px;
-        align-items: center;
+      .tarjeta-autenticacion__titulo {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.6rem;
+        color: #1a1a2e;
       }
-      .telefono-prefijo {
-        background: #f1f5f9;
-        border: 1px solid #e2e8f0;
-        padding: 10px 12px;
-        border-radius: 8px;
-        color: #334155;
-        font-weight: 700;
+      .tarjeta-autenticacion__campo {
+        margin-bottom: 1rem;
       }
-      .telefono-input input {
-        flex: 1;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-      }
-      .combobox {
-        appearance: none;
-        -webkit-appearance: none;
-        background-color: #ffffff;
-        border: 1px solid #cfd5e4;
-        padding: 12px 40px 12px 12px;
-        border-radius: 12px;
-        font-size: 14px;
-        background-image:
-          linear-gradient(45deg, transparent 50%, #034e8b 50%),
-          linear-gradient(135deg, #034e8b 50%, transparent 50%);
-        background-position:
-          calc(100% - 18px) calc(1em + 2px),
-          calc(100% - 13px) calc(1em + 2px);
-        background-size:
-          7px 7px,
-          7px 7px;
-        background-repeat: no-repeat;
-      }
-      .btn-login {
+      .tarjeta-autenticacion__etiqueta {
         display: block;
-        width: auto;
-        min-width: 220px;
-        max-width: 320px;
-        margin: 10px auto 0;
-        padding: 12px 28px;
+        margin-bottom: 0.3rem;
+        font-size: 0.9rem;
+        color: #555;
+      }
+      .tarjeta-autenticacion__entrada {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+      }
+      .tarjeta-autenticacion__entrada:focus {
+        outline: none;
+        border-color: #034e8b;
+      }
+      .tarjeta-autenticacion__boton {
+        width: 100%;
+        padding: 0.85rem;
         background: #034e8b;
         color: white;
         border: none;
         border-radius: 28px;
-        font-weight: 800;
+        font-size: 1rem;
         cursor: pointer;
-        font-size: 15px;
+        margin-top: 0.5rem;
+        transition: background 0.2s;
+      }
+      .tarjeta-autenticacion__boton:hover {
+        background: #023a6b;
+      }
+      .tarjeta-autenticacion__enlace {
+        display: block;
         text-align: center;
-      }
-      .btn-login:hover {
-        background: #02375f;
-      }
-      .cambiar-modo {
-        margin-top: 14px;
-        font-size: 14px;
-        color: #666;
-      }
-      .cambiar-modo a {
+        margin-top: 1rem;
         color: #034e8b;
-        font-weight: bold;
         text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .tarjeta-autenticacion__enlace:hover {
+        text-decoration: underline;
       }
     </style>
   </head>
   <body>
-    <header id="navbar-placeholder"></header>
+    <header id="navbar-container"></header>
 
-    <main class="contenedor-login">
-      <h1>Crear Cuenta</h1>
-      <form id="form-registro">
-        <div class="form-grupo">
-          <label for="reg-nombre">Nombre Completo</label>
-          <input
-            type="text"
-            id="reg-nombre"
-            required />
-        </div>
-        <div class="form-grupo">
-          <label for="reg-email">Correo Electrónico</label>
-          <input
-            type="email"
-            id="reg-email"
-            required />
-        </div>
-        <div class="form-grupo">
-          <label for="reg-telefono-local">Teléfono</label>
-          <div class="telefono-input">
-            <div class="telefono-prefijo">+591</div>
+    <main class="pagina-autenticacion">
+      <div class="tarjeta-autenticacion">
+        <h1 class="tarjeta-autenticacion__titulo">Crear Cuenta</h1>
+        <form id="formularioRegistro">
+          <div class="tarjeta-autenticacion__campo">
+            <label
+              class="tarjeta-autenticacion__etiqueta"
+              for="nombreRegistro"
+              >Nombre completo</label
+            >
             <input
-              type="tel"
-              id="reg-telefono-local"
-              placeholder="7xxxxxxx"
-              inputmode="tel"
-              pattern="[0-9]{6,9}"
-              maxlength="9" />
+              type="text"
+              id="nombreRegistro"
+              class="tarjeta-autenticacion__entrada"
+              placeholder="Tu nombre"
+              required />
           </div>
-        </div>
-        <div class="form-grupo">
-          <label for="reg-password">Contraseña</label>
-          <input
-            type="password"
-            id="reg-password"
-            required
-            minlength="6" />
-        </div>
-        <div class="form-grupo">
-          <label for="reg-rol">Tipo de cuenta</label>
-          <select
-            id="reg-rol"
-            required>
-            <option value="cliente">Cliente</option>
-            <option value="chofer">Chofer</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          class="btn-login">
-          Registrarse
-        </button>
-      </form>
-      <div class="cambiar-modo">
-        ¿Ya tienes cuenta?
+          <div class="tarjeta-autenticacion__campo">
+            <label
+              class="tarjeta-autenticacion__etiqueta"
+              for="correoRegistro"
+              >Correo electrónico</label
+            >
+            <input
+              type="email"
+              id="correoRegistro"
+              class="tarjeta-autenticacion__entrada"
+              placeholder="tu@correo.com"
+              required />
+          </div>
+          <div class="tarjeta-autenticacion__campo">
+            <label
+              class="tarjeta-autenticacion__etiqueta"
+              for="contrasenaRegistro"
+              >Contraseña</label
+            >
+            <input
+              type="password"
+              id="contrasenaRegistro"
+              class="tarjeta-autenticacion__entrada"
+              placeholder="Mínimo 6 caracteres"
+              required
+              minlength="6" />
+          </div>
+          <div class="tarjeta-autenticacion__campo">
+            <label
+              class="tarjeta-autenticacion__etiqueta"
+              for="confirmarContrasena"
+              >Confirmar contraseña</label
+            >
+            <input
+              type="password"
+              id="confirmarContrasena"
+              class="tarjeta-autenticacion__entrada"
+              placeholder="Repite la contraseña"
+              required />
+          </div>
+          <button
+            type="submit"
+            class="tarjeta-autenticacion__boton">
+            Registrarse
+          </button>
+        </form>
         <a
           href="/login"
-          id="ir-a-login"
-          >Inicia sesión</a
+          class="tarjeta-autenticacion__enlace"
+          >¿Ya tienes cuenta? Inicia sesión</a
         >
       </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/utilidades/ClienteSupabase.js"></script>
     <script src="/js/utilidades/Toaster.js"></script>
+    <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
     <script src="/js/navbar-comun.js"></script>
     <script src="/js/navbar-global.js"></script>
-    <script src="/js/servicios/CarritoServicio.js"></script>
-    <script src="/js/utilidades/ActualizadorContador.js"></script>
     <script src="/js/auth.js"></script>
-    <script>
-      fetch('/api/navbar')
-        .then((res) => res.text())
-        .then((html) => {
-          document.getElementById('navbar-placeholder').innerHTML = html;
-          actualizarIconoUsuario();
-          const actualizador = new ActualizadorContador(new CarritoServicio());
-          actualizador.actualizar();
-        });
-    </script>
   </body>
 </html>

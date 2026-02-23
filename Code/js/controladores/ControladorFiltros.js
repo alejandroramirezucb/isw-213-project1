@@ -1,64 +1,69 @@
-﻿class ControladorFiltros {
-    constructor(controladorProductos) {
-        this.controladorProductos = controladorProductos;
-        this.panelVisible = false;
+class ControladorFiltros {
+  constructor(controladorProductos) {
+    this.controladorProductos = controladorProductos;
+    this.panelFiltros = document.querySelector('.panel-filtros');
+    this._inicializarEventos();
+  }
+
+  _inicializarEventos() {
+    if (!this.panelFiltros) return;
+
+    var botonAplicar = this.panelFiltros.querySelector('.boton-primario');
+    var botonLimpiar = this.panelFiltros.querySelector('.boton-secundario');
+    var yo = this;
+
+    if (botonAplicar) {
+      botonAplicar.addEventListener('click', function () {
+        yo.aplicarFiltros();
+      });
     }
 
-    inicializar() {
-        this.configurarEventos();
+    if (botonLimpiar) {
+      botonLimpiar.addEventListener('click', function () {
+        yo.limpiarFiltros();
+      });
+    }
+  }
+
+  alternarVisibilidad() {
+    if (!this.panelFiltros) return;
+    this.panelFiltros.classList.toggle('panel-filtros--visible');
+  }
+
+  aplicarFiltros() {
+    var filtros = this._obtenerValoresFiltros();
+    this.controladorProductos.cargarProductos(filtros);
+  }
+
+  limpiarFiltros() {
+    var campoPrecioMinimo = document.getElementById('precioMinimo');
+    var campoPrecioMaximo = document.getElementById('precioMaximo');
+    var campoDisponibles = document.getElementById('soloDisponibles');
+
+    if (campoPrecioMinimo) campoPrecioMinimo.value = '';
+    if (campoPrecioMaximo) campoPrecioMaximo.value = '';
+    if (campoDisponibles) campoDisponibles.checked = false;
+
+    this.controladorProductos.cargarProductos({});
+  }
+
+  _obtenerValoresFiltros() {
+    var filtros = {};
+
+    var campoPrecioMinimo = document.getElementById('precioMinimo');
+    var campoPrecioMaximo = document.getElementById('precioMaximo');
+    var campoDisponibles = document.getElementById('soloDisponibles');
+
+    if (campoPrecioMinimo && campoPrecioMinimo.value) {
+      filtros.precioMinimo = campoPrecioMinimo.value;
+    }
+    if (campoPrecioMaximo && campoPrecioMaximo.value) {
+      filtros.precioMaximo = campoPrecioMaximo.value;
+    }
+    if (campoDisponibles && campoDisponibles.checked) {
+      filtros.soloDisponibles = 'true';
     }
 
-
-    configurarEventos() {
-        const botonToggle = document.getElementById('btn-toggle-filtros');
-        if (botonToggle)
-            botonToggle.addEventListener('click', () => this.togglePanel());
-
-        const botonAplicar = document.getElementById('btn-aplicar-filtros');
-        if (botonAplicar)
-            botonAplicar.addEventListener('click', () => this.aplicarFiltros());
-
-        const botonLimpiar = document.getElementById('btn-limpiar-filtros');
-        if (botonLimpiar)
-            botonLimpiar.addEventListener('click', () => this.limpiarFiltros());
-    }
-
-    togglePanel() {
-        const panel = document.getElementById('panel-filtros');
-        if (!panel) return;
-
-        this.panelVisible = !this.panelVisible;
-        panel.style.display = this.panelVisible ? 'block' : 'none';
-    }
-
-    aplicarFiltros() {
-        const precioMinimo = document.getElementById('filtro-precio-minimo')?.value;
-        const precioMaximo = document.getElementById('filtro-precio-maximo')?.value;
-        const soloDisponibles = document.getElementById('filtro-solo-disponibles')?.checked;
-
-        const filtros = {};
-        
-        if (precioMinimo) filtros.precioMinimo = precioMinimo;
-        if (precioMaximo) filtros.precioMaximo = precioMaximo;
-        if (soloDisponibles) filtros.soloDisponibles = 'true';
-
-        const inputBusqueda = document.querySelector('.barra-navegacion__search-input');
-        if (inputBusqueda && inputBusqueda.value.trim())
-            filtros.busqueda = inputBusqueda.value.trim();
-
-        this.controladorProductos.cargarProductos(filtros);
-    }
-
-    limpiarFiltros() {
-        const precioMinimo = document.getElementById('filtro-precio-minimo');
-        const precioMaximo = document.getElementById('filtro-precio-maximo');
-        const soloDisponibles = document.getElementById('filtro-solo-disponibles');
-
-        if (precioMinimo) precioMinimo.value = '';
-        if (precioMaximo) precioMaximo.value = '';
-        if (soloDisponibles) soloDisponibles.checked = false;
-
-        this.controladorProductos.limpiarFiltros();
-    }
+    return filtros;
+  }
 }
-

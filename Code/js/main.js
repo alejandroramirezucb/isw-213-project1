@@ -1,89 +1,56 @@
-﻿const productoServicio = new ProductoServicio();
-const carritoServicio = new CarritoServicio();
-const actualizadorContador = new ActualizadorContador(carritoServicio);
-const controladorProductos = new ControladorProductos(
-  productoServicio,
-  carritoServicio,
-  actualizadorContador,
-);
-const controladorFiltros = new ControladorFiltros(controladorProductos);
+var controladorProductos = null;
+var controladorFiltros = null;
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await cargarNavbar();
-  const parametros = new URLSearchParams(window.location.search);
-  const filtrosDesdeURL = {};
-  const categoriaInicial = parametros.get('categoria');
-  if (parametros.get('precioMinimo'))
-    filtrosDesdeURL.precioMinimo = parametros.get('precioMinimo');
-  if (parametros.get('precioMaximo'))
-    filtrosDesdeURL.precioMaximo = parametros.get('precioMaximo');
-  if (parametros.get('soloDisponibles'))
-    filtrosDesdeURL.soloDisponibles =
-      parametros.get('soloDisponibles') === 'true';
-  if (parametros.get('busqueda'))
-    filtrosDesdeURL.busqueda = parametros.get('busqueda');
-  if (categoriaInicial) filtrosDesdeURL.categoria = categoriaInicial;
-  if (Object.keys(filtrosDesdeURL).length) {
-    controladorProductos.cargarProductos(filtrosDesdeURL);
-  } else {
-    controladorProductos.cargarProductos();
-  }
-  setTimeout(() => {
-    controladorFiltros.inicializar();
-    if (parametros.get('filtros') === 'show') {
-      controladorFiltros.togglePanel();
-    }
-  }, 150);
-  configurarBusqueda();
-});
+document.addEventListener('DOMContentLoaded', function () {
+  cargarNavbar().then(function () {
+    var productoServicio = new ProductoServicio();
+    var carritoServicio = new CarritoServicio();
+    var actualizadorContador = new ActualizadorContador(carritoServicio);
 
-async function cargarNavbar() {
-  try {
-    const respuesta = await fetch('/api/navbar');
-    document.getElementById('navbar-placeholder').innerHTML =
-      await respuesta.text();
-
-    if (typeof actualizarIconoUsuario === 'function')
-      await actualizarIconoUsuario();
-
-    actualizadorContador.actualizar();
-    adjuntarListenersCategorias();
-  } catch (error) {
-    console.error('Error al cargar el navbar:', error);
-  }
-}
-
-function adjuntarListenersCategorias() {
-  const enlaces = document.querySelectorAll('.barra-navegacion__dropdown-link');
-  if (!enlaces) return;
-  enlaces.forEach((enlace) => {
-    enlace.addEventListener('click', (e) => {
-      e.preventDefault();
-      const href = enlace.getAttribute('href') || '';
-      const query = href.includes('?')
-        ? href.split('?')[1]
-        : new URL(enlace.href).searchParams.toString();
-      const params = new URLSearchParams(query);
-      const categoria = params.get('categoria');
-      if (categoria) controladorProductos.cargarProductos({ categoria });
-    });
-  });
-}
-
-function configurarBusqueda() {
-  document.addEventListener('submit', (evento) => {
-    const formularioBusqueda = evento.target.closest(
-      '.barra-navegacion__search',
+    controladorProductos = new ControladorProductos(
+      productoServicio,
+      carritoServicio,
+      actualizadorContador,
     );
-    if (formularioBusqueda) {
-      evento.preventDefault();
-      const inputBusqueda = formularioBusqueda.querySelector(
-        '.barra-navegacion__search-input',
-      );
-      if (inputBusqueda && inputBusqueda.value.trim())
-        controladorProductos.cargarProductos({
-          busqueda: inputBusqueda.value.trim(),
-        });
+
+    controladorFiltros = new ControladorFiltros(controladorProductos);
+
+    var botonBuscar = document.querySelector('.barra-navegacion__boton-buscar');
+    var campoBusqueda = document.querySelector(
+      '.barra-navegacion__campo-busqueda',
+    );
+
+    if (botonBuscar && campoBusqueda) {
+      botonBuscar.addEventListener('click', function () {
+        var busqueda = campoBusqueda.value.trim();
+        controladorProductos.cargarProductos({ busqueda: busqueda });
+      });
     }
+
+    if (campoBusqueda) {
+      campoBusqueda.addEventListener('keypress', function (evento) {
+        if (evento.key === 'Enter') {
+          var busqueda = campoBusqueda.value.trim();
+          controladorProductos.cargarProductos({ busqueda: busqueda });
+        }
+      });
+    }
+
+    var parametros = new URLSearchParams(window.location.search);
+    var filtrosIniciales = {};
+
+    if (parametros.get('categoria')) {
+      filtrosIniciales.categoria = parametros.get('categoria');
+    }
+    if (parametros.get('busqueda')) {
+      filtrosIniciales.busqueda = parametros.get('busqueda');
+      if (campoBusqueda) campoBusqueda.value = parametros.get('busqueda');
+    }
+    if (parametros.get('filtros') === 'mostrar') {
+      controladorFiltros.alternarVisibilidad();
+    }
+
+    controladorProductos.cargarProductos(filtrosIniciales);
+    actualizadorContador.actualizar();
   });
-}
+});

@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -62,14 +62,33 @@
         color: #034e8b;
         margin-bottom: 15px;
       }
+      .perfil-acciones {
+        margin-left: auto;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .btn-logout {
+        margin: 0;
+        padding: 8px 16px;
+        background: #f44336;
+        color: white;
+        border: none;
+        border-radius: 28px;
+        cursor: pointer;
+        font-weight: bold;
+        display: block;
+      }
       .lista-pedidos {
         display: grid;
         gap: 15px;
+        max-width: 600px;
+        margin: 0 auto;
       }
       .item-pedido {
         padding: 15px;
         border: 1px solid #eee;
-        border-radius: 8px;
+        border-radius: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -100,19 +119,20 @@
         color: #2e7d32;
       }
       .btn-logout {
-        margin-top: 40px;
+        margin: 40px auto 0;
         padding: 10px 20px;
         background: #f44336;
         color: white;
         border: none;
-        border-radius: 25px;
+        border-radius: 28px;
         cursor: pointer;
         font-weight: bold;
+        display: block;
       }
     </style>
   </head>
   <body>
-    <header id="navbar-placeholder"></header>
+    <header id="navbar-container"></header>
 
     <main class="contenedor-perfil">
       <div id="perfil-contenido">
@@ -137,6 +157,13 @@
                 font-weight: 700;
               "></p>
           </div>
+          <div class="perfil-acciones">
+            <button
+              class="btn-logout"
+              id="btn-logout">
+              Cerrar Sesión
+            </button>
+          </div>
         </div>
 
         <div class="seccion-perfil">
@@ -147,31 +174,16 @@
             <p>No tienes pedidos registrados.</p>
           </div>
         </div>
-
-        <button
-          class="btn-logout"
-          id="btn-logout">
-          Cerrar Sesión
-        </button>
       </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="/js/utilidades/ClienteSupabase.js"></script>
     <script src="/js/utilidades/Toaster.js"></script>
     <script src="/js/navbar-comun.js"></script>
     <script src="/js/navbar-global.js"></script>
     <script src="/js/servicios/CarritoServicio.js"></script>
     <script src="/js/utilidades/ActualizadorContador.js"></script>
     <script src="/js/perfil.js"></script>
-    <script>
-      fetch('/api/navbar')
-        .then((res) => res.text())
-        .then((html) => {
-          document.getElementById('navbar-placeholder').innerHTML = html;
-          actualizarIconoUsuario();
-          const actualizador = new ActualizadorContador(new CarritoServicio());
-          actualizador.actualizar();
-        });
-    </script>
   </body>
 </html>

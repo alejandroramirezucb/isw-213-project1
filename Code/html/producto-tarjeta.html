@@ -1,20 +1,23 @@
-﻿<article class="tarjeta-producto" onclick="location.href='/producto/{{id}}'">
-    <div class="tarjeta-producto__contenedor-imagen">
-        <img src="{{image}}" alt="{{name}}" class="tarjeta-producto__imagen">
+<article
+  class="tarjeta-producto"
+  data-id="{{id}}">
+  <a
+    href="/producto/{{id}}"
+    class="tarjeta-producto__enlace">
+    <figure class="tarjeta-producto__contenedor-imagen">
+      <img
+        src="{{imagen}}"
+        alt="{{nombre}}"
+        class="tarjeta-producto__imagen"
+        loading="lazy" />
+    </figure>
+    <div class="tarjeta-producto__contenido">
+      <h3 class="tarjeta-producto__nombre">{{nombre}}</h3>
+      <div class="tarjeta-producto__precios">
+        <span class="tarjeta-producto__precio">Bs. {{precio}}</span>
+        <span class="tarjeta-producto__cuotas">12 cuotas de Bs. {{cuota}}</span>
+      </div>
     </div>
-    <div class="tarjeta-producto__informacion">
-        <p class="tarjeta-producto__marca">{{brand}}</p>
-        <h3 class="tarjeta-producto__nombre">{{name}}</h3>
-        <div class="tarjeta-producto__detalles-precio">
-            <span class="tarjeta-producto__precio">Bs. {{price}}</span>
-            <span class="tarjeta-producto__cuotas">12 cuotas de Bs {{cuota}}</span>
-        </div>
-        <button class="tarjeta-producto__boton btn-agregar" 
-                data-id="{{id}}" 
-                data-nombre="{{name}}" 
-                data-precio="{{price}}" 
-                data-imagen="{{image}}">
-            Agregar
-        </button>
-    </div>
+  </a>
+  <button class="tarjeta-producto__boton">Agregar al carrito</button>
 </article>

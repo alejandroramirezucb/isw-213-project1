@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -7,76 +7,71 @@
       content="width=device-width, initial-scale=1.0" />
     <title>Detalle del Producto - Raidencenter</title>
     <link
-      rel="icon"
-      href="/assets/icon.png"
-      type="image/png" />
+      rel="stylesheet"
+      href="/css/styles.css" />
     <link
       rel="stylesheet"
       href="/css/navbar.css" />
     <link
       rel="stylesheet"
       href="/css/producto-detalle.css" />
-    <link
-      rel="stylesheet"
-      href="/css/producto-detalle-extras.css" />
-    <link
-      rel="stylesheet"
-      href="/css/filtros.css" />
-    <link
-      rel="stylesheet"
-      href="/css/styles.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   </head>
   <body>
-    <header id="navbar-placeholder"></header>
-    <main
-      class="detalle-contenedor"
-      id="detalle-producto">
-      <div class="cargando">Cargando producto...</div>
+    <header id="navbar-container"></header>
+
+    <main class="detalle-contenedor">
+      <section class="detalle__imagen">
+        <img
+          class="detalle__imagen-foto"
+          src=""
+          alt="Producto" />
+        <div class="detalle__galeria-miniaturas"></div>
+      </section>
+
+      <section class="detalle__info">
+        <h1 class="detalle__nombre"></h1>
+        <div class="detalle__precio-contenedor">
+          <p class="detalle__precio"></p>
+          <p class="detalle__cuotas"></p>
+        </div>
+        <p class="detalle__stock"></p>
+        <div class="detalle__descripcion-contenedor">
+          <p class="detalle__descripcion-texto"></p>
+        </div>
+        <div class="detalle__cantidad-selector">
+          <label class="detalle__cantidad-etiqueta">Cantidad</label>
+          <div class="detalle__cantidad-controles">
+            <button
+              class="detalle__cantidad-boton detalle__cantidad-boton--menos"
+              aria-label="Reducir cantidad">
+              −
+            </button>
+            <input
+              type="number"
+              class="detalle__cantidad-input"
+              value="1"
+              min="1"
+              readonly />
+            <button
+              class="detalle__cantidad-boton detalle__cantidad-boton--mas"
+              aria-label="Aumentar cantidad">
+              +
+            </button>
+          </div>
+        </div>
+        <button class="detalle__boton-agregar">Agregar al carrito</button>
+      </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/utilidades/ClienteSupabase.js"></script>
     <script src="/js/utilidades/Toaster.js"></script>
+    <script src="/js/utilidades/CalculadorPrecio.js"></script>
+    <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
+    <script src="/js/servicios/ProductoServicio.js"></script>
     <script src="/js/navbar-comun.js"></script>
     <script src="/js/navbar-global.js"></script>
-    <script src="/js/utilidades/CalculadorPrecio.js"></script>
-    <script src="/js/servicios/ProductoServicio.js"></script>
-    <script src="/js/servicios/CarritoServicio.js"></script>
-    <script src="/js/utilidades/ActualizadorContador.js"></script>
     <script src="/js/producto-detalle.js"></script>
-    <script>
-      fetch('/api/navbar')
-        .then((res) => res.text())
-        .then((html) => {
-          document.getElementById('navbar-placeholder').innerHTML = html;
-          actualizarIconoUsuario();
-          const actualizadorContador = new ActualizadorContador(
-            new CarritoServicio(),
-          );
-          actualizadorContador.actualizar();
-          inicializarDropdownCategorias();
-
-          const aplicarFiltrosDesdePagina = () => {
-            const precioMin = document.getElementById(
-              'filtro-precio-minimo',
-            )?.value;
-            const precioMax = document.getElementById(
-              'filtro-precio-maximo',
-            )?.value;
-            const soloDisp = document.getElementById(
-              'filtro-solo-disponibles',
-            )?.checked;
-            const params = new URLSearchParams();
-            if (precioMin) params.set('precioMinimo', precioMin);
-            if (precioMax) params.set('precioMaximo', precioMax);
-            if (soloDisp) params.set('soloDisponibles', 'true');
-            if (params.toString())
-              window.location.href = '/?' + params.toString() + '&filtros=show';
-          };
-
-          document
-            .getElementById('btn-aplicar-filtros')
-            ?.addEventListener('click', aplicarFiltrosDesdePagina);
-        });
-    </script>
   </body>
 </html>

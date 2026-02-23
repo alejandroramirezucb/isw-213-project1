@@ -5,99 +5,86 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0" />
-    <title>Tienda Raidencenter Online</title>
+    <title>Raidencenter - Tienda de Tecnología</title>
     <link
-      rel="icon"
-      href="/assets/icon.png"
-      type="image/png" />
+      rel="stylesheet"
+      href="/css/styles.css" />
     <link
       rel="stylesheet"
       href="/css/navbar.css" />
     <link
       rel="stylesheet"
-      href="/css/producto-tarjeta.css" />
-    <link
-      rel="stylesheet"
       href="/css/filtros.css" />
     <link
       rel="stylesheet"
-      href="/css/styles.css" />
+      href="/css/producto-tarjeta.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   </head>
   <body>
-    <header id="navbar-placeholder"></header>
+    <header id="navbar-container"></header>
 
-    <div
-      id="panel-filtros"
-      class="panel-filtros">
-      <div class="filtros-contenedor">
-        <div class="filtro-grupo">
-          <label for="filtro-precio-minimo">Precio Mínimo:</label>
+    <aside class="panel-filtros">
+      <div class="panel-filtros__contenedor">
+        <div class="panel-filtros__grupo">
+          <label
+            class="panel-filtros__etiqueta"
+            for="precioMinimo"
+            >Precio mínimo</label
+          >
           <input
             type="number"
-            id="filtro-precio-minimo"
-            min="0"
-            step="0.01"
-            placeholder="$0.00" />
+            id="precioMinimo"
+            class="panel-filtros__campo-numero"
+            placeholder="Mín"
+            min="0" />
         </div>
-        <div class="filtro-grupo">
-          <label for="filtro-precio-maximo">Precio Máximo:</label>
+
+        <div class="panel-filtros__grupo">
+          <label
+            class="panel-filtros__etiqueta"
+            for="precioMaximo"
+            >Precio máximo</label
+          >
           <input
             type="number"
-            id="filtro-precio-maximo"
-            min="0"
-            step="0.01"
-            placeholder="$999.99" />
+            id="precioMaximo"
+            class="panel-filtros__campo-numero"
+            placeholder="Máx"
+            min="0" />
         </div>
-        <div class="filtro-grupo">
-          <label for="filtro-solo-disponibles">
+
+        <div class="panel-filtros__grupo">
+          <label class="panel-filtros__checkbox">
             <input
               type="checkbox"
-              id="filtro-solo-disponibles" />
-            Solo productos disponibles
+              id="soloDisponibles" />
+            Solo disponibles
           </label>
         </div>
-        <div class="filtro-acciones">
-          <button
-            id="btn-aplicar-filtros"
-            class="btn-primary">
-            Aplicar Filtros
-          </button>
-          <button
-            id="btn-limpiar-filtros"
-            class="btn-secondary">
-            Limpiar
-          </button>
+
+        <div class="panel-filtros__acciones">
+          <button class="boton-primario">Aplicar</button>
+          <button class="boton-secundario">Limpiar</button>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <main
-      id="contenedor-productos"
-      class="contenedor-productos"></main>
+    <main class="contenedor-principal">
+      <section class="contenedor-productos">
+        <div class="productos-grid"></div>
+      </section>
+    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/utilidades/ClienteSupabase.js"></script>
     <script src="/js/utilidades/Toaster.js"></script>
-    <script src="/js/navbar-comun.js"></script>
-    <script src="/js/navbar-global.js"></script>
     <script src="/js/utilidades/CalculadorPrecio.js"></script>
-    <script src="/js/servicios/ProductoServicio.js"></script>
-    <script src="/js/servicios/CarritoServicio.js"></script>
     <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
+    <script src="/js/servicios/ProductoServicio.js"></script>
     <script src="/js/controladores/ControladorProductos.js"></script>
     <script src="/js/controladores/ControladorFiltros.js"></script>
+    <script src="/js/navbar-comun.js"></script>
+    <script src="/js/navbar-global.js"></script>
     <script src="/js/main.js"></script>
-    <script>
-      fetch('/api/navbar')
-        .then((res) => res.text())
-        .then((html) => {
-          document.getElementById('navbar-placeholder').innerHTML = html;
-          actualizarIconoUsuario();
-          const actualizadorContador = new ActualizadorContador(
-            new CarritoServicio(),
-          );
-          actualizadorContador.actualizar();
-          inicializarDropdownCategorias();
-        });
-    </script>
   </body>
 </html>

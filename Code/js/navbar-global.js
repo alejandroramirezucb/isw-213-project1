@@ -1,47 +1,54 @@
-﻿class ControladorGlobalNavbar {
-    constructor() {
-        this.inicializar();
+(function () {
+  var esPaginaInicio =
+    window.location.pathname === '/' ||
+    window.location.pathname === '/index' ||
+    window.location.pathname.endsWith('index.html');
+
+  document.body.addEventListener('click', function (evento) {
+    var botonBuscar = evento.target.closest('.barra-navegacion__boton-buscar');
+    var botonFiltros = evento.target.closest(
+      '.barra-navegacion__boton-filtros',
+    );
+
+    if (botonBuscar) {
+      ejecutarBusqueda();
     }
 
-    inicializar() {
-        this.configurarBuscador();
-        this.configurarFiltros();
+    if (botonFiltros) {
+      alternarPanelFiltros();
     }
+  });
 
-    configurarBuscador() {
-        const formBusqueda = document.querySelector('.barra-navegacion__search');
-        if (!formBusqueda) return;
-
-        formBusqueda.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const input = formBusqueda.querySelector('.barra-navegacion__search-input');
-            const query = input ? input.value.trim() : '';
-            
-            if (query) {
-                window.location.href = `/?q=${encodeURIComponent(query)}`;
-            }
-        });
+  document.body.addEventListener('keypress', function (evento) {
+    if (
+      evento.key === 'Enter' &&
+      evento.target.closest('.barra-navegacion__campo-busqueda')
+    ) {
+      ejecutarBusqueda();
     }
+  });
 
-    configurarFiltros() {
-        const btnFiltros = document.getElementById('btn-toggle-filtros');
-        if (!btnFiltros) return;
+  function ejecutarBusqueda() {
+    var campoBusqueda = document.querySelector(
+      '.barra-navegacion__campo-busqueda',
+    );
+    if (!campoBusqueda) return;
 
-        btnFiltros.addEventListener('click', () => {
-            if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
-                window.location.href = '/?filtros=show';
-                return;
-            }
-            const panelFiltros = document.getElementById('panel-filtros');
-            if (panelFiltros) {
-                if (typeof controladorFiltros !== 'undefined') {
-                    if (panelFiltros.style.display === 'none' || !panelFiltros.style.display) {
-                        controladorFiltros.togglePanel();
-                    }
-                } else {
-                    panelFiltros.style.display = (panelFiltros.style.display === 'none' || !panelFiltros.style.display) ? 'block' : 'none';
-                }
-            }
-        });
+    var termino = campoBusqueda.value.trim();
+    if (!termino) return;
+
+    if (esPaginaInicio && typeof controladorProductos !== 'undefined') {
+      controladorProductos.cargarProductos({ busqueda: termino });
+    } else {
+      window.location.href = '/?busqueda=' + encodeURIComponent(termino);
     }
-}
+  }
+
+  function alternarPanelFiltros() {
+    if (esPaginaInicio && typeof controladorFiltros !== 'undefined') {
+      controladorFiltros.alternarVisibilidad();
+    } else {
+      window.location.href = '/?filtros=mostrar';
+    }
+  }
+})();

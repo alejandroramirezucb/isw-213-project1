@@ -1,143 +1,152 @@
 (function () {
-  const containerId = 'site-toaster-container';
+  var idContenedor = 'contenedor-notificaciones';
 
-  function ensureContainer() {
-    let c = document.getElementById(containerId);
-    if (!c) {
-      c = document.createElement('div');
-      c.id = containerId;
-      c.className = 'toaster-container';
-      document.body.appendChild(c);
+  function asegurarContenedor() {
+    var contenedor = document.getElementById(idContenedor);
+    if (!contenedor) {
+      contenedor = document.createElement('div');
+      contenedor.id = idContenedor;
+      contenedor.className = 'toaster-contenedor';
+      document.body.appendChild(contenedor);
     }
-    return c;
+    return contenedor;
   }
 
-  function createToastEl(
-    message,
-    { type = 'info', actionText, action, persistent = false } = {},
-  ) {
-    const el = document.createElement('div');
-    el.className = `toast toast--${type}`;
+  function crearElementoNotificacion(mensaje, opciones) {
+    var tipo = opciones.tipo || 'info';
+    var textoAccion = opciones.textoAccion;
+    var accion = opciones.accion;
 
-    const msg = document.createElement('div');
-    msg.className = 'toast__message';
-    msg.innerText = message;
-    el.appendChild(msg);
+    var elemento = document.createElement('div');
+    elemento.className =
+      'notificacion-emergente notificacion-emergente--' + tipo;
 
-    const actions = document.createElement('div');
-    actions.className = 'toast__actions';
+    var divMensaje = document.createElement('div');
+    divMensaje.className = 'notificacion-emergente__mensaje';
+    divMensaje.innerText = mensaje;
+    elemento.appendChild(divMensaje);
 
-    if (actionText && typeof action === 'function') {
-      const btn = document.createElement('button');
-      btn.className = 'toast__btn toast__btn--action';
-      btn.innerText = actionText;
-      btn.addEventListener('click', (e) => {
-        try {
-          action();
-        } catch (e) {
-          console.error(e);
-        }
-        remove();
+    var divAcciones = document.createElement('div');
+    divAcciones.className = 'notificacion-emergente__acciones';
+
+    if (textoAccion && typeof accion === 'function') {
+      var botonAccion = document.createElement('button');
+      botonAccion.className =
+        'notificacion-emergente__boton notificacion-emergente__boton--accion';
+      botonAccion.innerText = textoAccion;
+      botonAccion.addEventListener('click', function () {
+        accion();
+        eliminar();
       });
-      actions.appendChild(btn);
+      divAcciones.appendChild(botonAccion);
     }
 
-    const close = document.createElement('button');
-    close.className = 'toast__btn toast__btn--close';
-    close.innerText = '✕';
-    close.addEventListener('click', remove);
-    actions.appendChild(close);
+    var botonCerrar = document.createElement('button');
+    botonCerrar.className =
+      'notificacion-emergente__boton notificacion-emergente__boton--cerrar';
+    botonCerrar.innerText = '✕';
+    botonCerrar.addEventListener('click', eliminar);
+    divAcciones.appendChild(botonCerrar);
 
-    el.appendChild(actions);
+    elemento.appendChild(divAcciones);
 
-    function remove() {
-      el.classList.remove('toast--show');
-      setTimeout(() => el.remove(), 300);
+    function eliminar() {
+      elemento.classList.remove('notificacion-emergente--visible');
+      setTimeout(function () {
+        elemento.remove();
+      }, 300);
     }
 
-    return { el, remove };
+    return { elemento: elemento, eliminar: eliminar };
   }
 
-  function showToast(
-    message,
-    {
-      type = 'info',
-      duration = 4000,
-      actionText,
-      action,
-      persistent = false,
-    } = {},
-  ) {
-    try {
-      const container = ensureContainer();
-      const { el, remove } = createToastEl(message, {
-        type,
-        actionText,
-        action,
-        persistent,
+  function mostrarNotificacion(mensaje, opciones) {
+    opciones = opciones || {};
+    var tipo = opciones.type || opciones.tipo || 'info';
+    var duracion = opciones.duration || opciones.duracion || 4000;
+    var textoAccion = opciones.actionText || opciones.textoAccion;
+    var accion = opciones.action || opciones.accion;
+    var persistente = opciones.persistent || opciones.persistente || false;
+
+    var contenedor = asegurarContenedor();
+    var resultado = crearElementoNotificacion(mensaje, {
+      tipo: tipo,
+      textoAccion: textoAccion,
+      accion: accion,
+    });
+
+    contenedor.appendChild(resultado.elemento);
+    requestAnimationFrame(function () {
+      resultado.elemento.classList.add('notificacion-emergente--visible');
+    });
+
+    if (!persistente && duracion > 0) {
+      setTimeout(resultado.eliminar, duracion);
+    }
+
+    return { eliminar: resultado.eliminar };
+  }
+
+  function mostrarConfirmacion(mensaje, opciones) {
+    opciones = opciones || {};
+    var textoConfirmar =
+      opciones.confirmText || opciones.textoConfirmar || 'Confirmar';
+    var textoCancelar =
+      opciones.cancelText || opciones.textoCancelar || 'Cancelar';
+    var tipo = opciones.type || opciones.tipo || 'warning';
+
+    return new Promise(function (resolver) {
+      var contenedor = asegurarContenedor();
+      var elemento = document.createElement('div');
+      elemento.className =
+        'notificacion-emergente notificacion-emergente--' +
+        tipo +
+        ' notificacion-emergente--confirmar';
+
+      var divMensaje = document.createElement('div');
+      divMensaje.className = 'notificacion-emergente__mensaje';
+      divMensaje.innerText = mensaje;
+      elemento.appendChild(divMensaje);
+
+      var divAcciones = document.createElement('div');
+      divAcciones.className = 'notificacion-emergente__acciones';
+
+      var botonCancelar = document.createElement('button');
+      botonCancelar.className =
+        'notificacion-emergente__boton notificacion-emergente__boton--cancelar';
+      botonCancelar.innerText = textoCancelar;
+      botonCancelar.addEventListener('click', function () {
+        cerrar();
+        resolver(false);
       });
-      container.appendChild(el);
-      requestAnimationFrame(() => el.classList.add('toast--show'));
-      if (!persistent && duration > 0) {
-        setTimeout(remove, duration);
+
+      var botonAceptar = document.createElement('button');
+      botonAceptar.className =
+        'notificacion-emergente__boton notificacion-emergente__boton--aceptar';
+      botonAceptar.innerText = textoConfirmar;
+      botonAceptar.addEventListener('click', function () {
+        cerrar();
+        resolver(true);
+      });
+
+      divAcciones.appendChild(botonCancelar);
+      divAcciones.appendChild(botonAceptar);
+      elemento.appendChild(divAcciones);
+
+      function cerrar() {
+        elemento.classList.remove('notificacion-emergente--visible');
+        setTimeout(function () {
+          elemento.remove();
+        }, 200);
       }
-      return { remove };
-    } catch (err) {
-      console.error('showToast error', err);
-    }
-  }
 
-  function showConfirm(
-    message,
-    {
-      confirmText = 'Confirmar',
-      cancelText = 'Cancelar',
-      type = 'warning',
-    } = {},
-  ) {
-    return new Promise((resolve) => {
-      const container = ensureContainer();
-      const el = document.createElement('div');
-      el.className = `toast toast--${type} toast--confirm`;
-
-      const msg = document.createElement('div');
-      msg.className = 'toast__message';
-      msg.innerText = message;
-      el.appendChild(msg);
-
-      const actions = document.createElement('div');
-      actions.className = 'toast__actions';
-
-      const btnCancel = document.createElement('button');
-      btnCancel.className = 'toast__btn toast__btn--cancel';
-      btnCancel.innerText = cancelText;
-      btnCancel.addEventListener('click', () => {
-        close();
-        resolve(false);
+      contenedor.appendChild(elemento);
+      requestAnimationFrame(function () {
+        elemento.classList.add('notificacion-emergente--visible');
       });
-
-      const btnOk = document.createElement('button');
-      btnOk.className = 'toast__btn toast__btn--ok';
-      btnOk.innerText = confirmText;
-      btnOk.addEventListener('click', () => {
-        close();
-        resolve(true);
-      });
-
-      actions.appendChild(btnCancel);
-      actions.appendChild(btnOk);
-      el.appendChild(actions);
-
-      function close() {
-        el.classList.remove('toast--show');
-        setTimeout(() => el.remove(), 200);
-      }
-
-      container.appendChild(el);
-      requestAnimationFrame(() => el.classList.add('toast--show'));
     });
   }
 
-  window.showToast = showToast;
-  window.showConfirm = showConfirm;
+  window.showToast = mostrarNotificacion;
+  window.showConfirm = mostrarConfirmacion;
 })();

@@ -1,39 +1,60 @@
-﻿class ProductoServicio {
-    constructor() {
-        this.urlBase = '/api/productos';
+class ProductoServicio {
+  constructor() {
+    this.urlBase = '/api';
+  }
+
+  obtenerProductos(filtros) {
+    var parametros = new URLSearchParams();
+
+    if (filtros) {
+      if (filtros.categoria) parametros.set('categoria', filtros.categoria);
+      if (filtros.busqueda) parametros.set('busqueda', filtros.busqueda);
+      if (filtros.precioMinimo)
+        parametros.set('precioMinimo', filtros.precioMinimo);
+      if (filtros.precioMaximo)
+        parametros.set('precioMaximo', filtros.precioMaximo);
+      if (filtros.soloDisponibles)
+        parametros.set('soloDisponibles', filtros.soloDisponibles);
     }
 
-    async obtenerTodos(filtros = {}) {
-        const parametros = new URLSearchParams();
-        
-        if (filtros.busqueda) parametros.append('q', filtros.busqueda);
-        if (filtros.categoria) parametros.append('categoria', filtros.categoria);
-        if (filtros.precioMinimo) parametros.append('minPrice', filtros.precioMinimo);
-        if (filtros.precioMaximo) parametros.append('maxPrice', filtros.precioMaximo);
-        if (filtros.soloDisponibles) parametros.append('inStock', filtros.soloDisponibles);
+    var cadenaParametros = parametros.toString();
+    var url =
+      this.urlBase +
+      '/productos' +
+      (cadenaParametros ? '?' + cadenaParametros : '');
 
-        const url = `${this.urlBase}${parametros.toString() ? '?' + parametros.toString() : ''}`;
-        const respuesta = await fetch(url);
-        
-        if (!respuesta.ok) throw new Error('Error al obtener productos');
-        
-        return await respuesta.json();
-    }
+    return fetch(url).then(function (respuesta) {
+      if (!respuesta.ok) throw new Error('Error al obtener productos');
+      return respuesta.json();
+    });
+  }
 
-    async obtenerPorId(idProducto) {
-        const respuesta = await fetch(`${this.urlBase}/${idProducto}`);
-        
+  obtenerProductoPorId(idProducto) {
+    return fetch(this.urlBase + '/productos/' + idProducto).then(
+      function (respuesta) {
         if (!respuesta.ok) throw new Error('Producto no encontrado');
-        
-        return await respuesta.json();
-    }
+        return respuesta.json();
+      },
+    );
+  }
 
-    async verificarStock(idProducto) {
-        const respuesta = await fetch(`${this.urlBase}/${idProducto}/stock`);
-        
+  verificarStock(idProducto) {
+    return fetch(this.urlBase + '/productos/' + idProducto + '/stock').then(
+      function (respuesta) {
         if (!respuesta.ok) throw new Error('Error al verificar stock');
-        
-        return await respuesta.json();
-    }
-}
+        return respuesta.json();
+      },
+    );
+  }
 
+  verificarStockLote(listaIds) {
+    return fetch(this.urlBase + '/productos/stock-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: listaIds }),
+    }).then(function (respuesta) {
+      if (!respuesta.ok) throw new Error('Error al verificar stock en lote');
+      return respuesta.json();
+    });
+  }
+}
