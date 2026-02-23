@@ -46,6 +46,7 @@ function inicializarPanelAdmin(clienteSupabase) {
   configurarReportes(clienteSupabase);
   configurarAlertasUI(clienteSupabase);
   configurarMonitoreoRutas(clienteSupabase);
+  configurarDevoluciones();
 }
 
 function configurarPestanas() {
@@ -1258,5 +1259,263 @@ function cargarDetalleEntregasChofer(
 
         tbody.appendChild(tr);
       });
+    });
+}
+
+var devolucionesCargadasGlobal = [];
+
+function configurarDevoluciones() {
+  cargarDevoluciones();
+  configurarFiltrosDevoluciones();
+  configurarModalObservaciones();
+}
+
+function cargarDevoluciones() {
+  fetch('/api/devoluciones')
+    .then(function (respuesta) {
+      return respuesta.json();
+    })
+    .then(function (datos) {
+      devolucionesCargadasGlobal = datos.devoluciones || [];
+      renderizarTablaDevoluciones(devolucionesCargadasGlobal);
+    });
+}
+
+function renderizarTablaDevoluciones(devoluciones) {
+  var tbody = document.getElementById('tabla-devoluciones-body');
+  var mensajeVacio = document.getElementById('mensaje-sin-devoluciones');
+
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (devoluciones.length === 0) {
+    if (mensajeVacio)
+      mensajeVacio.classList.add('panel-admin__mensaje-vacio--visible');
+    return;
+  }
+
+  if (mensajeVacio)
+    mensajeVacio.classList.remove('panel-admin__mensaje-vacio--visible');
+
+  for (var i = 0; i < devoluciones.length; i++) {
+    var devolucion = devoluciones[i];
+    var fila = crearFilaDevolucion(devolucion);
+    tbody.appendChild(fila);
+  }
+}
+
+function crearFilaDevolucion(devolucion) {
+  var tr = document.createElement('tr');
+  tr.className = 'panel-admin__tabla-fila';
+
+  var tdPedido = document.createElement('td');
+  tdPedido.className = 'panel-admin__tabla-td';
+  tdPedido.textContent =
+    '#' + (devolucion.pedido_id || '').toString().slice(0, 8);
+  tr.appendChild(tdPedido);
+
+  var tdCliente = document.createElement('td');
+  tdCliente.className = 'panel-admin__tabla-td';
+  tdCliente.textContent = devolucion.nombre_cliente || 'Desconocido';
+  tr.appendChild(tdCliente);
+
+  var tdMotivo = document.createElement('td');
+  tdMotivo.className = 'panel-admin__tabla-td panel-admin__tabla-td--motivo';
+  tdMotivo.textContent = devolucion.motivo_devolucion || '';
+  tr.appendChild(tdMotivo);
+
+  var tdFactura = document.createElement('td');
+  tdFactura.className = 'panel-admin__tabla-td';
+  if (devolucion.foto_factura_url) {
+    var enlaceFactura = document.createElement('a');
+    enlaceFactura.href = devolucion.foto_factura_url;
+    enlaceFactura.target = '_blank';
+    enlaceFactura.rel = 'noopener noreferrer';
+    enlaceFactura.className = 'panel-admin__enlace-factura';
+    enlaceFactura.textContent = 'Ver factura';
+    tdFactura.appendChild(enlaceFactura);
+  } else {
+    tdFactura.textContent = 'Sin imagen';
+  }
+  tr.appendChild(tdFactura);
+
+  var tdFecha = document.createElement('td');
+  tdFecha.className = 'panel-admin__tabla-td';
+  if (devolucion.fecha_solicitud) {
+    var fecha = new Date(devolucion.fecha_solicitud);
+    tdFecha.textContent =
+      fecha.toLocaleDateString('es-BO') +
+      ' ' +
+      fecha.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+  }
+  tr.appendChild(tdFecha);
+
+  var tdEstado = document.createElement('td');
+  tdEstado.className = 'panel-admin__tabla-td';
+  var etiquetaEstado = document.createElement('span');
+  etiquetaEstado.className =
+    'panel-admin__estado panel-admin__estado--devolucion-' +
+    devolucion.estado_devolucion;
+  etiquetaEstado.textContent = obtenerTextoEstadoDevolucion(
+    devolucion.estado_devolucion,
+  );
+  tdEstado.appendChild(etiquetaEstado);
+  tr.appendChild(tdEstado);
+
+  var tdAcciones = document.createElement('td');
+  tdAcciones.className =
+    'panel-admin__tabla-td panel-admin__tabla-td--acciones';
+
+  if (devolucion.estado_devolucion === 'pendiente') {
+    var botonAprobar = document.createElement('button');
+    botonAprobar.className = 'panel-admin__boton panel-admin__boton--aprobar';
+    botonAprobar.textContent = 'Aprobar';
+    botonAprobar.setAttribute('data-devolucion-id', devolucion.id);
+    botonAprobar.addEventListener('click', function () {
+      var idDevolucion = this.getAttribute('data-devolucion-id');
+      abrirModalObservaciones(idDevolucion, 'aprobar');
+    });
+    tdAcciones.appendChild(botonAprobar);
+
+    var botonRechazar = document.createElement('button');
+    botonRechazar.className = 'panel-admin__boton panel-admin__boton--rechazar';
+    botonRechazar.textContent = 'Rechazar';
+    botonRechazar.setAttribute('data-devolucion-id', devolucion.id);
+    botonRechazar.addEventListener('click', function () {
+      var idDevolucion = this.getAttribute('data-devolucion-id');
+      abrirModalObservaciones(idDevolucion, 'rechazar');
+    });
+    tdAcciones.appendChild(botonRechazar);
+  } else {
+    var textoObservaciones = document.createElement('span');
+    textoObservaciones.className = 'panel-admin__observaciones-texto';
+    textoObservaciones.textContent =
+      devolucion.observaciones_admin || 'Sin observaciones';
+    tdAcciones.appendChild(textoObservaciones);
+  }
+
+  tr.appendChild(tdAcciones);
+
+  return tr;
+}
+
+function obtenerTextoEstadoDevolucion(estado) {
+  var mapa = {
+    pendiente: 'Pendiente',
+    aprobada: 'Aprobada',
+    rechazada: 'Rechazada',
+  };
+  return mapa[estado] || estado;
+}
+
+function configurarFiltrosDevoluciones() {
+  var botonesFiltro = document.querySelectorAll('[data-filtro-devolucion]');
+
+  botonesFiltro.forEach(function (boton) {
+    boton.addEventListener('click', function () {
+      botonesFiltro.forEach(function (b) {
+        b.classList.remove('panel-admin__boton--filtro-activo');
+      });
+      boton.classList.add('panel-admin__boton--filtro-activo');
+
+      var filtro = boton.getAttribute('data-filtro-devolucion');
+
+      if (filtro === 'todas') {
+        renderizarTablaDevoluciones(devolucionesCargadasGlobal);
+      } else {
+        var devolucionesFiltradas = devolucionesCargadasGlobal.filter(
+          function (d) {
+            return d.estado_devolucion === filtro;
+          },
+        );
+        renderizarTablaDevoluciones(devolucionesFiltradas);
+      }
+    });
+  });
+}
+
+function configurarModalObservaciones() {
+  var modal = document.getElementById('modal-observaciones-devolucion');
+  var botonCerrar = document.getElementById('btn-cerrar-modal-observaciones');
+  var botonCancelar = document.getElementById('btn-cancelar-observaciones');
+  var formulario = document.getElementById('form-observaciones-devolucion');
+
+  if (!modal) return;
+
+  botonCerrar.addEventListener('click', function () {
+    cerrarModalObservaciones();
+  });
+
+  botonCancelar.addEventListener('click', function () {
+    cerrarModalObservaciones();
+  });
+
+  modal.addEventListener('click', function (evento) {
+    if (evento.target === modal) {
+      cerrarModalObservaciones();
+    }
+  });
+
+  formulario.addEventListener('submit', function (evento) {
+    evento.preventDefault();
+    procesarAccionDevolucion();
+  });
+}
+
+function abrirModalObservaciones(devolucionId, tipoAccion) {
+  var modal = document.getElementById('modal-observaciones-devolucion');
+  var campoId = document.getElementById('devolucion-id-accion');
+  var campoTipo = document.getElementById('devolucion-tipo-accion');
+  var titulo = modal.querySelector('.panel-admin__modal-titulo');
+  var textarea = document.getElementById('observaciones-devolucion');
+
+  campoId.value = devolucionId;
+  campoTipo.value = tipoAccion;
+  textarea.value = '';
+
+  if (tipoAccion === 'aprobar') {
+    titulo.textContent = 'Aprobar Devolución';
+  } else {
+    titulo.textContent = 'Rechazar Devolución';
+  }
+
+  modal.classList.add('panel-admin__modal-overlay--visible');
+}
+
+function cerrarModalObservaciones() {
+  var modal = document.getElementById('modal-observaciones-devolucion');
+  modal.classList.remove('panel-admin__modal-overlay--visible');
+}
+
+function procesarAccionDevolucion() {
+  var devolucionId = document.getElementById('devolucion-id-accion').value;
+  var tipoAccion = document.getElementById('devolucion-tipo-accion').value;
+  var observaciones = document.getElementById('observaciones-devolucion').value;
+
+  var url = '/api/devoluciones/' + devolucionId + '/' + tipoAccion;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ observaciones_admin: observaciones }),
+  })
+    .then(function (respuesta) {
+      return respuesta.json();
+    })
+    .then(function (datos) {
+      if (datos.error) {
+        mostrarToast(datos.error, 'error');
+        return;
+      }
+
+      var mensajeExito =
+        tipoAccion === 'aprobar'
+          ? 'Devolución aprobada correctamente'
+          : 'Devolución rechazada correctamente';
+      mostrarToast(mensajeExito, 'exito');
+
+      cerrarModalObservaciones();
+      cargarDevoluciones();
     });
 }

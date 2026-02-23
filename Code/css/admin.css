@@ -576,3 +576,147 @@
   background: #e0e0e0;
   color: #424242;
 }
+
+.panel-admin__estado--orden-realizada {
+  background: #e8f0fe;
+  color: #1a56a0;
+}
+
+.panel-admin__devoluciones-filtros {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.panel-admin__boton--filtro {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #6b7280;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.panel-admin__boton--filtro:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.panel-admin__boton--filtro-activo {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.panel-admin__boton--filtro-activo:hover {
+  background: #1d4ed8;
+}
+
+.panel-admin__tabla-td--motivo {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-admin__tabla-td--acciones {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.panel-admin__boton--aprobar {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  transition: background 0.2s;
+}
+
+.panel-admin__boton--aprobar:hover {
+  background: #a7f3d0;
+}
+
+.panel-admin__boton--rechazar {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  transition: background 0.2s;
+}
+
+.panel-admin__boton--rechazar:hover {
+  background: #fecaca;
+}
+
+.panel-admin__enlace-factura {
+  color: #2563eb;
+  text-decoration: underline;
+  font-size: 0.875rem;
+}
+
+.panel-admin__enlace-factura:hover {
+  color: #1d4ed8;
+}
+
+.panel-admin__observaciones-texto {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.panel-admin__mensaje-vacio {
+  display: none;
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+  font-size: 0.875rem;
+}
+
+.panel-admin__mensaje-vacio--visible {
+  display: block;
+}
+
+.panel-admin__estado--devolucion-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.panel-admin__estado--devolucion-aprobada {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.panel-admin__estado--devolucion-rechazada {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.panel-admin__modal-overlay--visible {
+  display: flex;
+}

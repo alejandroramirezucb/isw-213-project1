@@ -139,7 +139,7 @@ aplicacion.post('/api/pedidos', async (req, res) => {
         monto_total: monto_total || 0,
         metodo_entrega: metodo_entrega || 'recojo_almacen',
         direccion_destino: direccion_destino || null,
-        estado: 'recibido',
+        estado: 'orden realizada',
       })
       .select()
       .single();
@@ -197,7 +197,7 @@ aplicacion.post('/api/pedidos', async (req, res) => {
 
     await supabase.from('historial_estados_pedido').insert({
       pedido_id: pedidoId,
-      estado: 'recibido',
+      estado: 'orden realizada',
     });
 
     if (metodo_entrega === 'delivery') {
@@ -440,6 +440,264 @@ async function simularCicloPedido(pedidoId, direccionDestino) {
 aplicacion.get('/historial', (peticion, respuesta) => {
   respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'historial.html'));
 });
+
+aplicacion.post('/api/devoluciones', async (req, res) => {
+  try {
+    const { pedido_id, motivo_devolucion, foto_factura_url } = req.body;
+
+    if (!pedido_id || !motivo_devolucion || !foto_factura_url) {
+      return res.status(400).json({
+        error: 'pedido_id, motivo_devolucion y foto_factura_url son requeridos',
+      });
+    }
+
+    const supabase = require('./db');
+
+    const { data: pedido } = await supabase
+      .from('pedidos')
+      .select('estado, fecha_entrega_final')
+      .eq('id', pedido_id)
+      .single();
+
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
+    var estadosPermitidos = ['entregado', 'cerrado'];
+    if (estadosPermitidos.indexOf(pedido.estado) === -1) {
+      return res.status(400).json({
+        error: 'Solo se pueden devolver pedidos entregados o cerrados',
+      });
+    }
+
+    if (pedido.fecha_entrega_final) {
+      var milisegundosEn24Horas = 24 * 60 * 60 * 1000;
+      var diferencia =
+        new Date().getTime() - new Date(pedido.fecha_entrega_final).getTime();
+      if (diferencia > milisegundosEn24Horas) {
+        return res.status(400).json({
+          error: 'El plazo de 24 horas para solicitar devolucion ha vencido',
+        });
+      }
+    }
+
+    const { data: devolucionExistente } = await supabase
+      .from('devoluciones')
+      .select('id')
+      .eq('pedido_id', pedido_id)
+      .single();
+
+    if (devolucionExistente) {
+      return res.status(400).json({
+        error: 'Ya existe una solicitud de devolucion para este pedido',
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('devoluciones')
+      .insert({
+        pedido_id,
+        motivo_devolucion,
+        foto_factura_url,
+        estado_devolucion: 'pendiente',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.json({ devolucion: data });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+aplicacion.get('/api/devoluciones', async (req, res) => {
+  try {
+    const supabase = require('./db');
+
+    const { data, error } = await supabase
+      .from('devoluciones')
+      .select(
+        'id, pedido_id, motivo_devolucion, foto_factura_url, estado_devolucion, fecha_solicitud, observaciones_admin',
+      )
+      .order('fecha_solicitud', { ascending: false });
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    var pedidoIds = data.map(function (d) {
+      return d.pedido_id;
+    });
+
+    if (pedidoIds.length === 0) {
+      return res.json({ devoluciones: [] });
+    }
+
+    const { data: pedidos } = await supabase
+      .from('pedidos')
+      .select('id, usuario_id, monto_total')
+      .in('id', pedidoIds);
+
+    var usuarioIds = (pedidos || []).map(function (p) {
+      return p.usuario_id;
+    });
+
+    const { data: usuarios } = await supabase
+      .from('usuarios')
+      .select('id, nombre_completo, correo_electronico')
+      .in('id', usuarioIds);
+
+    var mapaPedidos = {};
+    (pedidos || []).forEach(function (p) {
+      mapaPedidos[p.id] = p;
+    });
+
+    var mapaUsuarios = {};
+    (usuarios || []).forEach(function (u) {
+      mapaUsuarios[u.id] = u;
+    });
+
+    var devolucionesEnriquecidas = data.map(function (devolucion) {
+      var pedido = mapaPedidos[devolucion.pedido_id] || {};
+      var usuario = mapaUsuarios[pedido.usuario_id] || {};
+      return {
+        id: devolucion.id,
+        pedido_id: devolucion.pedido_id,
+        motivo_devolucion: devolucion.motivo_devolucion,
+        foto_factura_url: devolucion.foto_factura_url,
+        estado_devolucion: devolucion.estado_devolucion,
+        fecha_solicitud: devolucion.fecha_solicitud,
+        observaciones_admin: devolucion.observaciones_admin,
+        monto_total: pedido.monto_total || 0,
+        nombre_cliente: usuario.nombre_completo || 'Desconocido',
+        correo_cliente: usuario.correo_electronico || '',
+      };
+    });
+
+    return res.json({ devoluciones: devolucionesEnriquecidas });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+aplicacion.patch(
+  '/api/devoluciones/:devolucionId/aprobar',
+  async (req, res) => {
+    try {
+      const { devolucionId } = req.params;
+      const { observaciones_admin } = req.body;
+      const supabase = require('./db');
+
+      const { data: devolucion } = await supabase
+        .from('devoluciones')
+        .select('id, pedido_id, estado_devolucion')
+        .eq('id', devolucionId)
+        .single();
+
+      if (!devolucion) {
+        return res.status(404).json({ error: 'Devolucion no encontrada' });
+      }
+
+      if (devolucion.estado_devolucion !== 'pendiente') {
+        return res
+          .status(400)
+          .json({ error: 'Esta devolucion ya fue procesada' });
+      }
+
+      const { data: detallesPedido } = await supabase
+        .from('detalles_pedido')
+        .select('producto_id, cantidad')
+        .eq('pedido_id', devolucion.pedido_id);
+
+      if (detallesPedido && detallesPedido.length > 0) {
+        for (var i = 0; i < detallesPedido.length; i++) {
+          var detalle = detallesPedido[i];
+          const { data: productoActual } = await supabase
+            .from('productos')
+            .select('stock_disponible')
+            .eq('id', detalle.producto_id)
+            .single();
+
+          if (productoActual) {
+            var nuevoStock =
+              (productoActual.stock_disponible || 0) + detalle.cantidad;
+            await supabase
+              .from('productos')
+              .update({ stock_disponible: nuevoStock })
+              .eq('id', detalle.producto_id);
+          }
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('devoluciones')
+        .update({
+          estado_devolucion: 'aprobada',
+          observaciones_admin: observaciones_admin || 'Devolucion aprobada',
+        })
+        .eq('id', devolucionId)
+        .select()
+        .single();
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+
+      return res.json({ devolucion: data });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+);
+
+aplicacion.patch(
+  '/api/devoluciones/:devolucionId/rechazar',
+  async (req, res) => {
+    try {
+      const { devolucionId } = req.params;
+      const { observaciones_admin } = req.body;
+      const supabase = require('./db');
+
+      const { data: devolucion } = await supabase
+        .from('devoluciones')
+        .select('id, estado_devolucion')
+        .eq('id', devolucionId)
+        .single();
+
+      if (!devolucion) {
+        return res.status(404).json({ error: 'Devolucion no encontrada' });
+      }
+
+      if (devolucion.estado_devolucion !== 'pendiente') {
+        return res
+          .status(400)
+          .json({ error: 'Esta devolucion ya fue procesada' });
+      }
+
+      const { data, error } = await supabase
+        .from('devoluciones')
+        .update({
+          estado_devolucion: 'rechazada',
+          observaciones_admin: observaciones_admin || 'Devolucion rechazada',
+        })
+        .eq('id', devolucionId)
+        .select()
+        .single();
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+
+      return res.json({ devolucion: data });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+);
 
 aplicacion.get('/user', (peticion, respuesta) => {
   respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'perfil.html'));

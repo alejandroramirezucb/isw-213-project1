@@ -1,5 +1,5 @@
 var ESTADOS_PEDIDO = [
-  'recibido',
+  'orden realizada',
   'en proceso',
   'enviado',
   'trasladandose',
@@ -10,8 +10,17 @@ var ESTADOS_PEDIDO = [
 var clienteSupabaseGlobal = null;
 var usuarioIdGlobal = null;
 
+function obtenerEtiquetaEstado(estado) {
+  if (!estado) return '';
+  if (estado === 'orden realizada') return 'Orden Realizada';
+  return estado.replace(/-/g, ' ').replace(/\b\w/g, function (c) {
+    return c.toUpperCase();
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   cargarNavbar().then(function () {
+    configurarModalDevolucion();
     cargarMisPedidos();
   });
 });
@@ -92,9 +101,16 @@ function obtenerPedidosConHistorial(clienteSupabase, usuarioId, contenedor) {
           .select('pedido_id, estado, fecha_cambio')
           .in('pedido_id', pedidoIds)
           .order('fecha_cambio', { ascending: true }),
+        clienteSupabase
+          .from('devoluciones')
+          .select(
+            'id, pedido_id, motivo_devolucion, estado_devolucion, fecha_solicitud',
+          )
+          .in('pedido_id', pedidoIds),
       ]).then(function (resultados) {
         var detalles = resultados[0].data || [];
         var historialEstados = resultados[1].data || [];
+        var devoluciones = resultados[2].data || [];
 
         pedidos.forEach(function (pedido) {
           pedido.detalles = detalles.filter(function (d) {
@@ -103,6 +119,10 @@ function obtenerPedidosConHistorial(clienteSupabase, usuarioId, contenedor) {
           pedido.historial_estados = historialEstados.filter(function (h) {
             return h.pedido_id === pedido.id;
           });
+          pedido.devolucion =
+            devoluciones.filter(function (d) {
+              return d.pedido_id === pedido.id;
+            })[0] || null;
         });
 
         renderizarPedidosConTimeline(contenedor, pedidos);
@@ -148,16 +168,15 @@ function crearTarjetaPedido(pedido) {
   cabecera.appendChild(infoDiv);
 
   var divDerecho = document.createElement('div');
-  divDerecho.style.display = 'flex';
-  divDerecho.style.alignItems = 'center';
-  divDerecho.style.gap = '10px';
+  divDerecho.className = 'pedido-tarjeta__cabecera-derecho';
 
   var estadoBadge = document.createElement('span');
   var claseEstadoMod = (pedido.estado || '').replace(/\s+/g, '-');
   estadoBadge.className =
     'pedido-tarjeta__estado-badge pedido-tarjeta__estado-badge--' +
     claseEstadoMod;
-  estadoBadge.textContent = pedido.estado || 'recibido';
+  estadoBadge.textContent =
+    obtenerEtiquetaEstado(pedido.estado) || 'Orden Realizada';
   divDerecho.appendChild(estadoBadge);
 
   var flecha = document.createElement('span');
@@ -212,7 +231,7 @@ function crearTarjetaPedido(pedido) {
     var btnConfirmar = document.createElement('button');
     btnConfirmar.className =
       'pedido-tarjeta__boton pedido-tarjeta__boton--confirmar';
-    btnConfirmar.textContent = 'Confirmar Recepción';
+    btnConfirmar.textContent = 'Confirmar Recepcion';
     btnConfirmar.addEventListener('click', function () {
       confirmarRecepcionPedido(pedido.id);
     });
@@ -229,6 +248,11 @@ function crearTarjetaPedido(pedido) {
     spanTexto.textContent = '✓ Pedido finalizado y confirmado';
     textoConfirmado.appendChild(spanTexto);
     cuerpo.appendChild(textoConfirmado);
+  }
+
+  var seccionDevolucion = crearSeccionDevolucion(pedido);
+  if (seccionDevolucion) {
+    cuerpo.appendChild(seccionDevolucion);
   }
 
   articulo.appendChild(cabecera);
@@ -253,7 +277,7 @@ function crearLineaTiempo(pedido) {
   }
 
   var nombresEstados = {
-    recibido: 'Recibido',
+    'orden realizada': 'Orden Realizada',
     'en proceso': 'En Proceso',
     enviado: 'Enviado',
     trasladandose: 'Trasladándose',
@@ -401,4 +425,206 @@ function suscribirseACambiosPedidos(clienteSupabase, usuarioId, contenedor) {
       },
     )
     .subscribe();
+}
+
+function crearSeccionDevolucion(pedido) {
+  var estadosConDevolucion = ['entregado', 'cerrado'];
+  var pedidoEntregado =
+    estadosConDevolucion.indexOf(pedido.estado) !== -1 ||
+    pedido.confirmacion_cliente;
+
+  if (!pedidoEntregado) {
+    return null;
+  }
+
+  var divDevolucion = document.createElement('div');
+  divDevolucion.className = 'pedido-tarjeta__acciones';
+
+  if (pedido.devolucion) {
+    var estadoDevolucion = pedido.devolucion.estado_devolucion;
+    var spanEstado = document.createElement('span');
+    var claseModificador =
+      'pedido-tarjeta__devolucion-estado--' + estadoDevolucion;
+    spanEstado.className =
+      'pedido-tarjeta__devolucion-estado ' + claseModificador;
+
+    if (estadoDevolucion === 'pendiente') {
+      spanEstado.textContent = 'Devolucion solicitada - En revision';
+    } else if (estadoDevolucion === 'aprobada') {
+      spanEstado.textContent = '✓ Devolucion aprobada - Reembolso procesado';
+    } else if (estadoDevolucion === 'rechazada') {
+      spanEstado.textContent = '✗ Devolucion rechazada';
+    }
+
+    divDevolucion.appendChild(spanEstado);
+    return divDevolucion;
+  }
+
+  var fechaEntrega = pedido.fecha_entrega_final;
+  if (!fechaEntrega) {
+    return null;
+  }
+
+  var milisegundosEn24Horas = 24 * 60 * 60 * 1000;
+  var fechaEntregaDate = new Date(fechaEntrega);
+  var ahora = new Date();
+  var diferenciaTiempo = ahora.getTime() - fechaEntregaDate.getTime();
+  var dentroDelPlazo = diferenciaTiempo <= milisegundosEn24Horas;
+
+  if (dentroDelPlazo) {
+    var btnDevolucion = document.createElement('button');
+    btnDevolucion.className =
+      'pedido-tarjeta__boton pedido-tarjeta__boton--devolucion';
+    btnDevolucion.textContent = 'Solicitar Devolucion';
+    btnDevolucion.addEventListener('click', function () {
+      abrirModalDevolucion(pedido.id);
+    });
+    divDevolucion.appendChild(btnDevolucion);
+  } else {
+    var spanVencido = document.createElement('span');
+    spanVencido.className = 'pedido-tarjeta__devolucion-vencido';
+    spanVencido.textContent = 'Plazo de devolucion vencido (24 horas)';
+    divDevolucion.appendChild(spanVencido);
+  }
+
+  return divDevolucion;
+}
+
+function abrirModalDevolucion(pedidoId) {
+  var modal = document.getElementById('modal-devolucion');
+  document.getElementById('devolucion-pedido-id').value = pedidoId;
+  document.getElementById('devolucion-motivo').value = '';
+  document.getElementById('devolucion-foto').value = '';
+  document.getElementById('devolucion-preview').style.display = 'none';
+  modal.classList.add('modal-devolucion--visible');
+}
+
+function cerrarModalDevolucion() {
+  var modal = document.getElementById('modal-devolucion');
+  modal.classList.remove('modal-devolucion--visible');
+}
+
+function configurarModalDevolucion() {
+  var btnCerrar = document.getElementById('btn-cerrar-devolucion');
+  var btnCancelar = document.getElementById('btn-cancelar-devolucion');
+  var formulario = document.getElementById('formulario-devolucion');
+  var inputFoto = document.getElementById('devolucion-foto');
+  var previewImg = document.getElementById('devolucion-preview');
+  var modal = document.getElementById('modal-devolucion');
+
+  if (!btnCerrar || !formulario) return;
+
+  btnCerrar.addEventListener('click', cerrarModalDevolucion);
+  btnCancelar.addEventListener('click', cerrarModalDevolucion);
+
+  modal.addEventListener('click', function (evento) {
+    if (evento.target === modal) {
+      cerrarModalDevolucion();
+    }
+  });
+
+  inputFoto.addEventListener('change', function () {
+    if (inputFoto.files && inputFoto.files[0]) {
+      var lector = new FileReader();
+      lector.onload = function (e) {
+        previewImg.src = e.target.result;
+        previewImg.style.display = 'block';
+      };
+      lector.readAsDataURL(inputFoto.files[0]);
+    }
+  });
+
+  formulario.addEventListener('submit', function (evento) {
+    evento.preventDefault();
+    enviarSolicitudDevolucion();
+  });
+}
+
+function enviarSolicitudDevolucion() {
+  var pedidoId = document.getElementById('devolucion-pedido-id').value;
+  var motivo = document.getElementById('devolucion-motivo').value.trim();
+  var archivoFoto = document.getElementById('devolucion-foto').files[0];
+
+  if (!motivo) {
+    if (window.showToast) {
+      window.showToast('Debes ingresar un motivo para la devolucion', {
+        tipo: 'warning',
+      });
+    }
+    return;
+  }
+
+  if (!archivoFoto) {
+    if (window.showToast) {
+      window.showToast('Debes adjuntar una foto de la factura', {
+        tipo: 'warning',
+      });
+    }
+    return;
+  }
+
+  var nombreArchivo = 'factura_' + pedidoId + '_' + Date.now() + '.jpg';
+  var rutaArchivo = 'facturas/' + nombreArchivo;
+
+  clienteSupabaseGlobal.storage
+    .from('devoluciones')
+    .upload(rutaArchivo, archivoFoto, { contentType: archivoFoto.type })
+    .then(function (resultadoSubida) {
+      var urlFoto;
+
+      if (resultadoSubida.error) {
+        urlFoto = 'factura_local_' + pedidoId + '_' + Date.now();
+      } else {
+        var urlData = clienteSupabaseGlobal.storage
+          .from('devoluciones')
+          .getPublicUrl(rutaArchivo);
+        urlFoto = urlData.data.publicUrl;
+      }
+
+      return fetch('/api/devoluciones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pedido_id: parseInt(pedidoId, 10),
+          motivo_devolucion: motivo,
+          foto_factura_url: urlFoto,
+        }),
+      });
+    })
+    .then(function (respuesta) {
+      return respuesta.json();
+    })
+    .then(function (data) {
+      if (data.error) {
+        if (window.showToast) {
+          window.showToast('Error al enviar solicitud: ' + data.error, {
+            tipo: 'error',
+          });
+        }
+        return;
+      }
+
+      cerrarModalDevolucion();
+
+      if (window.showToast) {
+        window.showToast('Solicitud de devolucion enviada correctamente', {
+          tipo: 'success',
+          duracion: 5000,
+        });
+      }
+
+      var contenedor = document.querySelector('.pedidos__lista');
+      obtenerPedidosConHistorial(
+        clienteSupabaseGlobal,
+        usuarioIdGlobal,
+        contenedor,
+      );
+    })
+    .catch(function () {
+      if (window.showToast) {
+        window.showToast('Error al procesar la solicitud de devolucion', {
+          tipo: 'error',
+        });
+      }
+    });
 }

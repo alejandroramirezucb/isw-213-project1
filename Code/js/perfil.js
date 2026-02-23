@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function getEstadoLabel(estado) {
   if (!estado) return '';
-  if (estado === 'recibido') return 'Orden realizada';
+  if (estado === 'orden realizada') return 'Orden Realizada';
   return estado.replace(/-/g, ' ').replace(/\b\w/g, function (c) {
     return c.toUpperCase();
   });

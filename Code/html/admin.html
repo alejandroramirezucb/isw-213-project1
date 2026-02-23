@@ -60,6 +60,11 @@
           data-seccion="monitoreo-rutas">
           Monitoreo de Rutas
         </button>
+        <button
+          class="panel-admin__pestana"
+          data-seccion="devoluciones">
+          Devoluciones
+        </button>
       </nav>
 
       <section
@@ -341,6 +346,110 @@
           </div>
         </div>
       </section>
+
+      <section
+        class="panel-admin__seccion"
+        id="seccion-devoluciones">
+        <h2 class="panel-admin__seccion-titulo">Gestión de Devoluciones</h2>
+
+        <nav class="panel-admin__devoluciones-filtros">
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro panel-admin__boton--filtro-activo"
+            data-filtro-devolucion="todas">
+            Todas
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-devolucion="pendiente">
+            Pendientes
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-devolucion="aprobada">
+            Aprobadas
+          </button>
+          <button
+            class="panel-admin__boton panel-admin__boton--filtro"
+            data-filtro-devolucion="rechazada">
+            Rechazadas
+          </button>
+        </nav>
+
+        <div class="panel-admin__tabla-contenedor">
+          <table class="panel-admin__tabla">
+            <thead class="panel-admin__tabla-cabecera">
+              <tr>
+                <th class="panel-admin__tabla-th">Pedido</th>
+                <th class="panel-admin__tabla-th">Cliente</th>
+                <th class="panel-admin__tabla-th">Motivo</th>
+                <th class="panel-admin__tabla-th">Factura</th>
+                <th class="panel-admin__tabla-th">Fecha</th>
+                <th class="panel-admin__tabla-th">Estado</th>
+                <th class="panel-admin__tabla-th">Acciones</th>
+              </tr>
+            </thead>
+            <tbody
+              class="panel-admin__tabla-cuerpo"
+              id="tabla-devoluciones-body"></tbody>
+          </table>
+        </div>
+
+        <p
+          class="panel-admin__mensaje-vacio"
+          id="mensaje-sin-devoluciones">
+          No hay devoluciones registradas.
+        </p>
+      </section>
+
+      <aside
+        class="panel-admin__modal-overlay"
+        id="modal-observaciones-devolucion">
+        <div class="panel-admin__modal">
+          <div class="panel-admin__modal-cabecera">
+            <h3 class="panel-admin__modal-titulo">Observaciones</h3>
+            <button
+              class="panel-admin__modal-cerrar"
+              id="btn-cerrar-modal-observaciones">
+              &times;
+            </button>
+          </div>
+          <form
+            class="panel-admin__modal-formulario"
+            id="form-observaciones-devolucion">
+            <div class="panel-admin__campo">
+              <label
+                class="panel-admin__etiqueta"
+                for="observaciones-devolucion">
+                Observaciones para el cliente
+              </label>
+              <textarea
+                id="observaciones-devolucion"
+                class="panel-admin__entrada panel-admin__entrada--textarea"
+                rows="4"
+                placeholder="Escriba las observaciones..."></textarea>
+            </div>
+            <input
+              type="hidden"
+              id="devolucion-id-accion" />
+            <input
+              type="hidden"
+              id="devolucion-tipo-accion" />
+            <div class="panel-admin__modal-acciones">
+              <button
+                type="button"
+                class="panel-admin__boton panel-admin__boton--secundario"
+                id="btn-cancelar-observaciones">
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="panel-admin__boton panel-admin__boton--primario">
+                Confirmar
+              </button>
+            </div>
+          </form>
+        </div>
+      </aside>
 
       <div
         class="panel-admin__modal-overlay"
