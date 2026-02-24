@@ -278,6 +278,23 @@ function crearTarjetaPedido(pedido) {
     cuerpo.appendChild(seccionQR);
   }
 
+  if (
+    pedido.metodo_entrega === 'recojo_almacen' &&
+    pedido.estado === 'listo para entregarse'
+  ) {
+    var accionesRetiro = document.createElement('div');
+    accionesRetiro.className = 'pedido-tarjeta__acciones';
+    var btnRetiro = document.createElement('button');
+    btnRetiro.className =
+      'pedido-tarjeta__boton pedido-tarjeta__boton--confirmar';
+    btnRetiro.textContent = 'Confirmar mi Retiro en Almacén';
+    btnRetiro.addEventListener('click', function () {
+      confirmarRetiroAlmacenCliente(pedido.id);
+    });
+    accionesRetiro.appendChild(btnRetiro);
+    cuerpo.appendChild(accionesRetiro);
+  }
+
   var seccionDevolucion = crearSeccionDevolucion(pedido);
   if (seccionDevolucion) {
     cuerpo.appendChild(seccionDevolucion);
@@ -469,6 +486,46 @@ function confirmarRecepcionPedido(pedidoId) {
         usuarioIdGlobal,
         contenedor,
       );
+    });
+}
+
+function confirmarRetiroAlmacenCliente(pedidoId) {
+  fetch('/api/pedidos/' + pedidoId + '/estado', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado: 'entregado' }),
+  })
+    .then(function (respuesta) {
+      return respuesta.json();
+    })
+    .then(function (data) {
+      if (data.error) {
+        if (window.showToast) {
+          window.showToast('Error al confirmar retiro: ' + data.error, {
+            tipo: 'error',
+          });
+        }
+        return;
+      }
+
+      if (window.showToast) {
+        window.showToast(
+          'Retiro confirmado. Ahora confirma la recepción para cerrar el pedido.',
+          { tipo: 'success', duracion: 6000 },
+        );
+      }
+
+      var contenedor = document.querySelector('.pedidos__lista');
+      obtenerPedidosConHistorial(
+        clienteSupabaseHistorial,
+        usuarioIdGlobal,
+        contenedor,
+      );
+    })
+    .catch(function () {
+      if (window.showToast) {
+        window.showToast('Error al procesar el retiro', { tipo: 'error' });
+      }
     });
 }
 

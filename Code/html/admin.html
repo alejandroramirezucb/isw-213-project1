@@ -70,6 +70,11 @@
           data-seccion="pedidos">
           Gestión de Pedidos
         </button>
+        <button
+          class="panel-admin__pestana"
+          data-seccion="soporte">
+          Soporte
+        </button>
       </nav>
 
       <section
@@ -455,6 +460,37 @@
           </form>
         </div>
       </aside>
+
+      <section
+        class="panel-admin__seccion"
+        id="seccion-soporte"
+        style="display: none">
+        <h2 class="panel-admin__seccion-titulo">Mensajes de Soporte</h2>
+        <div class="panel-admin__tabla-contenedor">
+          <table class="panel-admin__tabla">
+            <thead class="panel-admin__tabla-cabecera">
+              <tr>
+                <th class="panel-admin__tabla-th">ID</th>
+                <th class="panel-admin__tabla-th">Nombre</th>
+                <th class="panel-admin__tabla-th">Email</th>
+                <th class="panel-admin__tabla-th">Categoría</th>
+                <th class="panel-admin__tabla-th">Mensaje</th>
+                <th class="panel-admin__tabla-th">Fecha</th>
+                <th class="panel-admin__tabla-th">Estado</th>
+                <th class="panel-admin__tabla-th">Acciones</th>
+              </tr>
+            </thead>
+            <tbody
+              class="panel-admin__tabla-cuerpo"
+              id="tabla-soporte-body"></tbody>
+          </table>
+        </div>
+        <p
+          class="panel-admin__mensaje-vacio"
+          id="mensaje-sin-soporte">
+          No hay mensajes de soporte.
+        </p>
+      </section>
 
       <section
         class="panel-admin__seccion"

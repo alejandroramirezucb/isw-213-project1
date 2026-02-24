@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+    <title>Centro de Ayuda - Raidencenter</title>
+    <link
+      rel="icon"
+      href="/assets/icon.png"
+      type="image/png" />
+    <link
+      rel="stylesheet"
+      href="/css/navbar.css" />
+    <link
+      rel="stylesheet"
+      href="/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="/css/ayuda.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  </head>
+  <body>
+    <header id="navbar-container"></header>
+
+    <main class="pagina-ayuda">
+      <h1 class="ayuda__titulo">Centro de Ayuda</h1>
+      <p class="ayuda__subtitulo">
+        Encuentra respuestas rápidas o contáctanos directamente.
+      </p>
+
+      <section>
+        <h2 class="ayuda__seccion-titulo">Preguntas Frecuentes</h2>
+
+        <div class="faq__pestanas">
+          <button
+            class="faq__boton-pestana faq__boton-pestana--activo"
+            data-panel="pagos">
+            Pagos
+          </button>
+          <button
+            class="faq__boton-pestana"
+            data-panel="envios">
+            Envíos
+          </button>
+          <button
+            class="faq__boton-pestana"
+            data-panel="devoluciones">
+            Devoluciones
+          </button>
+        </div>
+
+        <div
+          id="faq-pagos"
+          class="faq__panel faq__panel--activo">
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿Qué métodos de pago están disponibles?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              Aceptamos tarjetas de crédito y débito Visa, Mastercard y American
+              Express, así como transferencias bancarias. El pago se procesa de
+              forma segura al confirmar tu pedido.
+            </div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿Mis datos de pago están seguros?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              Sí. Toda la información de pago se transmite mediante cifrado TLS
+              y no almacenamos los datos completos de tu tarjeta en nuestros
+              servidores.
+            </div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿Puedo solicitar factura por mi compra?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              Sí. Puedes solicitar tu factura electrónica a través del
+              formulario de contacto indicando el número de pedido y tu RUC o
+              DNI.
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="faq-envios"
+          class="faq__panel">
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿Cuánto demora mi pedido en llegar?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              Los pedidos con delivery se entregan entre 1 y 3 días hábiles
+              según tu ubicación. Los pedidos de recojo en almacén están listos
+              en 24 horas y puedes recogerlos en horario de atención.
+            </div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿Cómo puedo rastrear mi pedido?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              En la sección <strong>Historial</strong> puedes ver el estado
+              actualizado de cada pedido: desde "orden realizada" hasta
+              "entregado". También verás el código QR de tu pedido una vez
+              confirmado.
+            </div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿Hay costo de envío?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              El costo de delivery varía según la distancia. El recojo en
+              almacén es siempre gratuito. El monto exacto se muestra en el
+              carrito antes de confirmar la compra.
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="faq-devoluciones"
+          class="faq__panel">
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿Cómo solicito una devolución?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              Puedes solicitar una devolución desde la sección
+              <strong>Historial</strong> dentro de los 7 días posteriores a la
+              entrega. El pedido debe estar en estado "entregado" y no en estado
+              "cerrado".
+            </div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿En cuántos días se procesa el reembolso?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              Una vez aprobada la devolución, el reembolso se acredita en tu
+              método de pago original en un plazo de 5 a 10 días hábiles.
+            </div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__pregunta">
+              ¿Cuáles son los requisitos para devolver un producto?
+              <span class="faq__icono-flecha">&#8964;</span>
+            </button>
+            <div class="faq__respuesta">
+              El producto debe estar sin usar, en su empaque original y con
+              todos sus accesorios. No se aceptan devoluciones de productos
+              dañados por mal uso.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="ayuda__separador" />
+
+      <section>
+        <h2 class="ayuda__seccion-titulo">Contactar Soporte</h2>
+        <div class="contacto__formulario">
+          <p class="contacto__descripcion">
+            ¿No encontraste lo que buscabas? Envíanos un mensaje y te
+            responderemos en menos de 24 horas.
+          </p>
+          <form
+            id="formulario-contacto"
+            novalidate>
+            <div class="contacto__fila">
+              <div class="contacto__grupo">
+                <label
+                  class="contacto__etiqueta"
+                  for="contacto-nombre"
+                  >Nombre completo</label
+                >
+                <input
+                  type="text"
+                  id="contacto-nombre"
+                  class="contacto__campo"
+                  placeholder="Tu nombre"
+                  required />
+              </div>
+              <div class="contacto__grupo">
+                <label
+                  class="contacto__etiqueta"
+                  for="contacto-email"
+                  >Correo electrónico</label
+                >
+                <input
+                  type="email"
+                  id="contacto-email"
+                  class="contacto__campo"
+                  placeholder="correo@ejemplo.com"
+                  required />
+              </div>
+            </div>
+            <div class="contacto__grupo">
+              <label
+                class="contacto__etiqueta"
+                for="contacto-categoria"
+                >Categoría</label
+              >
+              <select
+                id="contacto-categoria"
+                class="contacto__campo"
+                required>
+                <option value="">Selecciona una categoría</option>
+                <option value="pagos">Pagos y facturación</option>
+                <option value="envios">Envíos y entregas</option>
+                <option value="devoluciones">Devoluciones y reembolsos</option>
+                <option value="cuenta">Mi cuenta</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="contacto__grupo">
+              <label
+                class="contacto__etiqueta"
+                for="contacto-mensaje"
+                >Mensaje</label
+              >
+              <textarea
+                id="contacto-mensaje"
+                class="contacto__campo contacto__campo--area"
+                placeholder="Describe tu consulta con el mayor detalle posible..."
+                required></textarea>
+            </div>
+            <button
+              type="submit"
+              class="contacto__boton">
+              Enviar mensaje
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="/js/utilidades/ClienteSupabase.js"></script>
+    <script src="/js/utilidades/Toaster.js"></script>
+    <script src="/js/utilidades/ActualizadorContador.js"></script>
+    <script src="/js/servicios/CarritoServicio.js"></script>
+    <script src="/js/navbar-comun.js"></script>
+    <script src="/js/navbar-global.js"></script>
+    <script src="/js/ayuda.js"></script>
+  </body>
+</html>

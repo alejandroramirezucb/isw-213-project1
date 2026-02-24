@@ -321,22 +321,64 @@ aplicacion.patch('/api/pedidos/:pedidoId/estado', async (req, res) => {
       .catch(function () {});
 
     if (estado === 'enviado') {
+      // assign a driver or reassign if already there but no progress
       const { data: choferes } = await supabase
         .from('usuarios')
         .select('id')
-        .eq('rol', 'chofer')
-        .limit(5);
+        .eq('rol', 'chofer');
 
       if (choferes && choferes.length > 0) {
-        const choferAzar =
-          choferes[Math.floor(Math.random() * choferes.length)];
-        const pedidoActual = data[0];
-        await supabase.from('envios').insert({
-          pedido_id: pedidoId,
-          chofer_id: choferAzar.id,
-          latitud_destino: null,
-          longitud_destino: null,
-        });
+        // see if an envio already exists for this pedido
+        const { data: envioExistente } = await supabase
+          .from('envios')
+          .select('*')
+          .eq('pedido_id', pedidoId)
+          .single();
+
+        let choferElegido = null;
+
+        if (envioExistente) {
+          // if the crated envio exists but pedido remains enviado for too long
+          // or has not been accepted (no historial ubicaciones yet), pick new
+          const { data: ubicaciones } = await supabase
+            .from('historial_ubicaciones')
+            .select('id')
+            .eq('envio_id', envioExistente.id)
+            .limit(1);
+
+          if (!ubicaciones || ubicaciones.length === 0) {
+            // choose another random chofer different from current
+            const candidatos = choferes.filter(
+              (c) => c.id !== envioExistente.chofer_id,
+            );
+            if (candidatos.length > 0) {
+              choferElegido =
+                candidatos[Math.floor(Math.random() * candidatos.length)];
+            }
+          }
+        }
+
+        if (!choferElegido) {
+          // pick random from all choferes
+          choferElegido = choferes[Math.floor(Math.random() * choferes.length)];
+        }
+
+        if (envioExistente) {
+          // update existing envio if chofer changed
+          if (envioExistente.chofer_id !== choferElegido.id) {
+            await supabase
+              .from('envios')
+              .update({ chofer_id: choferElegido.id })
+              .eq('id', envioExistente.id);
+          }
+        } else {
+          await supabase.from('envios').insert({
+            pedido_id: pedidoId,
+            chofer_id: choferElegido.id,
+            latitud_destino: null,
+            longitud_destino: null,
+          });
+        }
       }
     }
 
@@ -426,6 +468,10 @@ aplicacion.get('/api/choferes', async (req, res) => {
 
 aplicacion.get('/historial', (peticion, respuesta) => {
   respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'historial.html'));
+});
+
+aplicacion.get('/ayuda', (peticion, respuesta) => {
+  respuesta.sendFile(ruta.join(__dirname, '..', 'html', 'ayuda.html'));
 });
 
 aplicacion.get('/api/pedidos/admin', async (req, res) => {
@@ -553,6 +599,90 @@ aplicacion.post('/api/devoluciones', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+// ------ mensajes de ayuda ----------------
+aplicacion.post('/api/mensajes-ayuda', async (req, res) => {
+  try {
+    const { usuario_id, nombre, email, categoria, mensaje } = req.body || {};
+
+    if (!nombre || !email || !categoria || !mensaje) {
+      return res.status(400).json({
+        error: 'nombre, email, categoria y mensaje son requeridos',
+      });
+    }
+
+    const supabase = require('./db');
+    const { data, error } = await supabase
+      .from('mensajes_ayuda')
+      .insert({
+        usuario_id: usuario_id || null,
+        nombre,
+        email,
+        categoria,
+        mensaje,
+        estado: 'pendiente',
+      })
+      .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ mensaje: data[0] });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// admin retrieves todas las solicitudes
+aplicacion.get('/api/mensajes-ayuda', async (req, res) => {
+  try {
+    const supabase = require('./db');
+    const { data, error } = await supabase
+      .from('mensajes_ayuda')
+      .select('*')
+      .order('fecha_creacion', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ mensajes: data });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+aplicacion.patch('/api/mensajes-ayuda/:id/responder', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { respuesta_admin } = req.body;
+    if (!respuesta_admin) {
+      return res.status(400).json({ error: 'respuesta_admin es requerido' });
+    }
+    const supabase = require('./db');
+    const { data: mensaje } = await supabase
+      .from('mensajes_ayuda')
+      .select('id, estado')
+      .eq('id', id)
+      .single();
+    if (!mensaje) {
+      return res.status(404).json({ error: 'Mensaje no encontrado' });
+    }
+    if (mensaje.estado === 'respondido') {
+      return res.status(400).json({ error: 'El mensaje ya fue respondido' });
+    }
+    const { data, error } = await supabase
+      .from('mensajes_ayuda')
+      .update({
+        estado: 'respondido',
+        respuesta_admin,
+        fecha_respuesta: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ mensaje: data });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// -------------------------------------------------
 
 aplicacion.get('/api/devoluciones', async (req, res) => {
   try {
