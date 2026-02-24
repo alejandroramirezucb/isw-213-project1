@@ -320,68 +320,6 @@ aplicacion.patch('/api/pedidos/:pedidoId/estado', async (req, res) => {
       .then(function () {})
       .catch(function () {});
 
-    if (estado === 'enviado') {
-      // assign a driver or reassign if already there but no progress
-      const { data: choferes } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('rol', 'chofer');
-
-      if (choferes && choferes.length > 0) {
-        // see if an envio already exists for this pedido
-        const { data: envioExistente } = await supabase
-          .from('envios')
-          .select('*')
-          .eq('pedido_id', pedidoId)
-          .single();
-
-        let choferElegido = null;
-
-        if (envioExistente) {
-          // if the crated envio exists but pedido remains enviado for too long
-          // or has not been accepted (no historial ubicaciones yet), pick new
-          const { data: ubicaciones } = await supabase
-            .from('historial_ubicaciones')
-            .select('id')
-            .eq('envio_id', envioExistente.id)
-            .limit(1);
-
-          if (!ubicaciones || ubicaciones.length === 0) {
-            // choose another random chofer different from current
-            const candidatos = choferes.filter(
-              (c) => c.id !== envioExistente.chofer_id,
-            );
-            if (candidatos.length > 0) {
-              choferElegido =
-                candidatos[Math.floor(Math.random() * candidatos.length)];
-            }
-          }
-        }
-
-        if (!choferElegido) {
-          // pick random from all choferes
-          choferElegido = choferes[Math.floor(Math.random() * choferes.length)];
-        }
-
-        if (envioExistente) {
-          // update existing envio if chofer changed
-          if (envioExistente.chofer_id !== choferElegido.id) {
-            await supabase
-              .from('envios')
-              .update({ chofer_id: choferElegido.id })
-              .eq('id', envioExistente.id);
-          }
-        } else {
-          await supabase.from('envios').insert({
-            pedido_id: pedidoId,
-            chofer_id: choferElegido.id,
-            latitud_destino: null,
-            longitud_destino: null,
-          });
-        }
-      }
-    }
-
     return res.json({ pedido: data[0] });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -600,7 +538,6 @@ aplicacion.post('/api/devoluciones', async (req, res) => {
   }
 });
 
-// ------ mensajes de ayuda ----------------
 aplicacion.post('/api/mensajes-ayuda', async (req, res) => {
   try {
     const { usuario_id, nombre, email, categoria, mensaje } = req.body || {};
@@ -631,7 +568,6 @@ aplicacion.post('/api/mensajes-ayuda', async (req, res) => {
   }
 });
 
-// admin retrieves todas las solicitudes
 aplicacion.get('/api/mensajes-ayuda', async (req, res) => {
   try {
     const supabase = require('./db');
@@ -682,12 +618,9 @@ aplicacion.patch('/api/mensajes-ayuda/:id/responder', async (req, res) => {
   }
 });
 
-// -------------------------------------------------
-
 aplicacion.get('/api/devoluciones', async (req, res) => {
   try {
     const supabase = require('./db');
-
     const { data, error } = await supabase
       .from('devoluciones')
       .select(

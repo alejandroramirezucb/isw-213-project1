@@ -383,7 +383,7 @@ function renderizarTarjetas(
     if (tipo === 'pendiente') {
       var btnIniciar = document.createElement('button');
       btnIniciar.className =
-        'panel-chofer__boton panel-chofer__boton--advertencia';
+        'panel-chofer__boton panel-chofer__boton--primario';
       btnIniciar.textContent = 'Iniciar Entrega';
       btnIniciar.addEventListener('click', function () {
         iniciarEntrega(clienteSupabase, pedido.id, envio.id, choferId);
@@ -668,8 +668,10 @@ function subirEvidenciaYConfirmar(
     .from('evidencias-entrega')
     .upload(rutaArchivo, archivo, { contentType: archivo.type })
     .then(function (resultado) {
+      console.log('upload evidencia result', resultado);
       var urlFoto;
       if (resultado.error) {
+        console.error('Error subida evidencia', resultado.error);
         urlFoto = 'evidencia_local_' + envioId + '_' + Date.now();
       } else {
         var urlData = clienteSupabase.storage

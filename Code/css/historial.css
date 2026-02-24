@@ -229,15 +229,20 @@
 }
 
 .pedido-tarjeta__boton {
-  padding: 10px 24px;
+  padding: 10px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
   transition:
     background 0.2s,
     transform 0.1s;
+  display: inline-block;
+  white-space: nowrap;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .pedido-tarjeta__boton:active {
@@ -245,12 +250,20 @@
 }
 
 .pedido-tarjeta__boton--confirmar {
-  background: #2e7d32;
+  background: #034e8b !important;
   color: white;
+  margin: 0 auto;
+  display: block;
+  border-radius: 20px !important;
 }
 
 .pedido-tarjeta__boton--confirmar:hover {
-  background: #1b5e20;
+  background: #023a6b !important;
+}
+
+.pedido-tarjeta__acciones {
+  justify-content: center !important;
+  width: 100%;
 }
 
 .pedido-tarjeta__boton--deshabilitado {
@@ -276,12 +289,12 @@
 }
 
 .pedido-tarjeta__boton--devolucion {
-  background: #ff9800;
+  background: #d32f2f;
   color: white;
 }
 
 .pedido-tarjeta__boton--devolucion:hover {
-  background: #e68900;
+  background: #b71c1c;
 }
 
 .pedido-tarjeta__devolucion-vencido {
@@ -418,7 +431,7 @@
 .modal-devolucion__boton {
   padding: 10px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;

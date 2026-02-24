@@ -703,9 +703,14 @@ function enviarSolicitudDevolucion() {
     .from('devoluciones')
     .upload(rutaArchivo, archivoFoto, { contentType: archivoFoto.type })
     .then(function (resultadoSubida) {
+      console.log('upload result', resultadoSubida);
       var urlFoto;
 
       if (resultadoSubida.error) {
+        console.error(
+          'Error al subir archivo de devolucion:',
+          resultadoSubida.error,
+        );
         urlFoto = 'factura_local_' + pedidoId + '_' + Date.now();
       } else {
         var urlData = clienteSupabaseHistorial.storage

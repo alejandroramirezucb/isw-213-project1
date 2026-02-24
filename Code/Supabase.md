@@ -158,13 +158,126 @@ USING (EXISTS (SELECT 1 FROM pedidos WHERE pedidos.id = devoluciones.pedido_id A
 
 CREATE POLICY "Choferes ven sus envios asignados" ON envios FOR SELECT USING (auth.uid() = chofer_id);
 CREATE POLICY "Choferes insertan historial de ubicacion" ON historial_ubicaciones FOR INSERT WITH CHECK (
-EXISTS (SELECT 1 FROM envios WHERE envios.id = historial_ubicaciones.envio_id AND envios.chofer_id = auth.uid())
+    EXISTS (SELECT 1 FROM envios WHERE envios.id = historial_ubicaciones.envio_id AND envios.chofer_id = auth.uid())
 );
 
 CREATE POLICY "Admin acceso total productos" ON productos FOR ALL USING (es_admin());
 CREATE POLICY "Admin acceso total pedidos" ON pedidos FOR ALL USING (es_admin());
 CREATE POLICY "Admin acceso total pagos" ON pagos FOR ALL USING (es_admin());
 CREATE POLICY "Admin acceso total devoluciones" ON devoluciones FOR ALL USING (es_admin());
+
+CREATE TABLE historial_estados_pedido (
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  pedido_id INT REFERENCES pedidos(id) ON DELETE CASCADE,
+  estado tipo_estado_pedido NOT NULL,
+  fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.historial_estados_pedido ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Permitir lectura de historial estados"
+  ON historial_estados_pedido FOR SELECT USING (true);
+
+CREATE POLICY "Permitir inserción de historial estados"
+  ON historial_estados_pedido FOR INSERT WITH CHECK (true);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE pedidos;
+ALTER PUBLICATION supabase_realtime ADD TABLE historial_estados_pedido;
+
+CREATE TABLE IF NOT EXISTS public.mensajes_ayuda (
+  id                SERIAL PRIMARY KEY,
+  usuario_id        UUID REFERENCES public.usuarios(id),
+  nombre            VARCHAR(100)       NOT NULL,
+  email             VARCHAR(100)       NOT NULL,
+  categoria         VARCHAR(50)        NOT NULL,
+  mensaje           TEXT               NOT NULL,
+  respuesta_admin   TEXT,
+  estado            VARCHAR(20)        DEFAULT 'pendiente',
+  fecha_creacion    TIMESTAMP          DEFAULT CURRENT_TIMESTAMP,
+  fecha_respuesta   TIMESTAMP
+);
+
+ALTER TABLE public.mensajes_ayuda ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enviar mensaje ayuda"
+  ON public.mensajes_ayuda
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Ver mensajes ayuda"
+  ON public.mensajes_ayuda
+  FOR SELECT USING (es_admin());
+
+CREATE POLICY "Admin responder mensajes"
+  ON public.mensajes_ayuda
+  FOR UPDATE USING (es_admin());
+
+CREATE POLICY "Admin eliminar mensaje"
+  ON public.mensajes_ayuda
+  FOR DELETE USING (es_admin());
+
+CREATE OR REPLACE FUNCTION public.asignar_chofer_por_enviado()
+RETURNS trigger AS
+$$
+
+DECLARE
+chofer RECORD;
+BEGIN
+IF NEW.estado = 'enviado' THEN
+SELECT id INTO chofer
+FROM public.usuarios
+WHERE rol='chofer'
+ORDER BY random()
+LIMIT 1;
+IF chofer.id IS NOT NULL THEN
+INSERT INTO public.envios(pedido_id, chofer_id)
+VALUES (NEW.id, chofer.id);
+END IF;
+END IF;
+RETURN NEW;
+END;
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_asignar_chofer ON public.pedidos;
+CREATE TRIGGER trg_asignar_chofer
+  AFTER INSERT OR UPDATE OF estado ON public.pedidos
+  FOR EACH ROW
+  WHEN (NEW.estado = 'enviado')
+  EXECUTE FUNCTION public.asignar_chofer_por_enviado();
+
+CREATE OR REPLACE FUNCTION public.reasignar_envios_vencidos()
+RETURNS void AS
+$$
+
+DECLARE
+r RECORD;
+nuevoChofer RECORD;
+BEGIN
+FOR r IN
+SELECT e.id, e.chofer_id
+FROM public.envios e
+JOIN public.pedidos p ON p.id=e.pedido_id
+WHERE p.estado='enviado'
+AND now() - p.fecha_creacion > interval '10 minutes'
+LOOP
+SELECT id INTO nuevoChofer FROM public.usuarios
+WHERE rol='chofer' AND id <> r.chofer_id
+ORDER BY random()
+LIMIT 1;
+IF nuevoChofer.id IS NOT NULL THEN
+UPDATE public.envios
+SET chofer_id = nuevoChofer.id,
+fecha_asignacion = now()
+WHERE id = r.id;
+END IF;
+END LOOP;
+END;
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER;
+
+SELECT public.reasignar_envios_vencidos();
 
 CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
 RETURNS trigger AS
@@ -249,12 +362,12 @@ SET search_path = public;
 
 CREATE OR REPLACE FUNCTION seleccionar_productos_por_categoria(categoria_nombre VARCHAR)
 RETURNS TABLE (
-id_producto INT,
-nombre_producto VARCHAR,
-descripcion_producto TEXT,
-precio_actual DECIMAL,
-stock_disponible INT,
-url_imagen VARCHAR
+    id_producto INT,
+    nombre_producto VARCHAR,
+    descripcion_producto TEXT,
+    precio_actual DECIMAL,
+    stock_disponible INT,
+    url_imagen VARCHAR
 ) AS
 $$
 
@@ -276,7 +389,6 @@ END;
 $$
 LANGUAGE plpgsql;
 
--- actualizar la función para incluir telefono y rol desde raw_user_meta_data
 CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
 RETURNS trigger AS
 $$
@@ -296,17 +408,16 @@ END;
 $$
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- eliminar trigger existente (si lo hubiera) y recrearlo
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.crear_usuario_nuevo();
+
+CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
+RETURNS trigger AS
 $$
 
--- 1) Función resiliente: no aborta la creación en auth.users y evita errores por duplicado
-CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
-RETURNS trigger AS $$
 BEGIN
 INSERT INTO public.usuarios (id, nombre_completo, correo_electronico, telefono, rol)
 VALUES (
@@ -331,16 +442,16 @@ END;
 $$
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- 2) (asegura que el trigger apunte a la función actualizada)
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.crear_usuario_nuevo();
-$$
 
 CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
-RETURNS trigger AS $$
+RETURNS trigger AS
+$$
+
 BEGIN
 INSERT INTO public.usuarios (id, nombre_completo, correo_electronico, telefono, rol)
 VALUES (
@@ -369,28 +480,25 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.crear_usuario_nuevo();
+
+CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
+RETURNS trigger AS
 $$
 
--- Función ultra-robusta con manejo de errores y casts explícitos
-CREATE OR REPLACE FUNCTION public.crear_usuario_nuevo()
-RETURNS trigger AS $$
 DECLARE
 v_nombre text;
 v_rol public.tipo_rol;
 v_tel text;
 BEGIN
--- Extraer metadatos con valores por defecto seguros
 v_nombre := COALESCE(NEW.raw_user_meta_data->>'nombre_completo', 'Usuario Nuevo');
 v_tel := NULLIF(NEW.raw_user_meta_data->>'telefono', '');
 
-    -- Manejo robusto del ENUM para evitar errores de tipo
     BEGIN
         v_rol := (COALESCE(NEW.raw_user_meta_data->>'rol', 'cliente'))::public.tipo_rol;
     EXCEPTION WHEN OTHERS THEN
         v_rol := 'cliente'::public.tipo_rol;
     END;
 
-    -- Insertar o actualizar si ya existe el ID
     INSERT INTO public.usuarios (id, nombre_completo, correo_electronico, telefono, rol)
     VALUES (NEW.id, v_nombre, NEW.email, v_tel, v_rol)
     ON CONFLICT (id) DO UPDATE
@@ -403,8 +511,6 @@ v_tel := NULLIF(NEW.raw_user_meta_data->>'telefono', '');
     RETURN NEW;
 
 EXCEPTION WHEN OTHERS THEN
--- Fallback absoluto: si todo falla, permitimos la creación en auth.users
--- para que el usuario pueda al menos loguearse.
 RAISE WARNING 'Error en crear_usuario_nuevo: %', SQLERRM;
 RETURN NEW;
 END;
@@ -412,28 +518,60 @@ END;
 $$
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Re-crear el trigger
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.crear_usuario_nuevo();
+
+  INSERT INTO categorias (nombre, descripcion) VALUES
+('Hogar', 'Artículos y productos para el hogar.'),
+('Oficina', 'Equipamiento y mobiliario para oficinas.'),
+('Muebles', 'Muebles para el hogar y la oficina.'),
+('Tecnología', 'Televisores, gadgets y equipos de alta tecnología.'),
+('Juguetería', 'Juguetes y artículos para niños.'),
+('Alimentos y Bebidas', 'Productos de consumo alimenticio y bebidas.'),
+('Herramientas', 'Herramientas para construcción, reparación y manualidades.');
+
+INSERT INTO productos (categoria_id, nombre, descripcion, precio_actual, stock_disponible, stock_minimo_alerta, url_imagen, estado) VALUES
+((SELECT id FROM categorias WHERE nombre = 'Hogar'),
+ 'Juego de Sábanas Queen', 'Juego de sábanas 100% algodón, diseño floral.', 299.90, 50, 10, 'https://resources.multicenter.com.bo/products/sabanas-queen.jpg', 'activo'),
+
+((SELECT id FROM categorias WHERE nombre = 'Oficina'),
+ 'Silla de Oficina GREGOR Negra', 'Silla ergonómica con ajuste de altura y base con ruedas.', 489.90, 30, 5, 'https://resources.multicenter.com.bo/products/silla-gregor.jpg', 'activo'),
+
+((SELECT id FROM categorias WHERE nombre = 'Muebles'),
+ 'Set Dallas 2 Poltronas + Puff', 'Dos poltronas y un puff tapizados en tela gris.', 1999.00, 10, 2, 'https://resources.multicenter.com.bo/products/set-dallas.jpg', 'activo'),
+
+((SELECT id FROM categorias WHERE nombre = 'Tecnología'),
+ 'Smart TV LG 43" 4K UHD', 'Televisor de 43 pulgadas con resolución 4K y ThinQ AI.', 3299.00, 15, 3, 'https://resources.multicenter.com.bo/products/lg-43-4k.jpg', 'activo'),
+
+((SELECT id FROM categorias WHERE nombre = 'Juguetería'),
+ 'Auto Control Remoto 1:16 Rastar', 'Carro a control remoto escala 1:16 con diseño deportivo.', 369.00, 20, 5, 'https://resources.multicenter.com.bo/products/auto-rc.jpg', 'activo'),
+
+((SELECT id FROM categorias WHERE nombre = 'Alimentos y Bebidas'),
+ 'Soda Sprite 2L', 'Soda gaseosa refrescante de limón en presentación de 2 litros.', 12.50, 100, 15, 'https://resources.multicenter.com.bo/products/sprite-2l.jpg', 'activo'),
+
+((SELECT id FROM categorias WHERE nombre = 'Herramientas'),
+ 'Taladro Percutor Bosch GSB 550', 'Taladro de impacto Bosch de 550W con accesorios incluidos.', 599.00, 25, 5, 'https://resources.multicenter.com.bo/products/taladro-percutor.jpg', 'activo');
+
+
 $$
 
-CREATE TABLE historial_estados_pedido (
-id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-pedido_id INT REFERENCES pedidos(id) ON DELETE CASCADE,
-estado tipo_estado_pedido NOT NULL,
-fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE POLICY "Choferes ven pedidos asignados"
+ON public.pedidos FOR SELECT
+USING (EXISTS (SELECT 1 FROM public.envios WHERE envios.pedido_id = pedidos.id AND envios.chofer_id = auth.uid()));
 
-ALTER TABLE public.historial_estados_pedido ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Choferes ven datos de sus clientes"
+ON public.usuarios FOR SELECT
+USING (auth.uid() = id OR EXISTS (SELECT 1 FROM public.pedidos p JOIN public.envios e ON e.pedido_id = p.id WHERE p.usuario_id = usuarios.id AND e.chofer_id = auth.uid()));
 
-CREATE POLICY "Permitir lectura de historial estados"
-ON historial_estados_pedido FOR SELECT USING (true);
+CREATE POLICY "Admin acceso total envios" ON public.envios FOR ALL USING (es_admin());
+CREATE POLICY "Admin acceso total usuarios" ON public.usuarios FOR ALL USING (es_admin());
 
-CREATE POLICY "Permitir inserción de historial estados"
-ON historial_estados_pedido FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Ver mensajes ayuda" ON public.mensajes_ayuda;
+CREATE POLICY "Ver mensajes ayuda" ON public.mensajes_ayuda FOR SELECT USING (es_admin() OR auth.uid() = usuario_id);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE pedidos;
-ALTER PUBLICATION supabase_realtime ADD TABLE historial_estados_pedido;
+DROP TRIGGER IF EXISTS trg_asignar_chofer ON public.pedidos;
+CREATE OR REPLACE FUNCTION public.asignar_chofer_por_enviado() RETURNS trigger AS $$ DECLARE chofer RECORD; BEGIN IF NEW.estado = 'enviado' THEN IF NOT EXISTS (SELECT 1 FROM public.envios WHERE pedido_id = NEW.id) THEN SELECT id INTO chofer FROM public.usuarios WHERE rol = 'chofer' ORDER BY random() LIMIT 1; IF chofer.id IS NOT NULL THEN INSERT INTO public.envios (pedido_id, chofer_id) VALUES (NEW.id, chofer.id); END IF; END IF; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql SECURITY DEFINER;
+CREATE TRIGGER trg_asignar_chofer AFTER INSERT OR UPDATE OF estado ON public.pedidos FOR EACH ROW WHEN (NEW.estado = 'enviado') EXECUTE FUNCTION public.asignar_chofer_por_enviado();

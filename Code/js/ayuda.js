@@ -3,8 +3,108 @@ document.addEventListener('DOMContentLoaded', function () {
     prefrellenarFormulario();
     configurarFAQ();
     configurarFormularioContacto();
+    cargarMisConsultas();
   });
 });
+
+function cargarMisConsultas() {
+  obtenerClienteSupabase().then(function (clienteSupabase) {
+    if (!clienteSupabase) return;
+    clienteSupabase.auth.getSession().then(function (resultado) {
+      var sesion = resultado.data.session;
+      if (!sesion) {
+        var seccion = document.getElementById('seccion-mis-consultas');
+        if (seccion) seccion.style.display = 'none';
+        return;
+      }
+
+      var seccion = document.getElementById('seccion-mis-consultas');
+      if (seccion) seccion.style.display = 'block';
+
+      var usuarioId = sesion.user.id;
+
+      clienteSupabase
+        .from('mensajes_ayuda')
+        .select(
+          'id, categoria, mensaje, respuesta_admin, estado, fecha_creacion, fecha_respuesta',
+        )
+        .eq('usuario_id', usuarioId)
+        .order('fecha_creacion', { ascending: false })
+        .then(function (res) {
+          var contenedor = document.getElementById('lista-mis-consultas');
+          if (!contenedor) return;
+          if (res.error) {
+            console.error('Error RLS:', res.error.message);
+            contenedor.innerHTML =
+              '<p class="consultas__vacio">Error: ' +
+              (res.error.message || 'No tienes permiso') +
+              '</p>';
+            return;
+          }
+          var consultas = res.data || [];
+
+          if (consultas.length === 0) {
+            contenedor.innerHTML =
+              '<p class="consultas__vacio">Aún no has enviado ninguna consulta.</p>';
+            return;
+          }
+
+          var html = '<div class="consultas__lista">';
+          consultas.forEach(function (c) {
+            var fecha = new Date(c.fecha_creacion).toLocaleDateString('es-BO', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            });
+            var estadoClase =
+              c.estado === 'respondido'
+                ? 'consulta__estado--respondido'
+                : 'consulta__estado--pendiente';
+            var estadoTexto =
+              c.estado === 'respondido' ? 'Respondido' : 'Pendiente';
+            var respuestaHtml = '';
+            if (c.respuesta_admin) {
+              var fechaResp = c.fecha_respuesta
+                ? new Date(c.fecha_respuesta).toLocaleDateString('es-BO', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                : '';
+              respuestaHtml =
+                '<div class="consulta__respuesta"><p class="consulta__respuesta-titulo">Respuesta del equipo' +
+                (fechaResp ? ' &ndash; ' + fechaResp : '') +
+                '</p><p>' +
+                c.respuesta_admin +
+                '</p></div>';
+            }
+            html +=
+              '<div class="consulta__tarjeta">' +
+              '<div class="consulta__encabezado">' +
+              '<span class="consulta__categoria">' +
+              (c.categoria || '') +
+              '</span>' +
+              '<span class="consulta__fecha">' +
+              fecha +
+              '</span>' +
+              '</div>' +
+              '<span class="' +
+              estadoClase +
+              '">' +
+              estadoTexto +
+              '</span>' +
+              '<p class="consulta__mensaje">' +
+              c.mensaje +
+              '</p>' +
+              respuestaHtml +
+              '</div>';
+          });
+          html += '</div>';
+          contenedor.innerHTML = html;
+        });
+    });
+  });
+}
 
 function prefrellenarFormulario() {
   obtenerClienteSupabase().then(function (clienteSupabase) {
@@ -102,41 +202,62 @@ function configurarFormularioContacto() {
       botonEnviar.textContent = 'Enviando...';
     }
 
-    fetch('/api/mensajes-ayuda', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, email, categoria, mensaje }),
-    })
-      .then(function (respuesta) {
-        return respuesta.json();
-      })
-      .then(function (data) {
-        if (data.error) {
-          if (window.showToast)
-            window.showToast('Error al enviar: ' + data.error, {
-              tipo: 'error',
-            });
-          return;
-        }
-        formulario.reset();
-        if (window.showToast)
-          window.showToast(
-            '¡Mensaje enviado! Te responderemos en menos de 24 horas.',
-            { tipo: 'success', duracion: 6000 },
-          );
-        prefrellenarFormulario();
-      })
-      .catch(function () {
-        if (window.showToast)
-          window.showToast('Error al enviar el mensaje. Inténtalo de nuevo.', {
-            tipo: 'error',
+    obtenerClienteSupabase().then(function (clienteSupabase) {
+      var usuarioId = null;
+      var promise = clienteSupabase
+        ? clienteSupabase.auth.getSession().then(function (r) {
+            if (r.data && r.data.session) usuarioId = r.data.session.user.id;
+          })
+        : Promise.resolve();
+
+      promise.then(function () {
+        fetch('/api/mensajes-ayuda', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre,
+            email,
+            categoria,
+            mensaje,
+            usuario_id: usuarioId,
+          }),
+        })
+          .then(function (respuesta) {
+            return respuesta.json();
+          })
+          .then(function (data) {
+            if (data.error) {
+              if (window.showToast)
+                window.showToast('Error al enviar: ' + data.error, {
+                  tipo: 'error',
+                });
+              return;
+            }
+            formulario.reset();
+            if (window.showToast)
+              window.showToast(
+                '¡Mensaje enviado! Te responderemos en menos de 24 horas.',
+                { tipo: 'success', duracion: 6000 },
+              );
+            prefrellenarFormulario();
+            cargarMisConsultas();
+          })
+          .catch(function () {
+            if (window.showToast)
+              window.showToast(
+                'Error al enviar el mensaje. Inténtalo de nuevo.',
+                {
+                  tipo: 'error',
+                },
+              );
+          })
+          .finally(function () {
+            if (botonEnviar) {
+              botonEnviar.disabled = false;
+              botonEnviar.textContent = 'Enviar mensaje';
+            }
           });
-      })
-      .finally(function () {
-        if (botonEnviar) {
-          botonEnviar.disabled = false;
-          botonEnviar.textContent = 'Enviar mensaje';
-        }
       });
+    });
   });
 }

@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+var mensajesSoporteGlobal = [];
+
 function verificarRolAdmin(clienteSupabase, usuario) {
   return clienteSupabase
     .from('usuarios')
@@ -1529,7 +1531,6 @@ function procesarAccionDevolucion() {
 var pedidosCargadosGlobal = [];
 var clienteSupabasePedidosGlobal = null;
 
-// soporte globals
 var mensajesSoporteGlobal = [];
 
 function configurarGestionPedidos(clienteSupabase) {
