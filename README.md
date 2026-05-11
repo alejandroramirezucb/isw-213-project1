@@ -17,14 +17,14 @@
 
 ---
 
-**I. Análisis del problema**
+## I. Análisis del problema
 
-**1\. Descripción del problema**
+### 1. Descripción del problema
 
 **¿Qué ocurre hoy en la realidad?**  
 Actualmente, se tiene una incapacidad para comercializar productos y realizar entregas a través de internet. No existe un flujo para gestionar el inventario, las devoluciones o los pagos en cuotas de forma automatizada. Además, la logística de entrega no tiene supervisión, provocando que no se pueda conocer las rutas seguidas por los transportistas o que no se tenga pruebas de la recepción de los productos.
 
-**2\. Usuario / Cliente**
+### 2. Usuario / Cliente
 
 **¿Quién sufre el problema directamente?**
 
@@ -32,7 +32,7 @@ Actualmente, se tiene una incapacidad para comercializar productos y realizar en
 - **Otros afectados:** Administradores de inventario y choferes.
 - **Contexto en el que ocurre el problema:** El problema se encuentra en Santa Cruz de la Sierra, con una demanda de 20,000 usuarios activos que requieren disponibilidad de servicio las 24 horas y flexibilidad en las formas de pago y entrega.
 
-  **3\. Dolor o necesidad**
+  ### 3. Dolor o necesidad
 
 **¿Qué consecuencia negativa genera el problema?**
 
@@ -41,7 +41,7 @@ Actualmente, se tiene una incapacidad para comercializar productos y realizar en
 - **Incertidumbre en el cliente:** La falta de estados claros (recibido, enviado, etc.) genera ansiedad, estrés, miedo y consultas constantes al soporte.
 - **Dificultad administrativa:** Realizar de manera manual las devoluciones y reportes consume mucho tiempo y aumenta el riesgo de errores en la facturación y el inventario.
 
-**4\. Alcance del sistema**
+### 4. Alcance del sistema
 
 **Qué SÍ va a resolver:**
 
@@ -57,7 +57,7 @@ Actualmente, se tiene una incapacidad para comercializar productos y realizar en
 - **Ventas nacionales/internacionales:** El sistema está restringido exclusivamente a la ciudad de Santa Cruz de la Sierra.
 - **Fabricación de productos:** El sistema está centrado en la comercialización y entrega, no en la fabricación de los productos.
 
-**II. Requerimientos funcionales**
+## II. Requerimientos funcionales
 
 **HU-01 Gestión de evidencia de entrega**
 

@@ -1,0 +1,16 @@
+{
+  "name": "isw-213-project1",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node Code/server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1"
+  }
+}
