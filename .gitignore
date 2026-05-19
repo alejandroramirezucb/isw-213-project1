@@ -1,6 +1,7 @@
 ﻿Code/node_modules/
 Code/**/node_modules/
 Code/logs/
+Code/.dockerignore
 Code/*.log
 Code/npm-debug.log*
 Code/yarn-debug.log*
