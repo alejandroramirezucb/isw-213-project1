@@ -10,6 +10,7 @@ Code/.env
 Code/.env.local
 Code/.env.*.local
 !Code/.env.example
+.claude
 Code/dist/
 Code/build/
 Code/.tmp/

@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "coverage": "nyc npm test"
   },
   "keywords": [],
   "author": "",
@@ -17,5 +19,9 @@
     "@supabase/supabase-js": "^2.95.3",
     "dotenv": "^17.2.4",
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nyc": "^15.1.0"
   }
 }
