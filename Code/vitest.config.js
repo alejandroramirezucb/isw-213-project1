@@ -11,9 +11,15 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'text-summary', 'html', 'lcov', 'json'],
       reportsDirectory: './coverage',
-      include: [
-        'servidor/utils-calculos.js',
-        'servidor/utils.js',
+      include: ['cliente/**/*.js'],
+      exclude: [
+        'cliente/admin.js',
+        'cliente/auth.js',
+        'cliente/ayuda.js',
+        'cliente/carrito.js',
+        'cliente/chofer.js',
+        'cliente/historial.js',
+        'cliente/main.js',
       ],
     },
   },
