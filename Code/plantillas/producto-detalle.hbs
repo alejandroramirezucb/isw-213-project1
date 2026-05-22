@@ -1,0 +1,27 @@
+<main class="detalle-contenedor">
+  <section class="detalle__imagen">
+    <img class="detalle__imagen-foto" src="" alt="Producto" />
+    <div class="detalle__galeria-miniaturas"></div>
+  </section>
+
+  <section class="detalle__info">
+    <h1 class="detalle__nombre"></h1>
+    <div class="detalle__precio-contenedor">
+      <p class="detalle__precio"></p>
+      <p class="detalle__cuotas"></p>
+    </div>
+    <p class="detalle__stock"></p>
+    <div class="detalle__descripcion-contenedor">
+      <p class="detalle__descripcion-texto"></p>
+    </div>
+    <div class="detalle__cantidad-selector">
+      <label class="detalle__cantidad-etiqueta">Cantidad</label>
+      <div class="detalle__cantidad-controles">
+        <button class="detalle__cantidad-boton detalle__cantidad-boton--menos" aria-label="Reducir cantidad">−</button>
+        <input type="number" class="detalle__cantidad-input" value="1" min="1" readonly />
+        <button class="detalle__cantidad-boton detalle__cantidad-boton--mas" aria-label="Aumentar cantidad">+</button>
+      </div>
+    </div>
+    <button class="detalle__boton-agregar">Agregar al carrito</button>
+  </section>
+</main>

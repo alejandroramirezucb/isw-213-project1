@@ -1,0 +1,60 @@
+<nav class="barra-navegacion">
+  <div class="barra-navegacion__logo-contenedor">
+    <a href="/">
+      <img src="/assets/logo.png" alt="Raidencenter" class="barra-navegacion__logo" />
+    </a>
+  </div>
+
+  <div class="barra-navegacion__menu">
+    <img src="/assets/menu.svg" alt="Categorías" class="barra-navegacion__icono-menu" />
+    <ul class="barra-navegacion__desplegable">
+      <li><a href="/?categoria=hogar" class="barra-navegacion__enlace-categoria" data-categoria="hogar">Hogar</a></li>
+      <li><a href="/?categoria=oficina" class="barra-navegacion__enlace-categoria" data-categoria="oficina">Oficina</a></li>
+      <li><a href="/?categoria=muebles" class="barra-navegacion__enlace-categoria" data-categoria="muebles">Muebles</a></li>
+      <li><a href="/?categoria=tecnologia" class="barra-navegacion__enlace-categoria" data-categoria="tecnologia">Tecnologia</a></li>
+      <li><a href="/?categoria=jugueteria" class="barra-navegacion__enlace-categoria" data-categoria="jugueteria">Jugueteria</a></li>
+      <li><a href="/?categoria=alimentos-y-bebidas" class="barra-navegacion__enlace-categoria" data-categoria="alimentos-y-bebidas">Alimentos y Bebidas</a></li>
+      <li><a href="/?categoria=herramientas" class="barra-navegacion__enlace-categoria" data-categoria="herramientas">Herramientas</a></li>
+    </ul>
+  </div>
+
+  <div class="barra-navegacion__buscador">
+    <button class="barra-navegacion__boton-buscar" aria-label="Buscar">
+      <img src="/assets/search.svg" alt="Buscar" class="barra-navegacion__icono-buscar" />
+    </button>
+    <input type="text" class="barra-navegacion__campo-busqueda" placeholder="Buscar productos..." aria-label="Buscar productos" />
+    <button class="barra-navegacion__boton-filtros" aria-label="Filtros">
+      <img src="/assets/filter.svg" alt="Filtros" class="barra-navegacion__icono-filtros" />
+    </button>
+  </div>
+
+  <div class="barra-navegacion__iconos">
+    <a href="/admin" class="barra-navegacion__enlace-icono barra-navegacion__enlace-icono--admin" aria-label="Panel de administración" style="display: none">
+      <img src="/assets/admin-line.svg" class="barra-navegacion__icono barra-navegacion__icono--linea" alt="Administración" />
+      <img src="/assets/admin.svg" class="barra-navegacion__icono barra-navegacion__icono--activo" alt="Administración" />
+    </a>
+    <a href="/chofer" class="barra-navegacion__enlace-icono barra-navegacion__enlace-icono--chofer" aria-label="Panel de chofer" style="display: none">
+      <img src="/assets/car-line.svg" class="barra-navegacion__icono barra-navegacion__icono--linea" alt="Mis Entregas" />
+      <img src="/assets/car.svg" class="barra-navegacion__icono barra-navegacion__icono--activo" alt="Mis Entregas" />
+    </a>
+    <a href="/ayuda" class="barra-navegacion__enlace-icono" aria-label="Centro de Ayuda">
+      <img src="/assets/support-line.svg" class="barra-navegacion__icono barra-navegacion__icono--linea" alt="Centro de Ayuda" />
+      <img src="/assets/support.svg" class="barra-navegacion__icono barra-navegacion__icono--activo" alt="Centro de Ayuda" />
+    </a>
+    <a href="/historial" class="barra-navegacion__enlace-icono">
+      <img src="/assets/history_line.svg" class="barra-navegacion__icono barra-navegacion__icono--linea" alt="Historial" />
+      <img src="/assets/history.svg" class="barra-navegacion__icono barra-navegacion__icono--activo" alt="Historial" />
+    </a>
+    <a href="/carrito" class="barra-navegacion__enlace-icono" aria-label="Carrito">
+      <img src="/assets/cart-line.svg" class="barra-navegacion__icono barra-navegacion__icono--linea" alt="Carrito" />
+      <img src="/assets/cart.svg" class="barra-navegacion__icono barra-navegacion__icono--activo" alt="Carrito" />
+      <span class="barra-navegacion__contador-carrito">0</span>
+    </a>
+    <a href="/login" class="barra-navegacion__enlace-icono" aria-label="Mi cuenta">
+      <img src="/assets/user-line.svg" class="barra-navegacion__icono barra-navegacion__icono--linea" alt="Usuario" />
+      <img src="/assets/user.svg" class="barra-navegacion__icono barra-navegacion__icono--activo" alt="Usuario" />
+    </a>
+  </div>
+
+  <div id="notificacion-carrito" class="notificacion-carrito"></div>
+</nav>

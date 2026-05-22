@@ -1,0 +1,322 @@
+<main class="panel-admin">
+  <section class="panel-admin__encabezado">
+    <h1 class="panel-admin__titulo">Panel de Administración</h1>
+    <p class="panel-admin__subtitulo">Gestiona productos, stock, reportes y alertas</p>
+  </section>
+
+  <nav class="panel-admin__navegacion">
+    <button class="panel-admin__pestana panel-admin__pestana--activa" data-seccion="catalogo">Catálogo de Productos</button>
+    <button class="panel-admin__pestana" data-seccion="stock">Gestión de Stock</button>
+    <button class="panel-admin__pestana" data-seccion="reportes">Reportes</button>
+    <button class="panel-admin__pestana" data-seccion="alertas">Alertas de Stock</button>
+    <button class="panel-admin__pestana" data-seccion="monitoreo-rutas">Monitoreo de Rutas</button>
+    <button class="panel-admin__pestana" data-seccion="devoluciones">Devoluciones</button>
+    <button class="panel-admin__pestana" data-seccion="pedidos">Gestión de Pedidos</button>
+    <button class="panel-admin__pestana" data-seccion="soporte">Soporte</button>
+  </nav>
+
+  <section class="panel-admin__seccion panel-admin__seccion--activa" id="seccion-catalogo">
+    <div class="panel-admin__barra-acciones">
+      <h2 class="panel-admin__seccion-titulo">Catálogo de Productos</h2>
+      <button class="panel-admin__boton panel-admin__boton--primario" id="btn-crear-producto">+ Nuevo Producto</button>
+    </div>
+    <div class="panel-admin__tabla-contenedor">
+      <table class="panel-admin__tabla">
+        <thead class="panel-admin__tabla-cabecera">
+          <tr>
+            <th class="panel-admin__tabla-th">Imagen</th>
+            <th class="panel-admin__tabla-th">Nombre</th>
+            <th class="panel-admin__tabla-th">Categoría</th>
+            <th class="panel-admin__tabla-th">Precio (Bs.)</th>
+            <th class="panel-admin__tabla-th">Stock</th>
+            <th class="panel-admin__tabla-th">Estado</th>
+            <th class="panel-admin__tabla-th">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="panel-admin__tabla-cuerpo" id="tabla-productos-body">
+          <tr><td class="panel-admin__tabla-td" colspan="7">Cargando productos...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel-admin__seccion" id="seccion-stock">
+    <h2 class="panel-admin__seccion-titulo">Gestión de Stock</h2>
+    <p class="panel-admin__descripcion">El stock se descuenta automáticamente tras cada venta confirmada.</p>
+    <div class="panel-admin__tabla-contenedor">
+      <table class="panel-admin__tabla">
+        <thead class="panel-admin__tabla-cabecera">
+          <tr>
+            <th class="panel-admin__tabla-th">Producto</th>
+            <th class="panel-admin__tabla-th">Stock Actual</th>
+            <th class="panel-admin__tabla-th">Estado</th>
+            <th class="panel-admin__tabla-th">Ajustar Stock</th>
+          </tr>
+        </thead>
+        <tbody class="panel-admin__tabla-cuerpo" id="tabla-stock-body">
+          <tr><td class="panel-admin__tabla-td" colspan="4">Cargando stock...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel-admin__seccion" id="seccion-reportes">
+    <h2 class="panel-admin__seccion-titulo">Generación de Reportes</h2>
+    <div class="panel-admin__formulario-reporte">
+      <div class="panel-admin__campo">
+        <label class="panel-admin__etiqueta" for="reporte-fecha-inicio">Fecha Inicio</label>
+        <input type="date" id="reporte-fecha-inicio" class="panel-admin__entrada" />
+      </div>
+      <div class="panel-admin__campo">
+        <label class="panel-admin__etiqueta" for="reporte-fecha-fin">Fecha Fin</label>
+        <input type="date" id="reporte-fecha-fin" class="panel-admin__entrada" />
+      </div>
+      <div class="panel-admin__campo">
+        <label class="panel-admin__etiqueta" for="reporte-formato">Formato</label>
+        <select id="reporte-formato" class="panel-admin__entrada panel-admin__entrada--select">
+          <option value="pdf">PDF</option>
+          <option value="excel">Excel</option>
+          <option value="doc">Word (Doc)</option>
+        </select>
+      </div>
+      <button class="panel-admin__boton panel-admin__boton--primario" id="btn-generar-reporte">Generar Reporte</button>
+    </div>
+    <div class="panel-admin__resumen-reporte" id="resumen-reporte" style="display: none">
+      <h3 class="panel-admin__resumen-titulo">Resumen del Período</h3>
+      <div class="panel-admin__tarjetas-resumen">
+        <div class="panel-admin__tarjeta-resumen">
+          <span class="panel-admin__tarjeta-valor" id="reporte-ingresos">Bs. 0.00</span>
+          <span class="panel-admin__tarjeta-label">Ingresos Totales</span>
+        </div>
+        <div class="panel-admin__tarjeta-resumen">
+          <span class="panel-admin__tarjeta-valor" id="reporte-pedidos">0</span>
+          <span class="panel-admin__tarjeta-label">Pedidos</span>
+        </div>
+        <div class="panel-admin__tarjeta-resumen">
+          <span class="panel-admin__tarjeta-valor" id="reporte-devoluciones">0</span>
+          <span class="panel-admin__tarjeta-label">Devoluciones</span>
+        </div>
+      </div>
+      <div class="panel-admin__grafico-contenedor">
+        <h4 class="panel-admin__grafico-titulo">Métodos de Pago</h4>
+        <div class="panel-admin__grafico" id="grafico-metodos-pago"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-admin__seccion" id="seccion-alertas">
+    <h2 class="panel-admin__seccion-titulo">Alertas de Stock Mínimo</h2>
+    <div class="panel-admin__barra-acciones">
+      <div class="panel-admin__campo panel-admin__campo--inline">
+        <label class="panel-admin__etiqueta" for="umbral-stock">Umbral mínimo</label>
+        <input type="number" id="umbral-stock" class="panel-admin__entrada panel-admin__entrada--corta" value="5" min="1" />
+      </div>
+      <button class="panel-admin__boton panel-admin__boton--secundario" id="btn-actualizar-alertas">Actualizar Alertas</button>
+    </div>
+    <div class="panel-admin__tabla-contenedor">
+      <table class="panel-admin__tabla">
+        <thead class="panel-admin__tabla-cabecera">
+          <tr>
+            <th class="panel-admin__tabla-th">Producto</th>
+            <th class="panel-admin__tabla-th">Stock Actual</th>
+            <th class="panel-admin__tabla-th">Nivel</th>
+            <th class="panel-admin__tabla-th">Acción</th>
+          </tr>
+        </thead>
+        <tbody class="panel-admin__tabla-cuerpo" id="tabla-alertas-body">
+          <tr><td class="panel-admin__tabla-td" colspan="4">Cargando alertas...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel-admin__seccion" id="seccion-monitoreo-rutas">
+    <h2 class="panel-admin__seccion-titulo">Monitoreo de Rutas</h2>
+    <div class="panel-admin__formulario-reporte">
+      <div class="panel-admin__campo">
+        <label class="panel-admin__etiqueta" for="seleccion-chofer">Chofer</label>
+        <select id="seleccion-chofer" class="panel-admin__entrada panel-admin__entrada--select">
+          <option value="">Seleccionar chofer</option>
+        </select>
+      </div>
+      <div class="panel-admin__campo">
+        <label class="panel-admin__etiqueta" for="fecha-ruta">Fecha</label>
+        <input type="date" id="fecha-ruta" class="panel-admin__entrada" />
+      </div>
+      <button class="panel-admin__boton panel-admin__boton--primario" id="btn-consultar-ruta">Consultar Ruta</button>
+    </div>
+    <div class="panel-admin__mapa-contenedor" id="contenedor-mapa-ruta" style="display: none">
+      <h3 class="panel-admin__resumen-titulo">Ruta del Chofer</h3>
+      <div id="mapa-ruta" class="panel-admin__mapa"></div>
+    </div>
+    <div class="panel-admin__entregas-chofer" id="contenedor-entregas-chofer" style="display: none">
+      <h3 class="panel-admin__resumen-titulo">Detalle de Entregas</h3>
+      <div class="panel-admin__tabla-contenedor">
+        <table class="panel-admin__tabla">
+          <thead class="panel-admin__tabla-cabecera">
+            <tr>
+              <th class="panel-admin__tabla-th">Pedido</th>
+              <th class="panel-admin__tabla-th">Cliente</th>
+              <th class="panel-admin__tabla-th">Dirección</th>
+              <th class="panel-admin__tabla-th">Hora de Llegada</th>
+              <th class="panel-admin__tabla-th">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="panel-admin__tabla-cuerpo" id="tabla-entregas-chofer-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-admin__seccion" id="seccion-devoluciones">
+    <h2 class="panel-admin__seccion-titulo">Gestión de Devoluciones</h2>
+    <nav class="panel-admin__devoluciones-filtros">
+      <button class="panel-admin__boton panel-admin__boton--filtro panel-admin__boton--filtro-activo" data-filtro-devolucion="todas">Todas</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-devolucion="pendiente">Pendientes</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-devolucion="aprobada">Aprobadas</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-devolucion="rechazada">Rechazadas</button>
+    </nav>
+    <div class="panel-admin__tabla-contenedor">
+      <table class="panel-admin__tabla">
+        <thead class="panel-admin__tabla-cabecera">
+          <tr>
+            <th class="panel-admin__tabla-th">Pedido</th>
+            <th class="panel-admin__tabla-th">Cliente</th>
+            <th class="panel-admin__tabla-th">Motivo</th>
+            <th class="panel-admin__tabla-th">Factura</th>
+            <th class="panel-admin__tabla-th">Fecha</th>
+            <th class="panel-admin__tabla-th">Estado</th>
+            <th class="panel-admin__tabla-th">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="panel-admin__tabla-cuerpo" id="tabla-devoluciones-body"></tbody>
+      </table>
+    </div>
+    <p class="panel-admin__mensaje-vacio" id="mensaje-sin-devoluciones">No hay devoluciones registradas.</p>
+  </section>
+
+  <aside class="panel-admin__modal-overlay" id="modal-observaciones-devolucion">
+    <div class="panel-admin__modal">
+      <div class="panel-admin__modal-cabecera">
+        <h3 class="panel-admin__modal-titulo">Observaciones</h3>
+        <button class="panel-admin__modal-cerrar" id="btn-cerrar-modal-observaciones">&times;</button>
+      </div>
+      <form class="panel-admin__modal-formulario" id="form-observaciones-devolucion">
+        <div class="panel-admin__campo">
+          <label class="panel-admin__etiqueta" for="observaciones-devolucion">Observaciones para el cliente</label>
+          <textarea id="observaciones-devolucion" class="panel-admin__entrada panel-admin__entrada--textarea" rows="4" placeholder="Escriba las observaciones..."></textarea>
+        </div>
+        <input type="hidden" id="devolucion-id-accion" />
+        <input type="hidden" id="devolucion-tipo-accion" />
+        <div class="panel-admin__modal-acciones">
+          <button type="button" class="panel-admin__boton panel-admin__boton--secundario" id="btn-cancelar-observaciones">Cancelar</button>
+          <button type="submit" class="panel-admin__boton panel-admin__boton--primario">Confirmar</button>
+        </div>
+      </form>
+    </div>
+  </aside>
+
+  <section class="panel-admin__seccion" id="seccion-soporte">
+    <h2 class="panel-admin__seccion-titulo">Mensajes de Soporte</h2>
+    <div class="panel-admin__tabla-contenedor">
+      <table class="panel-admin__tabla">
+        <thead class="panel-admin__tabla-cabecera">
+          <tr>
+            <th class="panel-admin__tabla-th">ID</th>
+            <th class="panel-admin__tabla-th">Nombre</th>
+            <th class="panel-admin__tabla-th">Email</th>
+            <th class="panel-admin__tabla-th">Categoría</th>
+            <th class="panel-admin__tabla-th">Mensaje</th>
+            <th class="panel-admin__tabla-th">Fecha</th>
+            <th class="panel-admin__tabla-th">Estado</th>
+            <th class="panel-admin__tabla-th">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="panel-admin__tabla-cuerpo" id="tabla-soporte-body"></tbody>
+      </table>
+    </div>
+    <p class="panel-admin__mensaje-vacio" id="mensaje-sin-soporte">No hay mensajes de soporte.</p>
+  </section>
+
+  <section class="panel-admin__seccion" id="seccion-pedidos">
+    <h2 class="panel-admin__seccion-titulo">Gestión de Pedidos</h2>
+    <div class="panel-admin__pedidos-herramientas">
+      <div class="panel-admin__confirmar-qr">
+        <label class="panel-admin__etiqueta" for="qr-pedido-id">Confirmar retiro en almacén (escaneo QR)</label>
+        <div class="panel-admin__confirmar-qr-fila">
+          <input type="text" id="qr-pedido-id" class="panel-admin__entrada panel-admin__confirmar-qr-entrada" placeholder="ID del pedido..." />
+          <button class="panel-admin__boton panel-admin__boton--primario" id="btn-confirmar-qr">Confirmar Retiro</button>
+        </div>
+      </div>
+    </div>
+    <nav class="panel-admin__devoluciones-filtros">
+      <button class="panel-admin__boton panel-admin__boton--filtro panel-admin__boton--filtro-activo" data-filtro-pedido="todos">Todos</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-pedido="orden realizada">Orden Realizada</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-pedido="en proceso">En Proceso</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-pedido="enviado">Enviado</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-pedido="trasladandose">Trasladándose</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-pedido="listo para entregarse">Listo para Entregarse</button>
+      <button class="panel-admin__boton panel-admin__boton--filtro" data-filtro-pedido="entregado">Entregado</button>
+    </nav>
+    <div class="panel-admin__tabla-contenedor">
+      <table class="panel-admin__tabla">
+        <thead class="panel-admin__tabla-cabecera">
+          <tr>
+            <th class="panel-admin__tabla-th">Pedido</th>
+            <th class="panel-admin__tabla-th">Cliente</th>
+            <th class="panel-admin__tabla-th">Total</th>
+            <th class="panel-admin__tabla-th">Método</th>
+            <th class="panel-admin__tabla-th">Estado</th>
+            <th class="panel-admin__tabla-th">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="panel-admin__tabla-cuerpo" id="tabla-pedidos-admin-body"></tbody>
+      </table>
+    </div>
+    <p class="panel-admin__mensaje-vacio" id="mensaje-sin-pedidos-admin">No hay pedidos registrados.</p>
+  </section>
+
+  <div class="panel-admin__modal-overlay" id="modal-producto">
+    <div class="panel-admin__modal">
+      <div class="panel-admin__modal-cabecera">
+        <h3 class="panel-admin__modal-titulo" id="modal-titulo">Nuevo Producto</h3>
+        <button class="panel-admin__modal-cerrar" id="btn-cerrar-modal">&times;</button>
+      </div>
+      <form class="panel-admin__modal-formulario" id="form-producto">
+        <div class="panel-admin__campo">
+          <label class="panel-admin__etiqueta" for="producto-nombre">Nombre</label>
+          <input type="text" id="producto-nombre" class="panel-admin__entrada" required />
+        </div>
+        <div class="panel-admin__campo">
+          <label class="panel-admin__etiqueta" for="producto-descripcion">Descripción</label>
+          <textarea id="producto-descripcion" class="panel-admin__entrada panel-admin__entrada--textarea" rows="3" required></textarea>
+        </div>
+        <div class="panel-admin__campo-grupo">
+          <div class="panel-admin__campo">
+            <label class="panel-admin__etiqueta" for="producto-precio">Precio (Bs.)</label>
+            <input type="number" id="producto-precio" class="panel-admin__entrada" step="0.01" min="0" required />
+          </div>
+          <div class="panel-admin__campo">
+            <label class="panel-admin__etiqueta" for="producto-stock">Stock</label>
+            <input type="number" id="producto-stock" class="panel-admin__entrada" min="0" required />
+          </div>
+        </div>
+        <div class="panel-admin__campo">
+          <label class="panel-admin__etiqueta" for="producto-categoria">Categoría</label>
+          <select id="producto-categoria" class="panel-admin__entrada panel-admin__entrada--select" required>
+            <option value="">Seleccionar categoría</option>
+          </select>
+        </div>
+        <div class="panel-admin__campo">
+          <label class="panel-admin__etiqueta" for="producto-imagen">URL de Imagen</label>
+          <input type="url" id="producto-imagen" class="panel-admin__entrada" placeholder="https://ejemplo.com/imagen.jpg" />
+        </div>
+        <input type="hidden" id="producto-id" />
+        <div class="panel-admin__modal-acciones">
+          <button type="button" class="panel-admin__boton panel-admin__boton--secundario" id="btn-cancelar-modal">Cancelar</button>
+          <button type="submit" class="panel-admin__boton panel-admin__boton--primario">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>

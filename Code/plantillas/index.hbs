@@ -1,0 +1,28 @@
+<aside class="panel-filtros">
+  <div class="panel-filtros__contenedor">
+    <div class="panel-filtros__grupo">
+      <label class="panel-filtros__etiqueta" for="precioMinimo">Precio mínimo</label>
+      <input type="number" id="precioMinimo" class="panel-filtros__campo-numero" placeholder="Mín" min="0" />
+    </div>
+    <div class="panel-filtros__grupo">
+      <label class="panel-filtros__etiqueta" for="precioMaximo">Precio máximo</label>
+      <input type="number" id="precioMaximo" class="panel-filtros__campo-numero" placeholder="Máx" min="0" />
+    </div>
+    <div class="panel-filtros__grupo">
+      <label class="panel-filtros__checkbox">
+        <input type="checkbox" id="soloDisponibles" />
+        Solo disponibles
+      </label>
+    </div>
+    <div class="panel-filtros__acciones">
+      <button class="boton-primario">Aplicar</button>
+      <button class="boton-secundario">Limpiar</button>
+    </div>
+  </div>
+</aside>
+
+<main class="contenedor-principal">
+  <section class="contenedor-productos">
+    <div class="productos-grid"></div>
+  </section>
+</main>

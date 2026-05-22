@@ -18,7 +18,6 @@ Code/.tmp-*
 Code/tmp/
 Code/temp/
 Code/.cache/
-Code/coverage/
 Code/.nyc_output/
 Code/.DS_Store
 Code/Thumbs.db

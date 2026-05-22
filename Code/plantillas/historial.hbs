@@ -1,0 +1,29 @@
+<main class="pagina-pedidos">
+  <h1 class="pagina-pedidos__titulo">Mis Pedidos</h1>
+  <section class="pedidos__lista"></section>
+</main>
+
+<aside class="modal-devolucion" id="modal-devolucion">
+  <div class="modal-devolucion__contenido">
+    <header class="modal-devolucion__cabecera">
+      <h2 class="modal-devolucion__titulo">Solicitar Devolucion</h2>
+      <button class="modal-devolucion__cerrar" id="btn-cerrar-devolucion" aria-label="Cerrar">&times;</button>
+    </header>
+    <form class="modal-devolucion__formulario" id="formulario-devolucion">
+      <input type="hidden" id="devolucion-pedido-id" />
+      <div class="modal-devolucion__campo">
+        <label class="modal-devolucion__etiqueta" for="devolucion-motivo">Motivo de la devolucion</label>
+        <textarea class="modal-devolucion__entrada" id="devolucion-motivo" rows="3" required placeholder="Describe el motivo de tu devolucion"></textarea>
+      </div>
+      <div class="modal-devolucion__campo">
+        <label class="modal-devolucion__etiqueta" for="devolucion-foto">Foto de la factura (obligatorio)</label>
+        <input type="file" class="modal-devolucion__entrada" id="devolucion-foto" accept="image/*" required />
+        <img class="modal-devolucion__preview" id="devolucion-preview" alt="Vista previa de la factura" />
+      </div>
+      <div class="modal-devolucion__acciones">
+        <button type="button" class="modal-devolucion__boton modal-devolucion__boton--cancelar" id="btn-cancelar-devolucion">Cancelar</button>
+        <button type="submit" class="modal-devolucion__boton modal-devolucion__boton--enviar">Enviar Solicitud</button>
+      </div>
+    </form>
+  </div>
+</aside>

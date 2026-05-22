@@ -1,0 +1,80 @@
+.pagina-autenticacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  padding: 2rem;
+  background: #f5f5f5;
+}
+
+.tarjeta-autenticacion {
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.tarjeta-autenticacion__titulo {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.6rem;
+  color: #1a1a2e;
+}
+
+.tarjeta-autenticacion__campo {
+  margin-bottom: 1rem;
+}
+
+.tarjeta-autenticacion__etiqueta {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.tarjeta-autenticacion__entrada {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.tarjeta-autenticacion__entrada:focus {
+  outline: none;
+  border-color: #034e8b;
+}
+
+.tarjeta-autenticacion__boton {
+  width: 100%;
+  padding: 0.85rem;
+  background: #034e8b;
+  color: white;
+  border: none;
+  border-radius: 28px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+}
+
+.tarjeta-autenticacion__boton:hover {
+  background: #023a6b;
+}
+
+.tarjeta-autenticacion__enlace {
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+  color: #034e8b;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.tarjeta-autenticacion__enlace:hover {
+  text-decoration: underline;
+}

@@ -1,27 +1,29 @@
 {
-  "name": "code",
+  "name": "raidencenter",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node server/index.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "coverage": "nyc npm test"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "description": "Plataforma e-commerce Raidencenter",
   "engines": {
     "node": ">=18"
+  },
+  "scripts": {
+    "dev": "concurrently \"vite build --watch\" \"nodemon servidor/index.js\"",
+    "build": "vite build",
+    "start": "node servidor/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
     "dotenv": "^17.2.4",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "express-handlebars": "^8.0.1"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "nyc": "^15.1.0"
+    "@vitest/coverage-v8": "^2.1.0",
+    "concurrently": "^9.1.0",
+    "nodemon": "^3.1.7",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.0"
   }
 }

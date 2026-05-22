@@ -1,0 +1,37 @@
+<main class="pagina-autenticacion">
+  <div class="tarjeta-autenticacion">
+    <h1 class="tarjeta-autenticacion__titulo">Crear Cuenta</h1>
+    <form id="formularioRegistro">
+      <div class="tarjeta-autenticacion__campo">
+        <label class="tarjeta-autenticacion__etiqueta" for="nombreRegistro">Nombre completo</label>
+        <input type="text" id="nombreRegistro" class="tarjeta-autenticacion__entrada" placeholder="Tu nombre" required />
+      </div>
+      <div class="tarjeta-autenticacion__campo">
+        <label class="tarjeta-autenticacion__etiqueta" for="correoRegistro">Correo electrónico</label>
+        <input type="email" id="correoRegistro" class="tarjeta-autenticacion__entrada" placeholder="tu@correo.com" required />
+      </div>
+      <div class="tarjeta-autenticacion__campo">
+        <label class="tarjeta-autenticacion__etiqueta" for="contrasenaRegistro">Contraseña</label>
+        <input type="password" id="contrasenaRegistro" class="tarjeta-autenticacion__entrada" placeholder="Mínimo 6 caracteres" required minlength="6" />
+      </div>
+      <div class="tarjeta-autenticacion__campo">
+        <label class="tarjeta-autenticacion__etiqueta" for="confirmarContrasena">Confirmar contraseña</label>
+        <input type="password" id="confirmarContrasena" class="tarjeta-autenticacion__entrada" placeholder="Repite la contraseña" required />
+      </div>
+      <div class="tarjeta-autenticacion__campo">
+        <label class="tarjeta-autenticacion__etiqueta" for="telefonoRegistro">Teléfono</label>
+        <input type="tel" id="telefonoRegistro" class="tarjeta-autenticacion__entrada" placeholder="Ej: 70012345" required />
+      </div>
+      <div class="tarjeta-autenticacion__campo">
+        <label class="tarjeta-autenticacion__etiqueta" for="rolRegistro">Tipo de cuenta</label>
+        <select id="rolRegistro" class="tarjeta-autenticacion__entrada" required>
+          <option value="cliente" selected>Cliente</option>
+          <option value="administrador">Administrador</option>
+          <option value="chofer">Chofer</option>
+        </select>
+      </div>
+      <button type="submit" class="tarjeta-autenticacion__boton">Registrarse</button>
+    </form>
+    <a href="/login" class="tarjeta-autenticacion__enlace">¿Ya tienes cuenta? Inicia sesión</a>
+  </div>
+</main>
