@@ -35,9 +35,12 @@ class ControladorHistorial {
   _bindEventos() {
     document.addEventListener('pedido:recepcionSolicitada', async (e) => {
       try {
-        await this._devolucionServicio.confirmarRecepcion
-          ? await fetch(`/api/pedidos/${e.detail.pedidoId}/confirmar-recepcion`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' } }).then((r) => r.json())
-          : null;
+        const res = await fetch(`/api/pedidos/${e.detail.pedidoId}/confirmar-recepcion`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
         if (window.showToast) window.showToast('Pedido confirmado y cerrado exitosamente', { tipo: 'success', duracion: 5000 });
         await this._modeloPedido.cargarHistorialUsuario(this._supabase, this._usuarioId);
       } catch {
@@ -47,7 +50,11 @@ class ControladorHistorial {
 
     document.addEventListener('pedido:retiroSolicitado', async (e) => {
       try {
-        const res = await fetch(`/api/pedidos/${e.detail.pedidoId}/estado`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: 'entregado' }) });
+        const res = await fetch(`/api/pedidos/${e.detail.pedidoId}/estado`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: 'entregado' }),
+        });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         if (window.showToast) window.showToast('Retiro confirmado. Ahora confirma la recepción para cerrar el pedido.', { tipo: 'success', duracion: 6000 });
