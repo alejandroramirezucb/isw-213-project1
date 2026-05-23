@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { ESLint } from 'eslint';
-import fs from 'fs';
+const { ESLint } = require('eslint');
+const fs = require('fs');
 
 async function generateReport() {
   try {

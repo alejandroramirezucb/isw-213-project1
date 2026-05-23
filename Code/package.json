@@ -1,6 +1,5 @@
 {
   "name": "raidencenter",
-  "type": "module",
   "version": "1.0.0",
   "description": "Plataforma e-commerce Raidencenter",
   "engines": {
