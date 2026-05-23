@@ -46,7 +46,7 @@ class ControladorAyuda {
         this._vista.resetearFormulario();
         if (window.showToast) window.showToast('¡Mensaje enviado! Te responderemos en menos de 24 horas.', { tipo: 'success', duracion: 6000 });
         await this._inicializar();
-      } catch (err) {
+      } catch (_err) {
         if (window.showToast) window.showToast('Error al enviar el mensaje. Inténtalo de nuevo.', { tipo: 'error' });
       } finally {
         this._vista.desbloquearBoton();

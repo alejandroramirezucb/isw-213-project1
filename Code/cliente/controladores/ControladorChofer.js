@@ -36,8 +36,8 @@ class ControladorChofer {
   }
 
   _bindEventos() {
-    document.addEventListener('entrega:iniciarSolicitada', async (e) => {
-      const { pedidoId, envioId } = e.detail;
+    document.addEventListener('entrega:iniciarSolicitada', async (event) => {
+      const { pedidoId, envioId } = event.detail;
       try {
         await this._pedidoServicio.avanzarEstado(pedidoId, 'trasladandose');
         if (window.showToast) window.showToast('Entrega iniciada - GPS activado', { tipo: 'success' });
