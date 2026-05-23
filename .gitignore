@@ -11,6 +11,7 @@ Code/.env.local
 Code/.env.*.local
 !Code/.env.example
 .claude
+Code/.idea/
 Code/dist/
 Code/build/
 Code/.tmp/
