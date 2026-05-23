@@ -1,5 +1,6 @@
 {
   "name": "raidencenter",
+  "type": "module",
   "version": "1.0.0",
   "description": "Plataforma e-commerce Raidencenter",
   "engines": {
@@ -12,7 +13,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "lint": "eslint --ext .js,.jsx cliente/ servidor/",
+    "lint:fix": "eslint --fix --ext .js,.jsx cliente/ servidor/",
+    "lint:reporter": "node eslint-reporter.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
@@ -21,8 +25,14 @@
     "express-handlebars": "^8.0.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
     "@vitest/coverage-v8": "^2.1.0",
     "concurrently": "^9.1.0",
+    "eslint": "^10.4.0",
+    "eslint-plugin-sonarjs": "^4.0.3",
+    "eslint-rich-reporter": "^0.0.11",
     "jsdom": "^29.1.1",
     "nodemon": "^3.1.7",
     "nyc": "^18.0.0",
