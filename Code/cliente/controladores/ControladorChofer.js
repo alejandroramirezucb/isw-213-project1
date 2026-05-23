@@ -1,3 +1,5 @@
+const LOCATION_UPDATE_INTERVAL_MS = 30000;
+
 class ControladorChofer {
   constructor(modeloChofer, choferServicio, pedidoServicio, authServicio, clienteSupabase) {
     this._modeloChofer = modeloChofer;
@@ -86,7 +88,7 @@ class ControladorChofer {
     this._detenerGPS();
     this._envioEnCursoId = envioId;
     this._enviarUbicacion(envioId);
-    this._intervaloGPS = setInterval(() => this._enviarUbicacion(envioId), 30000);
+    this._intervaloGPS = setInterval(() => this._enviarUbicacion(envioId), LOCATION_UPDATE_INTERVAL_MS);
   }
 
   _detenerGPS() {

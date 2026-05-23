@@ -1,3 +1,5 @@
+const REDIRECT_DELAY_MS = 1000;
+
 class ControladorAuth {
   constructor(modeloAuth) {
     this._modelo = modeloAuth;
@@ -15,7 +17,7 @@ class ControladorAuth {
 
     document.addEventListener('auth:sesionIniciada', () => {
       if (window.showToast) window.showToast('Sesión iniciada correctamente', { tipo: 'success' });
-      setTimeout(() => { window.location.href = '/'; }, 1000);
+      setTimeout(() => { window.location.href = '/'; }, REDIRECT_DELAY_MS);
     });
 
     document.addEventListener('auth:sesionError', (e) => {
