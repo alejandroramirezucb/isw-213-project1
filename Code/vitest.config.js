@@ -13,7 +13,11 @@ export default defineConfig({
       reportsDirectory: './coverage',
       include: [
         'cliente/utilidades/CalculadorPrecio.js',
+        'cliente/utilidades/ActualizadorContador.js',
+        'cliente/utilidades/GestorStock.js',
         'cliente/servicios/CarritoServicio.js',
+        'cliente/modelos/ModeloCarrito.js',
+        'cliente/modelos/ModeloPedido.js',
       ],
     },
   },
