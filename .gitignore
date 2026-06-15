@@ -20,6 +20,8 @@ Code/tmp/
 Code/temp/
 Code/.cache/
 Code/.nyc_output/
+Code/coverage/
+Code/coverage_inicial/
 Code/.DS_Store
 Code/Thumbs.db
 Code/.vscode/
