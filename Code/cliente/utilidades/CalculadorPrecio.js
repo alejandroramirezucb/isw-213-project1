@@ -3,6 +3,11 @@ class CalculadorPrecio {
     return (precio / numeroCuotas).toFixed(2);
   }
 
+  static calcularCuotaConInteres(precio, numeroCuotas, interes) {
+    const total = precio * (1 + interes);
+    return (total / numeroCuotas).toFixed(2);
+  }
+
   static formatearPrecio(precio) {
     return parseFloat(precio || 0).toFixed(2);
   }
