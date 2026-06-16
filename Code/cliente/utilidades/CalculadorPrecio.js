@@ -19,7 +19,7 @@ class CalculadorPrecio {
   }
 
   static calcularTotalConEnvio(subtotal, metodoEntrega) {
-    const envio = metodoEntrega === 'delivery' ? 15 : 0;
+    const envio = metodoEntrega === 'delivery' ? COSTO_DELIVERY : 0;
     return (parseFloat(subtotal || 0) + envio).toFixed(2);
   }
 }
