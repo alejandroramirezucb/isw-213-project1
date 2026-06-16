@@ -1,3 +1,5 @@
+const COSTO_DELIVERY = 15;
+
 class CalculadorPrecio {
   static calcularCuotas(precio, numeroCuotas = 12) {
     return (precio / numeroCuotas).toFixed(2);
