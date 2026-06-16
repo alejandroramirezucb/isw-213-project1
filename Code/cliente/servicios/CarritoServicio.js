@@ -5,11 +5,11 @@ class CarritoServicio {
 
   obtenerCarrito() {
     try {
-      var datos = localStorage.getItem(this.claveAlmacenamiento);
+      const datos = localStorage.getItem(this.claveAlmacenamiento);
       if (!datos) return [];
-      var carrito = JSON.parse(datos);
+      const carrito = JSON.parse(datos);
       return carrito.map(this._normalizarItem);
-    } catch (error) {
+    } catch {
       localStorage.removeItem(this.claveAlmacenamiento);
       return [];
     }
@@ -32,19 +32,19 @@ class CarritoServicio {
 
   agregarProducto(producto, cantidad) {
     cantidad = cantidad || 1;
-    var carrito = this.obtenerCarrito();
-    var indice = carrito.findIndex(function (item) {
+    const carrito = this.obtenerCarrito();
+    const indice = carrito.findIndex(function (item) {
       return item.id === producto.id;
     });
 
     if (indice !== -1) {
-      var nuevaCantidad = carrito[indice].cantidad + cantidad;
+      const nuevaCantidad = carrito[indice].cantidad + cantidad;
       if (nuevaCantidad > carrito[indice].stock) {
         return { exito: false, mensaje: 'Stock insuficiente' };
       }
       carrito[indice].cantidad = nuevaCantidad;
     } else {
-      var imagenProducto = producto.imagen || producto.imagenes?.[0] || '';
+      const imagenProducto = producto.imagen || producto.imagenes?.[0] || '';
       carrito.push({
         id: producto.id,
         nombre: producto.nombre,
@@ -60,8 +60,8 @@ class CarritoServicio {
   }
 
   eliminarProducto(idProducto) {
-    var carrito = this.obtenerCarrito();
-    var carritoFiltrado = carrito.filter(function (item) {
+    const carrito = this.obtenerCarrito();
+    const carritoFiltrado = carrito.filter(function (item) {
       return item.id !== idProducto;
     });
     this.guardarCarrito(carritoFiltrado);
@@ -69,8 +69,8 @@ class CarritoServicio {
   }
 
   actualizarCantidad(idProducto, nuevaCantidad) {
-    var carrito = this.obtenerCarrito();
-    var producto = carrito.find(function (item) {
+    const carrito = this.obtenerCarrito();
+    const producto = carrito.find(function (item) {
       return item.id === idProducto;
     });
 
@@ -94,14 +94,14 @@ class CarritoServicio {
   }
 
   obtenerCantidadTotal() {
-    var carrito = this.obtenerCarrito();
+    const carrito = this.obtenerCarrito();
     return carrito.reduce(function (total, item) {
       return total + item.cantidad;
     }, 0);
   }
 
   obtenerPrecioTotal() {
-    var carrito = this.obtenerCarrito();
+    const carrito = this.obtenerCarrito();
     return carrito.reduce(function (total, item) {
       return total + item.precio * item.cantidad;
     }, 0);
