@@ -4,8 +4,10 @@ class CalculadorPrecio {
   }
 
   static calcularCuotaConInteres(precio, numeroCuotas, interes) {
-    const total = precio * (1 + interes);
-    return (total / numeroCuotas).toFixed(2);
+    return CalculadorPrecio.calcularCuotas(
+      precio * (1 + interes),
+      numeroCuotas,
+    );
   }
 
   static formatearPrecio(precio) {
@@ -14,6 +16,11 @@ class CalculadorPrecio {
 
   static calcularSubtotal(precio, cantidad) {
     return (parseFloat(precio || 0) * parseInt(cantidad || 0)).toFixed(2);
+  }
+
+  static calcularTotalConEnvio(subtotal, metodoEntrega) {
+    const envio = metodoEntrega === 'delivery' ? 15 : 0;
+    return (parseFloat(subtotal || 0) + envio).toFixed(2);
   }
 }
 
