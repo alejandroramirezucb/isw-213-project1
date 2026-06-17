@@ -22,9 +22,7 @@ class ModeloCarrito {
   agregar(producto, cantidad) {
     const resultado = this._carritoServicio.agregarProducto(producto, cantidad || 1);
     if (resultado.exito === false) {
-      document.dispatchEvent(new CustomEvent('carrito:stockInsuficiente', {
-        detail: { productoId: producto.id, stockDisponible: producto.stock },
-      }));
+      this._emitirStockInsuficiente(producto.id, producto.stock);
       return;
     }
     this._emitirModificado(resultado.carrito);
@@ -38,9 +36,7 @@ class ModeloCarrito {
   actualizarCantidad(idProducto, cantidad) {
     const resultado = this._carritoServicio.actualizarCantidad(idProducto, cantidad);
     if (resultado.exito === false) {
-      document.dispatchEvent(new CustomEvent('carrito:stockInsuficiente', {
-        detail: { productoId: idProducto, stockDisponible: resultado.carrito.find(i => i.id === idProducto)?.stock },
-      }));
+      this._emitirStockInsuficiente(idProducto, resultado.carrito.find(i => i.id === idProducto)?.stock);
       return;
     }
     const carrito = Array.isArray(resultado) ? resultado : resultado.carrito;
@@ -77,6 +73,12 @@ class ModeloCarrito {
 
     const resultados = await Promise.all(promesas);
     return resultados.filter((item) => item !== null);
+  }
+
+  _emitirStockInsuficiente(productoId, stockDisponible) {
+    document.dispatchEvent(new CustomEvent('carrito:stockInsuficiente', {
+      detail: { productoId, stockDisponible },
+    }));
   }
 
   _emitirModificado(carrito) {
