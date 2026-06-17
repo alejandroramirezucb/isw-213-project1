@@ -1,3 +1,5 @@
+const DURACION_TOAST_MS = 6000;
+
 class ModeloCarrito {
   constructor(carritoServicio, productoServicio) {
     this._carritoServicio = carritoServicio;
@@ -56,13 +58,13 @@ class ModeloCarrito {
         const infoStock = await this._productoServicio.verificarStock(item.id);
         if (!infoStock.disponible || infoStock.stock === 0) {
           if (window.showToast) {
-            window.showToast(`El producto "${item.nombre}" ya no está disponible y será eliminado del carrito.`, { tipo: 'warning', duracion: 6000 });
+            window.showToast(`El producto "${item.nombre}" ya no está disponible y será eliminado del carrito.`, { tipo: 'warning', duracion: DURACION_TOAST_MS });
           }
           return null;
         }
         if (item.cantidad > infoStock.stock) {
           if (window.showToast) {
-            window.showToast(`El producto "${item.nombre}" tiene menos stock. Se ajustó a ${infoStock.stock} unidades.`, { tipo: 'warning', duracion: 6000 });
+            window.showToast(`El producto "${item.nombre}" tiene menos stock. Se ajustó a ${infoStock.stock} unidades.`, { tipo: 'warning', duracion: DURACION_TOAST_MS });
           }
           item.cantidad = infoStock.stock;
         }
