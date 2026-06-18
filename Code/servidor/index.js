@@ -3,10 +3,13 @@ const express = require('express');
 const path = require('path');
 const { engine } = require('express-handlebars');
 const { validarConfiguracion } = require('./utils');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 
 if (!validarConfiguracion()) process.exit(1);
 
 const app = express();
+app.disable('x-powered-by');
 
 app.engine('hbs', engine({
   extname: '.hbs',
@@ -31,13 +34,13 @@ app.get('/api/producto-tarjeta', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'plantillas', 'parciales', 'tarjeta-producto.html'));
 });
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/productos', require('./rutas/rutasProductos'));
 app.use('/api/pedidos', require('./rutas/rutasPedidos'));
 app.use('/api/devoluciones', require('./rutas/rutasDevoluciones'));
 app.use('/api/envios', require('./rutas/rutasEnvios'));
 app.use('/api/mensajes-ayuda', require('./rutas/rutasMensajes'));
 app.use('/api/usuarios', require('./rutas/rutasUsuarios'));
-
 app.use('/', require('./rutas/rutasVistas'));
 
 const puerto = process.env.PORT || 3000;

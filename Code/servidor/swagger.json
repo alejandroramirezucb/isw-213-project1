@@ -1,0 +1,304 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Raidencenter API",
+    "version": "1.0.0",
+    "description": "API de E-commerce"
+  },
+  "servers": [{ "url": "/api" }],
+  "tags": [
+    { "name": "productos" },
+    { "name": "pedidos" },
+    { "name": "devoluciones" },
+    { "name": "envios" },
+    { "name": "mensajes-ayuda" },
+    { "name": "usuarios" }
+  ],
+  "paths": {
+    "/productos": {
+      "get": {
+        "tags": ["productos"],
+        "summary": "Listar todos los productos",
+        "responses": {
+          "200": { "description": "Lista de productos", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Producto" } } } } }
+        }
+      }
+    },
+    "/productos/stock-batch": {
+      "post": {
+        "tags": ["productos"],
+        "summary": "Consultar stock de varios productos",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["ids"], "properties": { "ids": { "type": "array", "items": { "type": "integer" }, "example": [1, 2, 3] } } } } }
+        },
+        "responses": {
+          "200": { "description": "Stock por producto", "content": { "application/json": { "schema": { "type": "object", "properties": { "stocks": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "integer" }, "stock_disponible": { "type": "integer" } } } } } } } } },
+          "400": { "description": "Array de ids requerido" }
+        }
+      }
+    },
+    "/productos/{id}": {
+      "get": {
+        "tags": ["productos"],
+        "summary": "Obtener producto por ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Producto", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Producto" } } } },
+          "404": { "description": "No encontrado" }
+        }
+      }
+    },
+    "/productos/{id}/stock": {
+      "get": {
+        "tags": ["productos"],
+        "summary": "Verificar stock de un producto",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Info de stock", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InfoStock" } } } }
+        }
+      }
+    },
+    "/pedidos": {
+      "post": {
+        "tags": ["pedidos"],
+        "summary": "Crear pedido",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PedidoInput" } } }
+        },
+        "responses": {
+          "201": { "description": "Pedido creado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pedido" } } } },
+          "400": { "description": "Datos inválidos" }
+        }
+      }
+    },
+    "/pedidos/admin": {
+      "get": {
+        "tags": ["pedidos"],
+        "summary": "Listar todos los pedidos (admin)",
+        "responses": {
+          "200": { "description": "Lista de pedidos", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Pedido" } } } } }
+        }
+      }
+    },
+    "/pedidos/{pedidoId}/historial-estados": {
+      "get": {
+        "tags": ["pedidos"],
+        "summary": "Historial de estados de un pedido",
+        "parameters": [{ "name": "pedidoId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Historial de estados" }
+        }
+      }
+    },
+    "/pedidos/{pedidoId}/estado": {
+      "patch": {
+        "tags": ["pedidos"],
+        "summary": "Avanzar estado del pedido",
+        "parameters": [{ "name": "pedidoId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "estado": { "type": "string", "enum": ["recibido", "en_proceso", "enviado", "entregado"] } } } } }
+        },
+        "responses": {
+          "200": { "description": "Estado actualizado" }
+        }
+      }
+    },
+    "/pedidos/{pedidoId}/confirmar-recepcion": {
+      "patch": {
+        "tags": ["pedidos"],
+        "summary": "Confirmar recepción del pedido",
+        "parameters": [{ "name": "pedidoId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Recepción confirmada" }
+        }
+      }
+    },
+    "/devoluciones": {
+      "get": {
+        "tags": ["devoluciones"],
+        "summary": "Listar devoluciones",
+        "responses": {
+          "200": { "description": "Lista de devoluciones" }
+        }
+      },
+      "post": {
+        "tags": ["devoluciones"],
+        "summary": "Crear devolución",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DevolucionInput" } } }
+        },
+        "responses": {
+          "201": { "description": "Devolución creada" }
+        }
+      }
+    },
+    "/devoluciones/{devolucionId}/aprobar": {
+      "patch": {
+        "tags": ["devoluciones"],
+        "summary": "Aprobar devolución",
+        "parameters": [{ "name": "devolucionId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Devolución aprobada" }
+        }
+      }
+    },
+    "/devoluciones/{devolucionId}/rechazar": {
+      "patch": {
+        "tags": ["devoluciones"],
+        "summary": "Rechazar devolución",
+        "parameters": [{ "name": "devolucionId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Devolución rechazada" }
+        }
+      }
+    },
+    "/envios/ubicacion": {
+      "post": {
+        "tags": ["envios"],
+        "summary": "Registrar ubicación del envío",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "envioId": { "type": "integer" }, "latitud": { "type": "number" }, "longitud": { "type": "number" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Ubicación registrada" }
+        }
+      }
+    },
+    "/envios/{envioId}/evidencia": {
+      "patch": {
+        "tags": ["envios"],
+        "summary": "Actualizar evidencia de entrega",
+        "parameters": [{ "name": "envioId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "url_evidencia": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Evidencia actualizada" }
+        }
+      }
+    },
+    "/mensajes-ayuda": {
+      "get": {
+        "tags": ["mensajes-ayuda"],
+        "summary": "Listar mensajes de ayuda",
+        "responses": {
+          "200": { "description": "Lista de mensajes" }
+        }
+      },
+      "post": {
+        "tags": ["mensajes-ayuda"],
+        "summary": "Crear mensaje de ayuda",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MensajeInput" } } }
+        },
+        "responses": {
+          "201": { "description": "Mensaje creado" }
+        }
+      }
+    },
+    "/mensajes-ayuda/{id}/responder": {
+      "patch": {
+        "tags": ["mensajes-ayuda"],
+        "summary": "Responder mensaje de ayuda",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["respuesta"], "properties": { "respuesta": { "type": "string" } } } } }
+        },
+        "responses": {
+          "200": { "description": "Respuesta enviada" }
+        }
+      }
+    },
+    "/usuarios/fallback": {
+      "post": {
+        "tags": ["usuarios"],
+        "summary": "Sincronizar usuario con Supabase",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UsuarioFallback" } } }
+        },
+        "responses": {
+          "200": { "description": "Usuario sincronizado", "content": { "application/json": { "schema": { "type": "object", "properties": { "success": { "type": "boolean" }, "message": { "type": "string" } } } } } },
+          "400": { "description": "ID y correo son obligatorios" },
+          "500": { "description": "Error de sincronización" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Producto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "nombre": { "type": "string" },
+          "precio": { "type": "number" },
+          "stock": { "type": "integer" },
+          "imagen": { "type": "string" }
+        }
+      },
+      "InfoStock": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "stock": { "type": "integer" },
+          "disponible": { "type": "boolean" }
+        }
+      },
+      "PedidoInput": {
+        "type": "object",
+        "required": ["items", "pago"],
+        "properties": {
+          "items": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "integer" }, "cantidad": { "type": "integer" } } } },
+          "pago": { "type": "object", "properties": { "metodo_pago": { "type": "string", "enum": ["efectivo", "tarjeta", "cuotas"] }, "num_cuotas": { "type": "integer" } } },
+          "metodo_entrega": { "type": "string", "enum": ["delivery", "recojo"] }
+        }
+      },
+      "Pedido": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "estado": { "type": "string" },
+          "total": { "type": "number" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DevolucionInput": {
+        "type": "object",
+        "required": ["pedidoId", "motivo"],
+        "properties": {
+          "pedidoId": { "type": "integer" },
+          "motivo": { "type": "string" }
+        }
+      },
+      "MensajeInput": {
+        "type": "object",
+        "required": ["asunto", "mensaje"],
+        "properties": {
+          "asunto": { "type": "string" },
+          "mensaje": { "type": "string" },
+          "correo": { "type": "string", "format": "email" }
+        }
+      },
+      "UsuarioFallback": {
+        "type": "object",
+        "required": ["id", "correo_electronico"],
+        "properties": {
+          "id": { "type": "string" },
+          "nombre_completo": { "type": "string" },
+          "correo_electronico": { "type": "string", "format": "email" },
+          "telefono": { "type": "string" },
+          "rol": { "type": "string", "enum": ["cliente", "admin", "chofer"] }
+        }
+      }
+    }
+  }
+}

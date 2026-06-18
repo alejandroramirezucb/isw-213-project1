@@ -21,7 +21,8 @@
     "@supabase/supabase-js": "^2.95.3",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
-    "express-handlebars": "^8.0.1"
+    "express-handlebars": "^8.0.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
