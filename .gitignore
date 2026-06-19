@@ -1,7 +1,6 @@
 ﻿Code/node_modules/
 Code/**/node_modules/
 Code/logs/
-Code/.dockerignore
 Code/*.log
 Code/npm-debug.log*
 Code/yarn-debug.log*
@@ -10,6 +9,7 @@ Code/.env
 Code/.env.local
 Code/.env.*.local
 !Code/.env.example
+Code/eslint-reporter.html
 .claude
 Code/.idea/
 Code/dist/
