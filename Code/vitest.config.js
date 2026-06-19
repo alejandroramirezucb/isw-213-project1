@@ -15,6 +15,7 @@ export default defineConfig({
         'cliente/utilidades/CalculadorPrecio.js',
         'cliente/utilidades/ActualizadorContador.js',
         'cliente/utilidades/GestorStock.js',
+        'cliente/utilidades/GestorDevoluciones.js',
         'cliente/servicios/CarritoServicio.js',
         'cliente/modelos/ModeloCarrito.js',
         'cliente/modelos/ModeloPedido.js',
