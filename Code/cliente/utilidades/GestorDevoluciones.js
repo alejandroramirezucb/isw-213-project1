@@ -1,7 +1,11 @@
+const SEGUNDO_MS = 1000;
+const MINUTO_MS = 60 * SEGUNDO_MS;
+const HORA_MS = 60 * MINUTO_MS;
+const LIMITE_DEVOLUCION_MS = 24 * HORA_MS;
+
 class GestorDevoluciones {
   static puedeSolicitar(fechaEntrega, ahora) {
-    const transcurridoMs = ahora - fechaEntrega;
-    return transcurridoMs < 24 * 60 * 60 * 1000;
+    return (ahora - fechaEntrega) < LIMITE_DEVOLUCION_MS;
   }
 }
 
