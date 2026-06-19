@@ -300,11 +300,11 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  obtenerCarrito() {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      var datos = localStorage.getItem(this.claveAlmacenamiento);</span>
+<span class="cstat-no" title="statement not covered" >      const datos = localStorage.getItem(this.claveAlmacenamiento);</span>
 <span class="cstat-no" title="statement not covered" >      if (!datos) return [];</span>
-<span class="cstat-no" title="statement not covered" >      var carrito = JSON.parse(datos);</span>
+<span class="cstat-no" title="statement not covered" >      const carrito = JSON.parse(datos);</span>
 <span class="cstat-no" title="statement not covered" >      return carrito.map(this._normalizarItem);</span>
-<span class="cstat-no" title="statement not covered" >    } catch (error) {</span>
+<span class="cstat-no" title="statement not covered" >    } catch {</span>
 <span class="cstat-no" title="statement not covered" >      localStorage.removeItem(this.claveAlmacenamiento);</span>
 <span class="cstat-no" title="statement not covered" >      return [];</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
@@ -327,19 +327,19 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  agregarProducto(producto, cantidad) {</span>
 <span class="cstat-no" title="statement not covered" >    cantidad = cantidad || 1;</span>
-<span class="cstat-no" title="statement not covered" >    var carrito = this.obtenerCarrito();</span>
-<span class="cstat-no" title="statement not covered" >    var indice = carrito.findIndex(function (item) {</span>
+<span class="cstat-no" title="statement not covered" >    const carrito = this.obtenerCarrito();</span>
+<span class="cstat-no" title="statement not covered" >    const indice = carrito.findIndex(function (item) {</span>
 <span class="cstat-no" title="statement not covered" >      return item.id === producto.id;</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    if (indice !== -1) {</span>
-<span class="cstat-no" title="statement not covered" >      var nuevaCantidad = carrito[indice].cantidad + cantidad;</span>
+<span class="cstat-no" title="statement not covered" >      const nuevaCantidad = carrito[indice].cantidad + cantidad;</span>
 <span class="cstat-no" title="statement not covered" >      if (nuevaCantidad &gt; carrito[indice].stock) {</span>
 <span class="cstat-no" title="statement not covered" >        return { exito: false, mensaje: 'Stock insuficiente' };</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >      carrito[indice].cantidad = nuevaCantidad;</span>
 <span class="cstat-no" title="statement not covered" >    } else {</span>
-<span class="cstat-no" title="statement not covered" >      var imagenProducto = producto.imagen || producto.imagenes?.[0] || '';</span>
+<span class="cstat-no" title="statement not covered" >      const imagenProducto = producto.imagen || producto.imagenes?.[0] || '';</span>
 <span class="cstat-no" title="statement not covered" >      carrito.push({</span>
 <span class="cstat-no" title="statement not covered" >        id: producto.id,</span>
 <span class="cstat-no" title="statement not covered" >        nombre: producto.nombre,</span>
@@ -355,8 +355,8 @@
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  eliminarProducto(idProducto) {</span>
-<span class="cstat-no" title="statement not covered" >    var carrito = this.obtenerCarrito();</span>
-<span class="cstat-no" title="statement not covered" >    var carritoFiltrado = carrito.filter(function (item) {</span>
+<span class="cstat-no" title="statement not covered" >    const carrito = this.obtenerCarrito();</span>
+<span class="cstat-no" title="statement not covered" >    const carritoFiltrado = carrito.filter(function (item) {</span>
 <span class="cstat-no" title="statement not covered" >      return item.id !== idProducto;</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
 <span class="cstat-no" title="statement not covered" >    this.guardarCarrito(carritoFiltrado);</span>
@@ -364,8 +364,8 @@
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  actualizarCantidad(idProducto, nuevaCantidad) {</span>
-<span class="cstat-no" title="statement not covered" >    var carrito = this.obtenerCarrito();</span>
-<span class="cstat-no" title="statement not covered" >    var producto = carrito.find(function (item) {</span>
+<span class="cstat-no" title="statement not covered" >    const carrito = this.obtenerCarrito();</span>
+<span class="cstat-no" title="statement not covered" >    const producto = carrito.find(function (item) {</span>
 <span class="cstat-no" title="statement not covered" >      return item.id === idProducto;</span>
 <span class="cstat-no" title="statement not covered" >    });</span>
 <span class="cstat-no" title="statement not covered" ></span>
@@ -389,14 +389,14 @@
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  obtenerCantidadTotal() {</span>
-<span class="cstat-no" title="statement not covered" >    var carrito = this.obtenerCarrito();</span>
+<span class="cstat-no" title="statement not covered" >    const carrito = this.obtenerCarrito();</span>
 <span class="cstat-no" title="statement not covered" >    return carrito.reduce(function (total, item) {</span>
 <span class="cstat-no" title="statement not covered" >      return total + item.cantidad;</span>
 <span class="cstat-no" title="statement not covered" >    }, 0);</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  obtenerPrecioTotal() {</span>
-<span class="cstat-no" title="statement not covered" >    var carrito = this.obtenerCarrito();</span>
+<span class="cstat-no" title="statement not covered" >    const carrito = this.obtenerCarrito();</span>
 <span class="cstat-no" title="statement not covered" >    return carrito.reduce(function (total, item) {</span>
 <span class="cstat-no" title="statement not covered" >      return total + item.precio * item.cantidad;</span>
 <span class="cstat-no" title="statement not covered" >    }, 0);</span>
@@ -415,7 +415,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-23T00:49:43.647Z
+                at 2026-06-19T14:16:53.821Z
             </div>
         <script src="../prettify.js"></script>
         <script>
