@@ -1,0 +1,47 @@
+name: Tests y cobertura
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Code/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: Code
+        run: npm ci
+
+      - name: Ejecutar tests con cobertura
+        working-directory: Code
+        run: npm run coverage
+
+      - name: Subir reporte HTML de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-cobertura
+          path: Code/coverage/
+          retention-days: 30
+
+      - name: Generar reporte de ESLint
+        if: always()
+        working-directory: Code
+        run: npm run lint:reporter
+
+      - name: Subir reporte HTML de ESLint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-eslint
+          path: Code/eslint-reporter.html
+          retention-days: 30
