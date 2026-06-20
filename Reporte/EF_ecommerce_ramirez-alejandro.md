@@ -1,6 +1,6 @@
 # EF — Reporte de Proyecto
 **Estudiante:** Alejandro Ramirez
-**Proyecto:** Raidencenter (Ecommerce)
+**Proyecto:** Ecommerce
 **Repositorio:** https://github.com/alejandroramirezucb/proyecto1-isw-213
 **Fecha de entrega:** 20/06/2026
 
@@ -226,7 +226,9 @@ export default GestorStock;
 **HU:** HU-03 Solicitud de devolución
 > Como cliente, quiero solicitar la devolución de un producto dentro de las 24 horas para obtener un reembolso cumpliendo con las políticas de Raiden Corp. (factura y producto intacto).
 
-**CA elegido:** Dado que han pasado menos de 24 horas desde la entrega, cuando el cliente entre a su pedido, entonces el botón "Solicitar Devolución" debe estar activo. / Dado que han pasado más de 24 horas, entonces el sistema debe deshabilitar automáticamente la opción de devolución, indicando que el plazo ha vencido.
+**CA elegido:** 
+- Dado que han pasado menos de 24 horas desde la entrega, cuando el cliente entre a su pedido, entonces el botón "Solicitar Devolución" debe estar activo y exigir que se adjunte una foto de la factura. 
+- Dado que han pasado más de 24 horas, cuando el cliente entre a su pedido, entonces el sistema debe deshabilitar automáticamente la opción de devolución, indicando que el plazo ha vencido.
 
 **Commit 1 — Rojo** [`1068f6c`](https://github.com/alejandroramirezucb/proyecto1-isw-213/commit/1068f6c):
 ```
@@ -551,9 +553,9 @@ _emitirStockInsuficiente(productoId, stockDisponible) {
 
 | # | Historia de Usuario | Criterio de Aceptación | Prueba que valida ese CA | Commit |
 |---|---|---|---|---|
-| 1 | HU-02 Pago flexible por cuotas | Mostrar el monto de cada cuota y el interés antes de confirmar | `calcularCuotaConInteres_aplicaInteresAntesDeDividir` | [`1a305e6`](https://github.com/alejandroramirezucb/proyecto1-isw-213/commit/1a305e6) |
-| 2 | HU-12 Alerta de Stock Mínimo | Cuando el stock llegue a una cantidad, alertar | `requiereReposicion_stockEnElUmbral_true` | [`67628ed`](https://github.com/alejandroramirezucb/proyecto1-isw-213/commit/67628ed) |
-| 3 | HU-03 Solicitud de devolución | Más de 24 h desde la entrega → opción deshabilitada | `puedeSolicitar_exactamente24h_false` | [`1068f6c`](https://github.com/alejandroramirezucb/proyecto1-isw-213/commit/1068f6c) |
+| 1 | HU-02 Pago flexible por cuotas | Mostrar el monto de cada cuota y el interés antes de confirmar | `aplica el interés al total antes de dividir entre las cuotas` | [`1a305e6`](https://github.com/alejandroramirezucb/proyecto1-isw-213/commit/1a305e6) |
+| 2 | HU-12 Alerta de Stock Mínimo | Cuando el stock llegue a una cantidad, alertar | `marca reposición cuando el stock está en el umbral` | [`67628ed`](https://github.com/alejandroramirezucb/proyecto1-isw-213/commit/67628ed) |
+| 3 | HU-03 Solicitud de devolución | Más de 24 h desde la entrega → opción deshabilitada | `rechaza la devolución cuando han pasado exactamente 24 horas` | [`1068f6c`](https://github.com/alejandroramirezucb/proyecto1-isw-213/commit/1068f6c) |
 
 ### Cadena 1 — HU-02 Pago flexible por cuotas
 
@@ -561,7 +563,7 @@ _emitirStockInsuficiente(productoId, stockDisponible) {
 > Como cliente, quiero seleccionar la opción de pago en cuotas al finalizar mi compra para adquirir productos de mayor valor sin tener el dinero suficiente en ese momento.
 
 **Criterio de Aceptación elegido:**
-> Dado que el cliente está en la pasarela de pagos / Cuando seleccione "Pago en cuotas" / Entonces el sistema debe mostrar el monto de cada cuota y el interés antes de confirmar.
+> Dado que el cliente está en la pasarela de pagos, cuando seleccione "Pago en cuotas", entonces el sistema debe mostrar el monto de cada cuota y el interés (si existe) antes de confirmar.
 
 **Prueba que valida este CA:**
 ```javascript
@@ -583,7 +585,7 @@ it('aplica el interés al total antes de dividir entre las cuotas', () => {
 > Como administrador, quiero recibir notificaciones automáticas cuando un producto tenga pocas unidades en el stock para realizar la reposición a tiempo y no perder ventas.
 
 **Criterio de Aceptación elegido:**
-> Dado que el inventario disminuye por cada venta / Cuando el stock llegue a una cantidad (umbral) / Entonces el sistema debe enviar una alerta al panel de administración.
+> Dado que el inventario disminuye por cada venta, cuando el stock llegue a una cantidad, entonces el sistema debe enviar un correo o alerta al panel de administración.
 
 **Prueba que valida este CA:**
 ```javascript
@@ -602,10 +604,10 @@ it('marca reposición cuando el stock está en el umbral', () => {
 ### Cadena 3 — HU-03 Solicitud de devolución
 
 **Historia de Usuario:**
-> Como cliente, quiero solicitar la devolución de un producto dentro de las 24 horas para obtener un reembolso cumpliendo con las políticas de Raiden Corp.
+> Como cliente, quiero solicitar la devolución de un producto dentro de las 24 horas para obtener un reembolso cumpliendo con las políticas de Raiden Corp. (factura y producto intacto).
 
 **Criterio de Aceptación elegido:**
-> Dado que han pasado más de 24 horas desde la entrega / Cuando el cliente entre a su pedido / Entonces el sistema debe deshabilitar automáticamente la opción de devolución.
+> Dado que han pasado más de 24 horas, cuando el cliente entre a su pedido, entonces el sistema debe deshabilitar automáticamente la opción de devolución, indicando que el plazo ha vencido.
 
 **Prueba que valida este CA:**
 ```javascript
